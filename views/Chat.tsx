@@ -17,7 +17,25 @@ interface Message {
     timestamp: Date;
 }
 
-export const Chat: React.FC<ChatProps> = ({ models, servers, agents = [], onUpdateServer }) => {
+const MessageItem = React.memo(({ msg }: { msg: Message }) => (
+    <div className={`flex gap-4 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
+        <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${msg.role === 'user' ? 'bg-blue-600' : 'bg-purple-600'}`}>
+            {msg.role === 'user' ? <User size={16} /> : <Bot size={16} />}
+        </div>
+        <div className={`max-w-[70%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
+            msg.role === 'user'
+            ? 'bg-blue-900/30 border border-blue-500/30 text-blue-100 rounded-tr-none'
+            : 'bg-nebula-900 border border-nebula-700 text-gray-200 rounded-tl-none'
+        }`}>
+            <div className="whitespace-pre-wrap">{msg.content}</div>
+            <div className="text-[10px] opacity-40 mt-1 text-right">
+                {msg.timestamp.toLocaleTimeString()}
+            </div>
+        </div>
+    </div>
+));
+
+export const Chat: React.FC<ChatProps> = React.memo(({ models, servers, agents = [], onUpdateServer }) => {
     const [selectedServerId, setSelectedServerId] = useState<string>(servers[0]?.id || '');
     const [selectedModelId, setSelectedModelId] = useState<string>(models[0]?.id || '');
     const [selectedAgentId, setSelectedAgentId] = useState<string>('');
@@ -122,7 +140,7 @@ export const Chat: React.FC<ChatProps> = ({ models, servers, agents = [], onUpda
                 m.id === msgId ? { ...m, content: m.content + nextChar } : m
             ));
             currentIndex++;
-        }, 20); // 20ms per char for typewriter effect
+        }, 50); // 50ms per char for typewriter effect (Optimized)
     };
 
     const handleSend = () => {
@@ -306,21 +324,7 @@ export const Chat: React.FC<ChatProps> = ({ models, servers, agents = [], onUpda
                 )}
                 <div className="space-y-6">
                     {messages.map((msg) => (
-                        <div key={msg.id} className={`flex gap-4 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
-                            <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${msg.role === 'user' ? 'bg-blue-600' : 'bg-purple-600'}`}>
-                                {msg.role === 'user' ? <User size={16} /> : <Bot size={16} />}
-                            </div>
-                            <div className={`max-w-[70%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
-                                msg.role === 'user' 
-                                ? 'bg-blue-900/30 border border-blue-500/30 text-blue-100 rounded-tr-none' 
-                                : 'bg-nebula-900 border border-nebula-700 text-gray-200 rounded-tl-none'
-                            }`}>
-                                <div className="whitespace-pre-wrap">{msg.content}</div>
-                                <div className="text-[10px] opacity-40 mt-1 text-right">
-                                    {msg.timestamp.toLocaleTimeString()}
-                                </div>
-                            </div>
-                        </div>
+                        <MessageItem key={msg.id} msg={msg} />
                     ))}
                     {isTyping && (
                          <div className="flex gap-4">
@@ -387,4 +391,4 @@ export const Chat: React.FC<ChatProps> = ({ models, servers, agents = [], onUpda
             </div>
         </div>
     );
-};
+});

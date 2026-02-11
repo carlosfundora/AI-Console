@@ -52,7 +52,7 @@ const highScores = [
     { metric: 'Max VRAM Usage', value: '23.8 GB', model: 'Llama-3-70b-Q4', date: 'Yesterday' },
 ];
 
-export const Dashboard: React.FC<DashboardProps> = ({ serverConfig }) => {
+export const Dashboard: React.FC<DashboardProps> = React.memo(({ serverConfig }) => {
   const [slideIndex, setSlideIndex] = useState(0);
 
   const nextSlide = () => setSlideIndex((prev) => (prev + 1) % 4);
@@ -278,4 +278,4 @@ export const Dashboard: React.FC<DashboardProps> = ({ serverConfig }) => {
       </div>
     </div>
   );
-};
+});

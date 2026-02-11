@@ -11,7 +11,25 @@ type SortOption = 'name' | 'size' | 'rows';
 type FilterOption = 'all' | 'SFT' | 'DPO' | 'Pretrain';
 type GenTemplate = 'Instruction' | 'Chat' | 'Completion';
 
-export const Datasets: React.FC<DatasetsProps> = ({ datasets }) => {
+const DatasetCard = React.memo(({ ds }: { ds: Dataset }) => (
+    <div className="p-4 rounded-lg bg-nebula-950/50 border border-nebula-700/50 hover:border-purple-500/30 transition-all cursor-pointer group">
+        <div className="flex justify-between items-start">
+            <div>
+                <h4 className="font-bold text-gray-200 group-hover:text-purple-300 transition-colors">{ds.name}</h4>
+                <p className="text-xs text-gray-500 mt-1">{ds.description}</p>
+            </div>
+            <span className={`text-xs px-2 py-1 rounded border ${ds.type === 'SFT' ? 'bg-blue-900/20 border-blue-500/30 text-blue-300' : ds.type === 'DPO' ? 'bg-orange-900/20 border-orange-500/30 text-orange-300' : 'bg-gray-800 text-gray-300'}`}>
+                {ds.type}
+            </span>
+        </div>
+        <div className="mt-3 flex gap-4 text-xs text-gray-500 font-mono">
+            <span>📦 {ds.size}</span>
+            <span>📝 {ds.rows.toLocaleString()} rows</span>
+        </div>
+    </div>
+));
+
+export const Datasets: React.FC<DatasetsProps> = React.memo(({ datasets }) => {
   const [topic, setTopic] = useState('');
   const [generatedData, setGeneratedData] = useState<any[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -98,21 +116,7 @@ export const Datasets: React.FC<DatasetsProps> = ({ datasets }) => {
             </div>
             <div className="overflow-y-auto flex-1 p-2 space-y-2">
                 {filteredDatasets.map(ds => (
-                    <div key={ds.id} className="p-4 rounded-lg bg-nebula-950/50 border border-nebula-700/50 hover:border-purple-500/30 transition-all cursor-pointer group">
-                        <div className="flex justify-between items-start">
-                            <div>
-                                <h4 className="font-bold text-gray-200 group-hover:text-purple-300 transition-colors">{ds.name}</h4>
-                                <p className="text-xs text-gray-500 mt-1">{ds.description}</p>
-                            </div>
-                            <span className={`text-xs px-2 py-1 rounded border ${ds.type === 'SFT' ? 'bg-blue-900/20 border-blue-500/30 text-blue-300' : ds.type === 'DPO' ? 'bg-orange-900/20 border-orange-500/30 text-orange-300' : 'bg-gray-800 text-gray-300'}`}>
-                                {ds.type}
-                            </span>
-                        </div>
-                        <div className="mt-3 flex gap-4 text-xs text-gray-500 font-mono">
-                            <span>📦 {ds.size}</span>
-                            <span>📝 {ds.rows.toLocaleString()} rows</span>
-                        </div>
-                    </div>
+                    <DatasetCard key={ds.id} ds={ds} />
                 ))}
             </div>
         </div>
@@ -207,4 +211,4 @@ export const Datasets: React.FC<DatasetsProps> = ({ datasets }) => {
       </div>
     </div>
   );
-};
+});

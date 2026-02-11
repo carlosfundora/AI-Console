@@ -8,7 +8,50 @@ interface ModelsProps {
   servers: ServerProfile[];
 }
 
-export const Models: React.FC<ModelsProps> = ({ models, servers }) => {
+const ModelCard = React.memo(({ model, isSelected, onClick }: { model: Model, isSelected: boolean, onClick: (m: Model) => void }) => (
+    <div
+        onClick={() => onClick(model)}
+        className={`bg-nebula-900 border ${isSelected ? 'border-purple-500' : 'border-nebula-700'} rounded-xl p-3 hover:border-purple-500/50 transition-all cursor-pointer group relative overflow-hidden`}
+    >
+        <div className="flex justify-between items-start mb-2">
+            <span className="text-[10px] bg-nebula-800 text-purple-300 px-1.5 py-0.5 rounded border border-nebula-700">{model.provider}</span>
+            <span className="text-gray-500 text-[10px] font-mono">{model.versions.length} ver</span>
+        </div>
+        <h3 className="text-sm font-bold text-white mb-2 truncate" title={model.name}>{model.name}</h3>
+
+        <div className="flex items-center gap-2 mb-2">
+                <span className="text-[10px] flex items-center gap-1 bg-nebula-950 px-1.5 py-0.5 rounded border border-nebula-800 text-gray-300" title="Parameter Count">
+                <Scale size={10} /> {model.params}
+                </span>
+                <span className="text-[10px] flex items-center gap-1 bg-nebula-950 px-1.5 py-0.5 rounded border border-nebula-800 text-gray-300" title="Tensor Type">
+                <Cpu size={10} /> {model.tensorType}
+                </span>
+        </div>
+
+        <p className="text-[10px] text-gray-400 mb-2 line-clamp-2 leading-relaxed">{model.description}</p>
+
+        <div className="flex flex-wrap gap-1 mb-2">
+            {model.tags.slice(0, 3).map(tag => (
+                <span key={tag} className="text-[9px] px-1.5 py-0.5 rounded-full bg-nebula-950 border border-nebula-800 text-gray-500">
+                    {tag}
+                </span>
+            ))}
+        </div>
+
+        <div className="flex items-center gap-3 text-[10px] text-gray-600 pt-2 border-t border-nebula-800/50">
+                <div className="flex items-center gap-1">
+                <GitBranch size={10} />
+                {model.versions[0]?.format || '?'}
+                </div>
+                <div className="flex items-center gap-1">
+                <Box size={10} />
+                {model.versions[0]?.size || '?'}
+                </div>
+        </div>
+    </div>
+));
+
+export const Models: React.FC<ModelsProps> = React.memo(({ models, servers }) => {
   const [selectedModel, setSelectedModel] = useState<Model | null>(null);
   const [selectedVersionIds, setSelectedVersionIds] = useState<Set<string>>(new Set());
   const [showComparison, setShowComparison] = useState(false);
@@ -52,6 +95,13 @@ export const Models: React.FC<ModelsProps> = ({ models, servers }) => {
   const getCompatibleServers = (modelId: string) => {
       return servers.filter(s => s.compatibleModels.includes(modelId));
   };
+
+  const handleModelClick = React.useCallback((model: Model) => {
+      setSelectedModel(model);
+      setSelectedVersionIds(new Set());
+      setShowComparison(false);
+      setDetailTab('overview');
+  }, []);
 
   return (
     <div className="space-y-6 h-full flex flex-col relative">
@@ -127,47 +177,12 @@ export const Models: React.FC<ModelsProps> = ({ models, servers }) => {
         <div className={`flex-1 overflow-y-auto ${selectedModel ? 'hidden lg:block lg:w-1/2' : 'w-full'}`}>
              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                 {filteredModels.map(model => (
-                    <div 
+                    <ModelCard
                         key={model.id} 
-                        onClick={() => { setSelectedModel(model); setSelectedVersionIds(new Set()); setShowComparison(false); setDetailTab('overview'); }}
-                        className={`bg-nebula-900 border ${selectedModel?.id === model.id ? 'border-purple-500' : 'border-nebula-700'} rounded-xl p-3 hover:border-purple-500/50 transition-all cursor-pointer group relative overflow-hidden`}
-                    >
-                        <div className="flex justify-between items-start mb-2">
-                            <span className="text-[10px] bg-nebula-800 text-purple-300 px-1.5 py-0.5 rounded border border-nebula-700">{model.provider}</span>
-                            <span className="text-gray-500 text-[10px] font-mono">{model.versions.length} ver</span>
-                        </div>
-                        <h3 className="text-sm font-bold text-white mb-2 truncate" title={model.name}>{model.name}</h3>
-                        
-                        <div className="flex items-center gap-2 mb-2">
-                             <span className="text-[10px] flex items-center gap-1 bg-nebula-950 px-1.5 py-0.5 rounded border border-nebula-800 text-gray-300" title="Parameter Count">
-                                <Scale size={10} /> {model.params}
-                             </span>
-                             <span className="text-[10px] flex items-center gap-1 bg-nebula-950 px-1.5 py-0.5 rounded border border-nebula-800 text-gray-300" title="Tensor Type">
-                                <Cpu size={10} /> {model.tensorType}
-                             </span>
-                        </div>
-
-                        <p className="text-[10px] text-gray-400 mb-2 line-clamp-2 leading-relaxed">{model.description}</p>
-                        
-                        <div className="flex flex-wrap gap-1 mb-2">
-                            {model.tags.slice(0, 3).map(tag => (
-                                <span key={tag} className="text-[9px] px-1.5 py-0.5 rounded-full bg-nebula-950 border border-nebula-800 text-gray-500">
-                                    {tag}
-                                </span>
-                            ))}
-                        </div>
-
-                        <div className="flex items-center gap-3 text-[10px] text-gray-600 pt-2 border-t border-nebula-800/50">
-                             <div className="flex items-center gap-1">
-                                <GitBranch size={10} />
-                                {model.versions[0]?.format || '?'}
-                             </div>
-                             <div className="flex items-center gap-1">
-                                <Box size={10} />
-                                {model.versions[0]?.size || '?'}
-                             </div>
-                        </div>
-                    </div>
+                        model={model}
+                        isSelected={selectedModel?.id === model.id}
+                        onClick={handleModelClick}
+                    />
                 ))}
                 
                  {/* Add New Placeholder */}
@@ -465,4 +480,4 @@ export const Models: React.FC<ModelsProps> = ({ models, servers }) => {
       </div>
     </div>
   );
-};
+});

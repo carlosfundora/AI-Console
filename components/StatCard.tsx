@@ -8,7 +8,7 @@ interface StatCardProps {
   trendUp?: boolean;
 }
 
-export const StatCard: React.FC<StatCardProps> = ({ title, value, icon, trend, trendUp }) => {
+export const StatCard: React.FC<StatCardProps> = React.memo(({ title, value, icon, trend, trendUp }) => {
   return (
     <div className="bg-nebula-900 border border-nebula-700 p-5 rounded-xl flex items-start justify-between shadow-lg hover:border-nebula-500 transition-colors">
       <div>
@@ -25,4 +25,4 @@ export const StatCard: React.FC<StatCardProps> = ({ title, value, icon, trend, t
       </div>
     </div>
   );
-};
+});
