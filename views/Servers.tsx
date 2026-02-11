@@ -11,6 +11,95 @@ interface ServersProps {
     onAddServer: (server: ServerProfile) => void;
 }
 
+const ServerCard = React.memo(({ server, models, onEdit, onDelete }: { server: ServerProfile, models: Model[], onEdit: (s: ServerProfile) => void, onDelete: (id: string) => void }) => {
+    const getOsIcon = (os: string) => {
+        switch (os) {
+            case 'Windows': return <Monitor size={16} className="text-blue-400" />;
+            case 'MacOS': return <Command size={16} className="text-gray-200" />;
+            default: return <Terminal size={16} className="text-orange-400" />;
+        }
+    };
+
+    const getAccelColor = (accel: string) => {
+        switch (accel) {
+            case 'ROCm': return 'bg-red-900/30 text-red-400 border-red-500/30';
+            case 'CUDA': return 'bg-green-900/30 text-green-400 border-green-500/30';
+            case 'Vulkan': return 'bg-red-900/30 text-orange-400 border-orange-500/30';
+            case 'HYPR-RX': return 'bg-purple-900/30 text-purple-400 border-purple-500/30';
+            default: return 'bg-gray-800 text-gray-400 border-gray-700';
+        }
+    };
+
+    return (
+        <div className="bg-nebula-900 border border-nebula-700 rounded-xl p-5 hover:border-purple-500/50 transition-all group flex flex-col">
+            <div className="flex justify-between items-start mb-4">
+                    <div className="flex items-center gap-3">
+                        <div className="p-3 bg-nebula-950 rounded-lg border border-nebula-800 text-gray-300">
+                            {getOsIcon(server.os)}
+                        </div>
+                        <div>
+                            <h3 className="font-bold text-gray-200">{server.name}</h3>
+                            <div className="flex items-center gap-2 mt-1">
+                                <span className={`w-2 h-2 rounded-full ${server.status === 'Online' ? 'bg-green-500 shadow-[0_0_5px_#22c55e]' : 'bg-red-500'}`}></span>
+                                <span className="text-xs text-gray-500">{server.status}</span>
+                                <span className="text-xs text-gray-600">•</span>
+                                <span className="text-xs text-gray-500">{server.host}:{server.port}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button onClick={() => onEdit(server)} className="p-1.5 hover:bg-nebula-800 rounded text-gray-400 hover:text-white"><Settings size={14}/></button>
+                    <button onClick={() => onDelete(server.id)} className="p-1.5 hover:bg-red-900/30 rounded text-gray-400 hover:text-red-400"><X size={14}/></button>
+                    </div>
+            </div>
+
+            <div className="flex gap-2 mb-4">
+                    <span className="px-2 py-1 bg-nebula-950 border border-nebula-800 rounded text-xs text-gray-400 font-mono flex items-center gap-1">
+                        {server.type === 'Venv' ? <Package size={10} /> : <Terminal size={10} />}
+                        {server.type}
+                    </span>
+                    <span className={`px-2 py-1 rounded text-xs border flex items-center gap-1 ${getAccelColor(server.acceleration)}`}>
+                        <Zap size={10} /> {server.acceleration}
+                    </span>
+            </div>
+
+            <div className="bg-nebula-950/50 rounded-lg p-3 text-xs font-mono text-gray-500 mb-4 overflow-hidden text-ellipsis whitespace-nowrap border border-nebula-800/50">
+                {server.path || "No path configured"}
+            </div>
+
+            <div className="flex-1">
+                    <div className="text-[10px] text-gray-500 uppercase font-bold mb-2 flex items-center gap-1"><Layers size={10} /> Configured Models</div>
+                    <div className="flex flex-wrap gap-1">
+                    {server.compatibleModels.length > 0 ? (
+                        server.compatibleModels.slice(0, 3).map(mid => {
+                            const m = models.find(mod => mod.id === mid);
+                            return (
+                                <span key={mid} className="px-2 py-0.5 bg-nebula-800 rounded text-[10px] text-gray-300 border border-nebula-700">
+                                    {m?.name || mid}
+                                </span>
+                            );
+                        })
+                    ) : (
+                        <span className="text-[10px] text-gray-600 italic">No specific models linked</span>
+                    )}
+                    {server.compatibleModels.length > 3 && (
+                        <span className="px-2 py-0.5 bg-nebula-800 rounded text-[10px] text-gray-500 border border-nebula-700">+{server.compatibleModels.length - 3}</span>
+                    )}
+                    </div>
+            </div>
+
+            <div className="mt-4 pt-4 border-t border-nebula-800 flex gap-2">
+                    <button className="flex-1 py-1.5 bg-green-900/20 border border-green-500/30 text-green-400 hover:bg-green-900/30 rounded text-xs font-bold flex items-center justify-center gap-2 transition-colors">
+                        <Play size={12} /> Start
+                    </button>
+                    <button className="flex-1 py-1.5 bg-nebula-800 border border-nebula-700 text-gray-300 hover:bg-nebula-700 rounded text-xs font-bold flex items-center justify-center gap-2 transition-colors">
+                        <Square size={12} fill="currentColor" /> Stop
+                    </button>
+            </div>
+        </div>
+    );
+});
+
 const EMPTY_SERVER: ServerProfile = {
     id: '',
     name: 'New Server',
@@ -26,7 +115,7 @@ const EMPTY_SERVER: ServerProfile = {
     status: 'Offline'
 };
 
-export const Servers: React.FC<ServersProps> = ({ servers, models, onUpdateServer, onDeleteServer, onAddServer }) => {
+export const Servers: React.FC<ServersProps> = React.memo(({ servers, models, onUpdateServer, onDeleteServer, onAddServer }) => {
     const [editingId, setEditingId] = useState<string | null>(null);
     const [editForm, setEditForm] = useState<ServerProfile>(EMPTY_SERVER);
 
@@ -66,24 +155,6 @@ export const Servers: React.FC<ServersProps> = ({ servers, models, onUpdateServe
 
     const removePackage = (pkg: string) => {
         setEditForm({ ...editForm, packages: editForm.packages.filter(p => p !== pkg) });
-    };
-
-    const getOsIcon = (os: string) => {
-        switch (os) {
-            case 'Windows': return <Monitor size={16} className="text-blue-400" />;
-            case 'MacOS': return <Command size={16} className="text-gray-200" />;
-            default: return <Terminal size={16} className="text-orange-400" />;
-        }
-    };
-
-    const getAccelColor = (accel: string) => {
-        switch (accel) {
-            case 'ROCm': return 'bg-red-900/30 text-red-400 border-red-500/30';
-            case 'CUDA': return 'bg-green-900/30 text-green-400 border-green-500/30';
-            case 'Vulkan': return 'bg-red-900/30 text-orange-400 border-orange-500/30';
-            case 'HYPR-RX': return 'bg-purple-900/30 text-purple-400 border-purple-500/30';
-            default: return 'bg-gray-800 text-gray-400 border-gray-700';
-        }
     };
 
     return (
@@ -253,74 +324,15 @@ export const Servers: React.FC<ServersProps> = ({ servers, models, onUpdateServe
 
                 {/* Server List */}
                 {servers.map(server => (
-                    <div key={server.id} className="bg-nebula-900 border border-nebula-700 rounded-xl p-5 hover:border-purple-500/50 transition-all group flex flex-col">
-                        <div className="flex justify-between items-start mb-4">
-                             <div className="flex items-center gap-3">
-                                 <div className="p-3 bg-nebula-950 rounded-lg border border-nebula-800 text-gray-300">
-                                     {getOsIcon(server.os)}
-                                 </div>
-                                 <div>
-                                     <h3 className="font-bold text-gray-200">{server.name}</h3>
-                                     <div className="flex items-center gap-2 mt-1">
-                                         <span className={`w-2 h-2 rounded-full ${server.status === 'Online' ? 'bg-green-500 shadow-[0_0_5px_#22c55e]' : 'bg-red-500'}`}></span>
-                                         <span className="text-xs text-gray-500">{server.status}</span>
-                                         <span className="text-xs text-gray-600">•</span>
-                                         <span className="text-xs text-gray-500">{server.host}:{server.port}</span>
-                                     </div>
-                                 </div>
-                             </div>
-                             <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <button onClick={() => handleEdit(server)} className="p-1.5 hover:bg-nebula-800 rounded text-gray-400 hover:text-white"><Settings size={14}/></button>
-                                <button onClick={() => onDeleteServer(server.id)} className="p-1.5 hover:bg-red-900/30 rounded text-gray-400 hover:text-red-400"><X size={14}/></button>
-                             </div>
-                        </div>
-
-                        <div className="flex gap-2 mb-4">
-                             <span className="px-2 py-1 bg-nebula-950 border border-nebula-800 rounded text-xs text-gray-400 font-mono flex items-center gap-1">
-                                 {server.type === 'Venv' ? <Package size={10} /> : <Terminal size={10} />}
-                                 {server.type}
-                             </span>
-                             <span className={`px-2 py-1 rounded text-xs border flex items-center gap-1 ${getAccelColor(server.acceleration)}`}>
-                                 <Zap size={10} /> {server.acceleration}
-                             </span>
-                        </div>
-
-                        <div className="bg-nebula-950/50 rounded-lg p-3 text-xs font-mono text-gray-500 mb-4 overflow-hidden text-ellipsis whitespace-nowrap border border-nebula-800/50">
-                            {server.path || "No path configured"}
-                        </div>
-
-                        <div className="flex-1">
-                             <div className="text-[10px] text-gray-500 uppercase font-bold mb-2 flex items-center gap-1"><Layers size={10} /> Configured Models</div>
-                             <div className="flex flex-wrap gap-1">
-                                {server.compatibleModels.length > 0 ? (
-                                    server.compatibleModels.slice(0, 3).map(mid => {
-                                        const m = models.find(mod => mod.id === mid);
-                                        return (
-                                            <span key={mid} className="px-2 py-0.5 bg-nebula-800 rounded text-[10px] text-gray-300 border border-nebula-700">
-                                                {m?.name || mid}
-                                            </span>
-                                        );
-                                    })
-                                ) : (
-                                    <span className="text-[10px] text-gray-600 italic">No specific models linked</span>
-                                )}
-                                {server.compatibleModels.length > 3 && (
-                                    <span className="px-2 py-0.5 bg-nebula-800 rounded text-[10px] text-gray-500 border border-nebula-700">+{server.compatibleModels.length - 3}</span>
-                                )}
-                             </div>
-                        </div>
-
-                        <div className="mt-4 pt-4 border-t border-nebula-800 flex gap-2">
-                             <button className="flex-1 py-1.5 bg-green-900/20 border border-green-500/30 text-green-400 hover:bg-green-900/30 rounded text-xs font-bold flex items-center justify-center gap-2 transition-colors">
-                                 <Play size={12} /> Start
-                             </button>
-                             <button className="flex-1 py-1.5 bg-nebula-800 border border-nebula-700 text-gray-300 hover:bg-nebula-700 rounded text-xs font-bold flex items-center justify-center gap-2 transition-colors">
-                                 <Square size={12} fill="currentColor" /> Stop
-                             </button>
-                        </div>
-                    </div>
+                    <ServerCard
+                        key={server.id}
+                        server={server}
+                        models={models}
+                        onEdit={handleEdit}
+                        onDelete={onDeleteServer}
+                    />
                 ))}
             </div>
         </div>
     );
-};
+});

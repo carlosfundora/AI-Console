@@ -1,17 +1,19 @@
 
-import React, { useState } from 'react';
+import React, { useState, Suspense, lazy, useMemo, useCallback } from 'react';
 import { LayoutDashboard, Database, BrainCircuit, Activity, Settings as SettingsIcon, Server, Terminal, FlaskConical, Loader2, MessageSquare, Briefcase, GraduationCap } from 'lucide-react';
-import { Dashboard } from './views/Dashboard';
-import { Benchmarks } from './views/Benchmarks';
-import { Datasets } from './views/Datasets';
-import { Models } from './views/Models';
-import { Training } from './views/Training';
-import { Laboratory } from './views/Laboratory';
-import { Servers } from './views/Servers';
-import { Settings } from './views/Settings';
-import { Chat } from './views/Chat';
-import { Agents } from './views/Agents';
 import { ViewState, Model, BenchmarkResult, Dataset, ServerConfig, ModelStatus, ServerProfile, AgentConfig } from './types';
+
+// Code Splitting: Lazy load views to improve initial load time
+const Dashboard = lazy(() => import('./views/Dashboard').then(module => ({ default: module.Dashboard })));
+const Benchmarks = lazy(() => import('./views/Benchmarks').then(module => ({ default: module.Benchmarks })));
+const Datasets = lazy(() => import('./views/Datasets').then(module => ({ default: module.Datasets })));
+const Models = lazy(() => import('./views/Models').then(module => ({ default: module.Models })));
+const Training = lazy(() => import('./views/Training').then(module => ({ default: module.Training })));
+const Laboratory = lazy(() => import('./views/Laboratory').then(module => ({ default: module.Laboratory })));
+const Servers = lazy(() => import('./views/Servers').then(module => ({ default: module.Servers })));
+const Settings = lazy(() => import('./views/Settings').then(module => ({ default: module.Settings })));
+const Chat = lazy(() => import('./views/Chat').then(module => ({ default: module.Chat })));
+const Agents = lazy(() => import('./views/Agents').then(module => ({ default: module.Agents })));
 
 // Custom Snake Icon Component to mimic VscSnake
 const SnakeIcon = ({ size = 20, className = "" }: { size?: number, className?: string }) => (
@@ -272,32 +274,34 @@ const App: React.FC = () => {
   const [servers, setServers] = useState<ServerProfile[]>(MOCK_SERVERS);
   const [agents, setAgents] = useState<AgentConfig[]>(MOCK_AGENTS);
   
-  const handleUpdateServer = (updated: ServerProfile) => {
-      setServers(servers.map(s => s.id === updated.id ? updated : s));
-  };
+  const handleUpdateServer = useCallback((updated: ServerProfile) => {
+      setServers(prevServers => prevServers.map(s => s.id === updated.id ? updated : s));
+  }, []);
 
-  const handleDeleteServer = (id: string) => {
-      setServers(servers.filter(s => s.id !== id));
-  };
+  const handleDeleteServer = useCallback((id: string) => {
+      setServers(prevServers => prevServers.filter(s => s.id !== id));
+  }, []);
 
-  const handleAddServer = (newServer: ServerProfile) => {
-      setServers([...servers, newServer]);
-  };
+  const handleAddServer = useCallback((newServer: ServerProfile) => {
+      setServers(prevServers => [...prevServers, newServer]);
+  }, []);
 
-  const handleSaveAgent = (agent: AgentConfig) => {
-      if (agents.find(a => a.id === agent.id)) {
-          setAgents(agents.map(a => a.id === agent.id ? agent : a));
-      } else {
-          setAgents([...agents, agent]);
-      }
-  };
+  const handleSaveAgent = useCallback((agent: AgentConfig) => {
+      setAgents(prevAgents => {
+          if (prevAgents.find(a => a.id === agent.id)) {
+              return prevAgents.map(a => a.id === agent.id ? agent : a);
+          } else {
+              return [...prevAgents, agent];
+          }
+      });
+  }, []);
 
-  const handleDeleteAgent = (id: string) => {
-      setAgents(agents.filter(a => a.id !== id));
-  };
+  const handleDeleteAgent = useCallback((id: string) => {
+      setAgents(prevAgents => prevAgents.filter(a => a.id !== id));
+  }, []);
   
   // Updated Nav Items with new icons and swaps
-  const navItems = [
+  const navItems = useMemo(() => [
     { id: 'dashboard', label: 'Dashboard', icon: <Terminal size={20} /> }, // Swapped from Training
     { id: 'benchmarks', label: 'Benchmarks', icon: <Activity size={20} /> },
     { id: 'datasets', label: 'Datasets', icon: <Database size={20} /> },
@@ -307,7 +311,7 @@ const App: React.FC = () => {
     { id: 'models', label: 'Models', icon: <BrainCircuit size={20} /> },
     { id: 'agents', label: 'Agents / Tools', icon: <Briefcase size={20} /> },
     { id: 'chat', label: 'Playground', icon: <MessageSquare size={20} /> }, // Renamed from Chat/Testing
-  ];
+  ], []);
 
   return (
     <div className="flex flex-col h-screen bg-nebula-950 text-nebula-100 font-sans overflow-hidden">
@@ -380,16 +384,23 @@ const App: React.FC = () => {
           {/* View Content */}
           <div className="flex-1 overflow-auto p-8 relative">
             <div className="max-w-7xl mx-auto h-full">
-              {activeTab === 'dashboard' && <Dashboard serverConfig={SERVER_CONFIG} />}
-              {activeTab === 'benchmarks' && <Benchmarks results={MOCK_BENCHMARKS} models={MOCK_MODELS} />}
-              {activeTab === 'datasets' && <Datasets datasets={MOCK_DATASETS} />}
-              {activeTab === 'training' && <Training models={MOCK_MODELS} datasets={MOCK_DATASETS} />}
-              {activeTab === 'laboratory' && <Laboratory models={MOCK_MODELS} />}
-              {activeTab === 'servers' && <Servers servers={servers} models={MOCK_MODELS} onUpdateServer={handleUpdateServer} onDeleteServer={handleDeleteServer} onAddServer={handleAddServer} />}
-              {activeTab === 'models' && <Models models={MOCK_MODELS} servers={servers} />}
-              {activeTab === 'agents' && <Agents agents={agents} onSaveAgent={handleSaveAgent} onDeleteAgent={handleDeleteAgent} />}
-              {activeTab === 'settings' && <Settings />}
-              {activeTab === 'chat' && <Chat models={MOCK_MODELS} servers={servers} agents={agents} onUpdateServer={handleUpdateServer} />}
+              <Suspense fallback={
+                <div className="flex items-center justify-center h-full text-purple-400 gap-2">
+                  <Loader2 className="animate-spin" size={32} />
+                  <span>Loading View...</span>
+                </div>
+              }>
+                {activeTab === 'dashboard' && <Dashboard serverConfig={SERVER_CONFIG} />}
+                {activeTab === 'benchmarks' && <Benchmarks results={MOCK_BENCHMARKS} models={MOCK_MODELS} />}
+                {activeTab === 'datasets' && <Datasets datasets={MOCK_DATASETS} />}
+                {activeTab === 'training' && <Training models={MOCK_MODELS} datasets={MOCK_DATASETS} />}
+                {activeTab === 'laboratory' && <Laboratory models={MOCK_MODELS} />}
+                {activeTab === 'servers' && <Servers servers={servers} models={MOCK_MODELS} onUpdateServer={handleUpdateServer} onDeleteServer={handleDeleteServer} onAddServer={handleAddServer} />}
+                {activeTab === 'models' && <Models models={MOCK_MODELS} servers={servers} />}
+                {activeTab === 'agents' && <Agents agents={agents} onSaveAgent={handleSaveAgent} onDeleteAgent={handleDeleteAgent} />}
+                {activeTab === 'settings' && <Settings />}
+                {activeTab === 'chat' && <Chat models={MOCK_MODELS} servers={servers} agents={agents} onUpdateServer={handleUpdateServer} />}
+              </Suspense>
             </div>
           </div>
         </main>

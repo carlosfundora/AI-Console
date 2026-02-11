@@ -51,7 +51,211 @@ const INITIAL_MOCK_DATA: MockDataSource[] = [
     { id: 'm4', name: 'Customer_Support_Q4.sql', type: 'SQL', size: '450 MB', date: '2026-01-18', path: '/data/sql/cust_q4.db' },
 ];
 
-export const Benchmarks: React.FC<BenchmarksProps> = ({ results, models }) => {
+const BenchmarkRow = React.memo(({ row, onClick }: { row: BenchmarkResult, onClick: (r: BenchmarkResult) => void }) => (
+    <tr
+        onClick={() => onClick(row)}
+        className="hover:bg-nebula-800/50 transition-colors cursor-pointer group"
+    >
+      <td className="px-6 py-4 font-medium text-white">{row.modelId}</td>
+      <td className="px-6 py-4 text-gray-400">{row.versionId}</td>
+      <td className="px-6 py-4 text-gray-400">{row.dataset}</td>
+      <td className="px-6 py-4 text-gray-400">{row.metric}</td>
+      <td className="px-6 py-4 text-right text-green-400 font-mono">{row.score}</td>
+      <td className="px-6 py-4 text-right text-blue-400 font-mono">{row.tokensPerSecond?.toFixed(2) || '-'}</td>
+      <td className="px-6 py-4 text-right text-purple-400 font-mono">{row.latency}ms</td>
+      <td className="px-6 py-4 text-right">
+          <Expand size={16} className="text-gray-600 group-hover:text-white" />
+      </td>
+    </tr>
+));
+
+const PipelineStep = React.memo(({
+    step,
+    index,
+    expandedStepId,
+    models,
+    setExpandedStepId,
+    updateStep,
+    updateStepConfig,
+    removeStep,
+    handleDragStart,
+    handleDragOver,
+    handleDrop
+}: {
+    step: BenchmarkStep;
+    index: number;
+    expandedStepId: string | null;
+    models: Model[];
+    setExpandedStepId: (id: string | null) => void;
+    updateStep: (id: string, updates: Partial<BenchmarkStep>) => void;
+    updateStepConfig: (id: string, configUpdates: any) => void;
+    removeStep: (id: string) => void;
+    handleDragStart: (e: React.DragEvent, index: number) => void;
+    handleDragOver: (e: React.DragEvent, index: number) => void;
+    handleDrop: () => void;
+}) => {
+    const getStepIcon = (type: BenchmarkStepType) => {
+        switch(type) {
+            case 'Generation': return <MessageSquare size={16} className="text-blue-400"/>;
+            case 'RAG': return <Database size={16} className="text-purple-400"/>;
+            case 'Embedding': return <Binary size={16} className="text-green-400"/>;
+            case 'Ingestion': return <FileText size={16} className="text-yellow-400"/>;
+            case 'ToolUse': return <Wrench size={16} className="text-orange-400"/>;
+            case 'ColBERT': return <Search size={16} className="text-red-400"/>;
+        }
+    };
+
+    const renderStepConfig = () => {
+        switch(step.type) {
+            case 'Ingestion':
+                return (
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="text-xs text-gray-500 uppercase font-bold">Document Source Path</label>
+                            <input type="text" value={step.config.sourcePath || ''} onChange={(e) => updateStepConfig(step.id, { sourcePath: e.target.value })} className="w-full bg-nebula-950 border border-nebula-800 rounded p-2 text-sm mt-1" placeholder="/data/docs/legal" />
+                        </div>
+                        <div>
+                            <label className="text-xs text-gray-500 uppercase font-bold">Document Type</label>
+                            <select value={step.config.docType || 'PDF'} onChange={(e) => updateStepConfig(step.id, { docType: e.target.value })} className="w-full bg-nebula-950 border border-nebula-800 rounded p-2 text-sm mt-1">
+                                <option>PDF</option>
+                                <option>Markdown</option>
+                                <option>HTML</option>
+                                <option>Text</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label className="text-xs text-gray-500 uppercase font-bold">Chunk Size</label>
+                            <input type="number" value={step.config.chunkSize || 512} onChange={(e) => updateStepConfig(step.id, { chunkSize: parseInt(e.target.value) })} className="w-full bg-nebula-950 border border-nebula-800 rounded p-2 text-sm mt-1" />
+                        </div>
+                        <div>
+                            <label className="text-xs text-gray-500 uppercase font-bold">Overlap</label>
+                            <input type="number" value={step.config.overlap || 50} onChange={(e) => updateStepConfig(step.id, { overlap: parseInt(e.target.value) })} className="w-full bg-nebula-950 border border-nebula-800 rounded p-2 text-sm mt-1" />
+                        </div>
+                    </div>
+                );
+            case 'Embedding':
+                return (
+                    <div className="space-y-4">
+                        <div>
+                            <label className="text-xs text-gray-500 uppercase font-bold">Embedding Model</label>
+                             <select value={step.config.modelId || ''} onChange={(e) => updateStepConfig(step.id, { modelId: e.target.value })} className="w-full bg-nebula-950 border border-nebula-800 rounded p-2 text-sm mt-1">
+                                <option value="">Default (System)</option>
+                                {models.filter(m => m.tags.includes('Embedding')).map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
+                            </select>
+                        </div>
+                        <div>
+                            <label className="text-xs text-gray-500 uppercase font-bold">Vector Store Target</label>
+                             <select value={step.config.vectorStore || 'ChromaDB'} onChange={(e) => updateStepConfig(step.id, { vectorStore: e.target.value })} className="w-full bg-nebula-950 border border-nebula-800 rounded p-2 text-sm mt-1">
+                                <option>ChromaDB</option>
+                                <option>FAISS</option>
+                                <option>Pinecone</option>
+                                <option>Milvus</option>
+                            </select>
+                        </div>
+                    </div>
+                );
+            case 'RAG':
+                return (
+                    <div className="grid grid-cols-2 gap-4">
+                         <div>
+                            <label className="text-xs text-gray-500 uppercase font-bold">Top K Retrieval</label>
+                            <input type="number" value={step.config.rerankTopK || 5} onChange={(e) => updateStepConfig(step.id, { rerankTopK: parseInt(e.target.value) })} className="w-full bg-nebula-950 border border-nebula-800 rounded p-2 text-sm mt-1" />
+                        </div>
+                         <div>
+                            <label className="text-xs text-gray-500 uppercase font-bold">Metric</label>
+                             <select value={step.config.metric || 'Semantic'} onChange={(e) => updateStepConfig(step.id, { metric: e.target.value })} className="w-full bg-nebula-950 border border-nebula-800 rounded p-2 text-sm mt-1">
+                                <option>Semantic Similarity</option>
+                                <option>Exact Match</option>
+                                <option>Retrieval Latency</option>
+                            </select>
+                        </div>
+                    </div>
+                );
+              case 'ToolUse':
+                  return (
+                      <div className="space-y-4">
+                           <div>
+                              <label className="text-xs text-gray-500 uppercase font-bold">Tool Schema Definition (JSON/URL)</label>
+                              <input type="text" value={step.config.toolSchemaUrl || ''} onChange={(e) => updateStepConfig(step.id, { toolSchemaUrl: e.target.value })} className="w-full bg-nebula-950 border border-nebula-800 rounded p-2 text-sm mt-1" placeholder="https://api.example.com/openapi.json" />
+                          </div>
+                          <div>
+                               <label className="text-xs text-gray-500 uppercase font-bold">Success Metric</label>
+                               <select value={step.config.metric || 'FunctionCallValidity'} onChange={(e) => updateStepConfig(step.id, { metric: e.target.value })} className="w-full bg-nebula-950 border border-nebula-800 rounded p-2 text-sm mt-1">
+                                  <option value="FunctionCallValidity">Valid JSON / Schema Compliance</option>
+                                  <option value="ExactMatch">Argument Exact Match</option>
+                                  <option value="Throughput">Call Latency</option>
+                              </select>
+                          </div>
+                      </div>
+                  );
+            default:
+                return <div className="text-sm text-gray-500 italic">No specific configuration for this step type.</div>;
+        }
+    };
+
+    return (
+        <div className="relative">
+            {/* Connector Line */}
+            {index > 0 && (
+                <div className="absolute -top-4 left-8 w-0.5 h-4 bg-nebula-700 z-0"></div>
+            )}
+
+            <div
+                draggable
+                onDragStart={(e) => handleDragStart(e, index)}
+                onDragOver={(e) => handleDragOver(e, index)}
+                onDrop={handleDrop}
+                className={`relative z-10 bg-nebula-950 border ${expandedStepId === step.id ? 'border-purple-500 ring-1 ring-purple-500/50' : 'border-nebula-700'} rounded-lg transition-all shadow-lg group`}
+            >
+                <div className="flex items-center p-3 gap-3 cursor-grab active:cursor-grabbing hover:bg-nebula-900/50 transition-colors rounded-t-lg">
+                    <GripVertical size={16} className="text-gray-600" />
+                    <div className="p-2 bg-nebula-900 rounded border border-nebula-800 shadow-sm">
+                        {getStepIcon(step.type)}
+                    </div>
+                    <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                            <span className="text-sm font-bold text-gray-200">{step.name}</span>
+                            <span className="text-[10px] bg-nebula-800 px-2 rounded text-gray-500 border border-nebula-700">{step.type}</span>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <button onClick={() => setExpandedStepId(expandedStepId === step.id ? null : step.id)} className="p-1 hover:bg-nebula-800 rounded text-gray-400">
+                            {expandedStepId === step.id ? <ChevronDown size={16}/> : <ChevronRight size={16}/>}
+                        </button>
+                        <button onClick={() => removeStep(step.id)} className="p-1 hover:bg-red-900/30 hover:text-red-400 rounded text-gray-600">
+                            <X size={16} />
+                        </button>
+                    </div>
+                </div>
+
+                {expandedStepId === step.id && (
+                    <div className="p-4 border-t border-nebula-800 bg-nebula-900/30 animate-fade-in">
+                        <div className="mb-4">
+                            <label className="text-xs text-gray-500 uppercase font-bold">Step Name</label>
+                            <input
+                                type="text"
+                                value={step.name}
+                                onChange={(e) => updateStep(step.id, { name: e.target.value })}
+                                className="w-full bg-nebula-950 border border-nebula-800 rounded p-2 text-sm mt-1 text-white focus:border-purple-500 outline-none"
+                            />
+                        </div>
+                        {renderStepConfig()}
+                    </div>
+                )}
+            </div>
+
+            {/* Down Arrow for Flow visualization */}
+            {/* Note: In original code, currentConfig was available. Here we assume caller handles length check or passes prop.
+                Actually we can just render arrow and control visibility in parent or pass isLast prop.
+                Or better, just render it and parent doesn't need to change much logic if we use index.
+                But wait, parent logic was `index < currentConfig.steps.length - 1`.
+                We can pass `isLast` prop.
+            */}
+        </div>
+    );
+});
+
+export const Benchmarks: React.FC<BenchmarksProps> = React.memo(({ results, models }) => {
   const [activeView, setActiveView] = useState<'matrix' | 'trends' | 'config' | 'analysis' | 'data'>('matrix');
   const [analysis, setAnalysis] = useState<string>('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -155,105 +359,6 @@ export const Benchmarks: React.FC<BenchmarksProps> = ({ results, models }) => {
 
   const removeMockData = (id: string) => {
       setMockData(mockData.filter(m => m.id !== id));
-  };
-
-  const getStepIcon = (type: BenchmarkStepType) => {
-      switch(type) {
-          case 'Generation': return <MessageSquare size={16} className="text-blue-400"/>;
-          case 'RAG': return <Database size={16} className="text-purple-400"/>;
-          case 'Embedding': return <Binary size={16} className="text-green-400"/>;
-          case 'Ingestion': return <FileText size={16} className="text-yellow-400"/>;
-          case 'ToolUse': return <Wrench size={16} className="text-orange-400"/>;
-          case 'ColBERT': return <Search size={16} className="text-red-400"/>;
-      }
-  };
-
-  const renderStepConfig = (step: BenchmarkStep) => {
-      switch(step.type) {
-          case 'Ingestion':
-              return (
-                  <div className="grid grid-cols-2 gap-4">
-                      <div>
-                          <label className="text-xs text-gray-500 uppercase font-bold">Document Source Path</label>
-                          <input type="text" value={step.config.sourcePath || ''} onChange={(e) => updateStepConfig(step.id, { sourcePath: e.target.value })} className="w-full bg-nebula-950 border border-nebula-800 rounded p-2 text-sm mt-1" placeholder="/data/docs/legal" />
-                      </div>
-                      <div>
-                          <label className="text-xs text-gray-500 uppercase font-bold">Document Type</label>
-                          <select value={step.config.docType || 'PDF'} onChange={(e) => updateStepConfig(step.id, { docType: e.target.value })} className="w-full bg-nebula-950 border border-nebula-800 rounded p-2 text-sm mt-1">
-                              <option>PDF</option>
-                              <option>Markdown</option>
-                              <option>HTML</option>
-                              <option>Text</option>
-                          </select>
-                      </div>
-                      <div>
-                          <label className="text-xs text-gray-500 uppercase font-bold">Chunk Size</label>
-                          <input type="number" value={step.config.chunkSize || 512} onChange={(e) => updateStepConfig(step.id, { chunkSize: parseInt(e.target.value) })} className="w-full bg-nebula-950 border border-nebula-800 rounded p-2 text-sm mt-1" />
-                      </div>
-                      <div>
-                          <label className="text-xs text-gray-500 uppercase font-bold">Overlap</label>
-                          <input type="number" value={step.config.overlap || 50} onChange={(e) => updateStepConfig(step.id, { overlap: parseInt(e.target.value) })} className="w-full bg-nebula-950 border border-nebula-800 rounded p-2 text-sm mt-1" />
-                      </div>
-                  </div>
-              );
-          case 'Embedding':
-              return (
-                  <div className="space-y-4">
-                      <div>
-                          <label className="text-xs text-gray-500 uppercase font-bold">Embedding Model</label>
-                           <select value={step.config.modelId || ''} onChange={(e) => updateStepConfig(step.id, { modelId: e.target.value })} className="w-full bg-nebula-950 border border-nebula-800 rounded p-2 text-sm mt-1">
-                              <option value="">Default (System)</option>
-                              {models.filter(m => m.tags.includes('Embedding')).map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
-                          </select>
-                      </div>
-                      <div>
-                          <label className="text-xs text-gray-500 uppercase font-bold">Vector Store Target</label>
-                           <select value={step.config.vectorStore || 'ChromaDB'} onChange={(e) => updateStepConfig(step.id, { vectorStore: e.target.value })} className="w-full bg-nebula-950 border border-nebula-800 rounded p-2 text-sm mt-1">
-                              <option>ChromaDB</option>
-                              <option>FAISS</option>
-                              <option>Pinecone</option>
-                              <option>Milvus</option>
-                          </select>
-                      </div>
-                  </div>
-              );
-          case 'RAG':
-              return (
-                  <div className="grid grid-cols-2 gap-4">
-                       <div>
-                          <label className="text-xs text-gray-500 uppercase font-bold">Top K Retrieval</label>
-                          <input type="number" value={step.config.rerankTopK || 5} onChange={(e) => updateStepConfig(step.id, { rerankTopK: parseInt(e.target.value) })} className="w-full bg-nebula-950 border border-nebula-800 rounded p-2 text-sm mt-1" />
-                      </div>
-                       <div>
-                          <label className="text-xs text-gray-500 uppercase font-bold">Metric</label>
-                           <select value={step.config.metric || 'Semantic'} onChange={(e) => updateStepConfig(step.id, { metric: e.target.value })} className="w-full bg-nebula-950 border border-nebula-800 rounded p-2 text-sm mt-1">
-                              <option>Semantic Similarity</option>
-                              <option>Exact Match</option>
-                              <option>Retrieval Latency</option>
-                          </select>
-                      </div>
-                  </div>
-              );
-            case 'ToolUse':
-                return (
-                    <div className="space-y-4">
-                         <div>
-                            <label className="text-xs text-gray-500 uppercase font-bold">Tool Schema Definition (JSON/URL)</label>
-                            <input type="text" value={step.config.toolSchemaUrl || ''} onChange={(e) => updateStepConfig(step.id, { toolSchemaUrl: e.target.value })} className="w-full bg-nebula-950 border border-nebula-800 rounded p-2 text-sm mt-1" placeholder="https://api.example.com/openapi.json" />
-                        </div>
-                        <div>
-                             <label className="text-xs text-gray-500 uppercase font-bold">Success Metric</label>
-                             <select value={step.config.metric || 'FunctionCallValidity'} onChange={(e) => updateStepConfig(step.id, { metric: e.target.value })} className="w-full bg-nebula-950 border border-nebula-800 rounded p-2 text-sm mt-1">
-                                <option value="FunctionCallValidity">Valid JSON / Schema Compliance</option>
-                                <option value="ExactMatch">Argument Exact Match</option>
-                                <option value="Throughput">Call Latency</option>
-                            </select>
-                        </div>
-                    </div>
-                );
-          default:
-              return <div className="text-sm text-gray-500 italic">No specific configuration for this step type.</div>;
-      }
   };
 
   const renderDataView = () => (
@@ -371,22 +476,7 @@ export const Benchmarks: React.FC<BenchmarksProps> = ({ results, models }) => {
                 </thead>
                 <tbody className="divide-y divide-nebula-800">
                   {results.map((row) => (
-                    <tr 
-                        key={row.id} 
-                        onClick={() => setSelectedResult(row)}
-                        className="hover:bg-nebula-800/50 transition-colors cursor-pointer group"
-                    >
-                      <td className="px-6 py-4 font-medium text-white">{row.modelId}</td>
-                      <td className="px-6 py-4 text-gray-400">{row.versionId}</td>
-                      <td className="px-6 py-4 text-gray-400">{row.dataset}</td>
-                      <td className="px-6 py-4 text-gray-400">{row.metric}</td>
-                      <td className="px-6 py-4 text-right text-green-400 font-mono">{row.score}</td>
-                      <td className="px-6 py-4 text-right text-blue-400 font-mono">{row.tokensPerSecond?.toFixed(2) || '-'}</td>
-                      <td className="px-6 py-4 text-right text-purple-400 font-mono">{row.latency}ms</td>
-                      <td className="px-6 py-4 text-right">
-                          <Expand size={16} className="text-gray-600 group-hover:text-white" />
-                      </td>
-                    </tr>
+                    <BenchmarkRow key={row.id} row={row} onClick={setSelectedResult} />
                   ))}
                 </tbody>
               </table>
@@ -629,63 +719,27 @@ export const Benchmarks: React.FC<BenchmarksProps> = ({ results, models }) => {
                       )}
 
                       {currentConfig.steps.map((step, index) => (
-                          <div key={step.id} className="relative">
-                            {/* Connector Line */}
-                            {index > 0 && (
-                                <div className="absolute -top-4 left-8 w-0.5 h-4 bg-nebula-700 z-0"></div>
-                            )}
-                            
-                            <div 
-                                draggable
-                                onDragStart={(e) => handleDragStart(e, index)}
-                                onDragOver={(e) => handleDragOver(e, index)}
-                                onDrop={handleDrop}
-                                className={`relative z-10 bg-nebula-950 border ${expandedStepId === step.id ? 'border-purple-500 ring-1 ring-purple-500/50' : 'border-nebula-700'} rounded-lg transition-all shadow-lg group`}
-                            >
-                                <div className="flex items-center p-3 gap-3 cursor-grab active:cursor-grabbing hover:bg-nebula-900/50 transition-colors rounded-t-lg">
-                                    <GripVertical size={16} className="text-gray-600" />
-                                    <div className="p-2 bg-nebula-900 rounded border border-nebula-800 shadow-sm">
-                                        {getStepIcon(step.type)}
-                                    </div>
-                                    <div className="flex-1">
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-sm font-bold text-gray-200">{step.name}</span>
-                                            <span className="text-[10px] bg-nebula-800 px-2 rounded text-gray-500 border border-nebula-700">{step.type}</span>
-                                        </div>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <button onClick={() => setExpandedStepId(expandedStepId === step.id ? null : step.id)} className="p-1 hover:bg-nebula-800 rounded text-gray-400">
-                                            {expandedStepId === step.id ? <ChevronDown size={16}/> : <ChevronRight size={16}/>}
-                                        </button>
-                                        <button onClick={() => removeStep(step.id)} className="p-1 hover:bg-red-900/30 hover:text-red-400 rounded text-gray-600">
-                                            <X size={16} />
-                                        </button>
-                                    </div>
-                                </div>
-                                
-                                {expandedStepId === step.id && (
-                                    <div className="p-4 border-t border-nebula-800 bg-nebula-900/30 animate-fade-in">
-                                        <div className="mb-4">
-                                            <label className="text-xs text-gray-500 uppercase font-bold">Step Name</label>
-                                            <input 
-                                                type="text" 
-                                                value={step.name} 
-                                                onChange={(e) => updateStep(step.id, { name: e.target.value })}
-                                                className="w-full bg-nebula-950 border border-nebula-800 rounded p-2 text-sm mt-1 text-white focus:border-purple-500 outline-none" 
-                                            />
-                                        </div>
-                                        {renderStepConfig(step)}
-                                    </div>
-                                )}
-                            </div>
-                            
+                        <div key={step.id} className="relative">
+                             <PipelineStep
+                                step={step}
+                                index={index}
+                                expandedStepId={expandedStepId}
+                                models={models}
+                                setExpandedStepId={setExpandedStepId}
+                                updateStep={updateStep}
+                                updateStepConfig={updateStepConfig}
+                                removeStep={removeStep}
+                                handleDragStart={handleDragStart}
+                                handleDragOver={handleDragOver}
+                                handleDrop={handleDrop}
+                             />
                             {/* Down Arrow for Flow visualization */}
                             {index < currentConfig.steps.length - 1 && (
                                 <div className="flex justify-start pl-7 py-1">
                                     <ArrowRight className="rotate-90 text-nebula-700" size={16} />
                                 </div>
                             )}
-                          </div>
+                        </div>
                       ))}
                   </div>
               </div>
@@ -693,4 +747,4 @@ export const Benchmarks: React.FC<BenchmarksProps> = ({ results, models }) => {
       )}
     </div>
   );
-};
+});
