@@ -1,7 +1,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { Model, ServerProfile } from '../types';
-import { Send, Bot, User, Cpu, Zap, Eraser, MessageSquare, Power, Loader2, CircleCheck, CircleAlert, Server } from 'lucide-react';
+import { Send, Bot, User, Cpu, Zap, Eraser, MessageSquare, Power, Loader2, CircleCheck, CircleAlert, Server, Mic, MicOff, Volume2, Box, BrainCircuit } from 'lucide-react';
 
 interface ChatProps {
     models: Model[];
@@ -18,14 +18,42 @@ interface Message {
 
 export const Chat: React.FC<ChatProps> = ({ models, servers, onUpdateServer }) => {
     const [selectedServerId, setSelectedServerId] = useState<string>(servers[0]?.id || '');
-    const [messages, setMessages] = useState<Message[]>([
-        { id: '1', role: 'assistant', content: 'System initialized. Connect to a server to begin.', timestamp: new Date() }
-    ]);
+    const [selectedModelId, setSelectedModelId] = useState<string>(models[0]?.id || '');
+    const [messages, setMessages] = useState<Message[]>([]);
     const [input, setInput] = useState('');
     const [isTyping, setIsTyping] = useState(false);
+    
+    // Audio State
+    const [isAudioMode, setIsAudioMode] = useState(false);
+    const [isRecording, setIsRecording] = useState(false);
+    
     const messagesEndRef = useRef<HTMLDivElement>(null);
-
     const selectedServer = servers.find(s => s.id === selectedServerId) || servers[0];
+    const selectedModel = models.find(m => m.id === selectedModelId);
+
+    // Persistence Effect
+    useEffect(() => {
+        const saved = localStorage.getItem('chatHistory');
+        if (saved) {
+            try {
+                const parsed = JSON.parse(saved);
+                // Convert timestamp strings back to Date objects
+                const hydrated = parsed.map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) }));
+                setMessages(hydrated);
+            } catch (e) {
+                console.error("Failed to load chat history", e);
+            }
+        } else {
+             setMessages([{ id: '1', role: 'assistant', content: 'System initialized. Connect to a server to begin.', timestamp: new Date() }]);
+        }
+    }, []);
+
+    // Save on Change Effect
+    useEffect(() => {
+        if (messages.length > 0) {
+            localStorage.setItem('chatHistory', JSON.stringify(messages));
+        }
+    }, [messages]);
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -40,19 +68,50 @@ export const Chat: React.FC<ChatProps> = ({ models, servers, onUpdateServer }) =
         // Optimistic update for launching simulation
         onUpdateServer({ ...selectedServer, status: 'Starting' });
         
+        // Simulating WebGPU Load time if applicable
+        const loadTime = selectedServer.type === 'WebGPU' ? 4000 : 2500;
+        
         setTimeout(() => {
             onUpdateServer({ ...selectedServer, status: 'Online' });
             setMessages(prev => [...prev, {
                 id: Date.now().toString(),
                 role: 'assistant',
-                content: `Server ${selectedServer.name} is now Online and ready for inference.`,
+                content: `Server ${selectedServer.name} is now Online. Loaded model: ${selectedModel?.name || 'Default'}.`,
                 timestamp: new Date()
             }]);
-        }, 2500);
+        }, loadTime);
+    };
+
+    const streamText = (fullText: string) => {
+        const msgId = (Date.now() + 1).toString();
+        // Create empty placeholder message
+        setMessages(prev => [...prev, {
+            id: msgId,
+            role: 'assistant',
+            content: '',
+            timestamp: new Date()
+        }]);
+        
+        setIsTyping(true);
+        
+        let currentIndex = 0;
+        const interval = setInterval(() => {
+            if (currentIndex >= fullText.length) {
+                clearInterval(interval);
+                setIsTyping(false);
+                return;
+            }
+            
+            const nextChar = fullText[currentIndex];
+            setMessages(prev => prev.map(m => 
+                m.id === msgId ? { ...m, content: m.content + nextChar } : m
+            ));
+            currentIndex++;
+        }, 20); // 20ms per char for typewriter effect
     };
 
     const handleSend = () => {
-        if (!input.trim()) return;
+        if (!input.trim() && !isRecording) return;
         if (selectedServer?.status !== 'Online') {
             setMessages(prev => [...prev, {
                 id: Date.now().toString(),
@@ -72,54 +131,109 @@ export const Chat: React.FC<ChatProps> = ({ models, servers, onUpdateServer }) =
 
         setMessages(prev => [...prev, userMsg]);
         setInput('');
-        setIsTyping(true);
-
-        // Simulate inference delay
+        
+        // Simulate Inference
+        const responseText = `[${selectedServer.acceleration} Inference via ${selectedServer.name}] This is a simulated response generated by ${selectedModel?.name}. In a real application, tokens would stream here from the inference engine.`;
+        
         setTimeout(() => {
-            const aiMsg: Message = {
-                id: (Date.now() + 1).toString(),
-                role: 'assistant',
-                content: `[${selectedServer.acceleration} Inference via ${selectedServer.name}] This is a simulated response. In a production environment, this would be generated by the endpoint ${selectedServer.host}:${selectedServer.port}.`,
+             streamText(responseText);
+        }, 600);
+    };
+
+    const toggleAudioRecord = () => {
+        if (isRecording) {
+            setIsRecording(false);
+            // Simulate processing audio
+            setMessages(prev => [...prev, {
+                id: Date.now().toString(),
+                role: 'user',
+                content: '🎤 [Audio Clip 0:04]',
                 timestamp: new Date()
-            };
-            setMessages(prev => [...prev, aiMsg]);
-            setIsTyping(false);
-        }, 1200);
+            }]);
+            
+             setTimeout(() => {
+                 streamText("I heard you say something about the architecture. Here is the response generated by the Audio Model...");
+            }, 1000);
+        } else {
+            setIsRecording(true);
+        }
+    };
+
+    const clearHistory = () => {
+        setMessages([]);
+        localStorage.removeItem('chatHistory');
     };
 
     return (
-        <div className="flex flex-col h-full gap-4 animate-fade-in">
+        <div className="flex flex-col h-full gap-4 animate-fade-in relative">
             {/* Header / Toolbar */}
-            <div className="flex justify-between items-center bg-nebula-900 border border-nebula-700 p-4 rounded-xl shadow-md">
-                <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-3">
+            <div className="flex flex-col gap-4 bg-nebula-900 border border-nebula-700 p-4 rounded-xl shadow-md">
+                <div className="flex justify-between items-center">
+                    <div className="flex items-center gap-4">
                         <div className={`p-2 rounded-lg border ${selectedServer?.status === 'Online' ? 'bg-green-900/20 border-green-500/30 text-green-400' : 'bg-nebula-800 border-nebula-700 text-gray-400'}`}>
-                            <Bot size={20} />
+                            {selectedServer?.type === 'WebGPU' ? <BrainCircuit size={20} /> : <Bot size={20} />}
                         </div>
                         
-                        <div className="flex flex-col">
-                            <label className="text-[10px] text-gray-500 uppercase font-bold">Target Server</label>
-                            <select 
-                                value={selectedServerId}
-                                onChange={(e) => setSelectedServerId(e.target.value)}
-                                className="bg-transparent text-white font-medium text-sm outline-none cursor-pointer hover:text-purple-300 transition-colors"
-                            >
-                                {servers.map(s => <option key={s.id} value={s.id} className="bg-nebula-900 text-white">{s.name}</option>)}
-                            </select>
+                        <div className="flex gap-4">
+                            <div className="flex flex-col">
+                                <label className="text-[10px] text-gray-500 uppercase font-bold">Target Server</label>
+                                <select 
+                                    value={selectedServerId}
+                                    onChange={(e) => setSelectedServerId(e.target.value)}
+                                    className="bg-transparent text-white font-medium text-sm outline-none cursor-pointer hover:text-purple-300 transition-colors w-40"
+                                >
+                                    {servers.map(s => <option key={s.id} value={s.id} className="bg-nebula-900 text-white">{s.name}</option>)}
+                                </select>
+                            </div>
+
+                            <div className="flex flex-col">
+                                <label className="text-[10px] text-gray-500 uppercase font-bold">Active Model</label>
+                                <select 
+                                    value={selectedModelId}
+                                    onChange={(e) => setSelectedModelId(e.target.value)}
+                                    className="bg-transparent text-white font-medium text-sm outline-none cursor-pointer hover:text-purple-300 transition-colors w-48"
+                                >
+                                    {models.map(m => <option key={m.id} value={m.id} className="bg-nebula-900 text-white">{m.name}</option>)}
+                                </select>
+                            </div>
                         </div>
                     </div>
 
-                    <div className="h-8 w-px bg-nebula-800 mx-2"></div>
-
-                    {/* Server Status & Actions */}
                     <div className="flex items-center gap-4">
+                        <div className="flex bg-nebula-950 rounded-lg p-1 border border-nebula-800">
+                             <button 
+                                onClick={() => setIsAudioMode(false)}
+                                className={`flex items-center gap-2 px-3 py-1 rounded text-xs font-bold transition-all ${!isAudioMode ? 'bg-purple-600 text-white' : 'text-gray-500 hover:text-white'}`}
+                            >
+                                <MessageSquare size={12} /> Text
+                            </button>
+                            <button 
+                                onClick={() => setIsAudioMode(true)}
+                                className={`flex items-center gap-2 px-3 py-1 rounded text-xs font-bold transition-all ${isAudioMode ? 'bg-purple-600 text-white' : 'text-gray-500 hover:text-white'}`}
+                            >
+                                <Mic size={12} /> Audio
+                            </button>
+                        </div>
+
+                         <button 
+                            onClick={clearHistory}
+                            className="p-2 text-gray-500 hover:text-red-400 hover:bg-nebula-950 rounded transition-colors"
+                            title="Clear Chat History"
+                        >
+                            <Eraser size={18} />
+                        </button>
+                    </div>
+                </div>
+
+                <div className="flex items-center gap-4 border-t border-nebula-800 pt-2">
+                     <div className="flex items-center gap-2">
                         {selectedServer?.status === 'Online' ? (
                             <div className="flex items-center gap-2 px-3 py-1 bg-green-900/20 border border-green-500/30 rounded-full text-green-400 text-xs font-bold">
-                                <CircleCheck size={14} /> Connected
+                                <CircleCheck size={14} /> {selectedServer.type === 'WebGPU' ? 'Model Loaded (WebGPU)' : 'Online'}
                             </div>
                         ) : selectedServer?.status === 'Starting' ? (
                              <div className="flex items-center gap-2 px-3 py-1 bg-yellow-900/20 border border-yellow-500/30 rounded-full text-yellow-400 text-xs font-bold">
-                                <Loader2 size={14} className="animate-spin" /> Booting...
+                                <Loader2 size={14} className="animate-spin" /> {selectedServer.type === 'WebGPU' ? 'Loading Model to Browser...' : 'Booting...'}
                             </div>
                         ) : (
                              <div className="flex items-center gap-2 px-3 py-1 bg-nebula-800 border border-nebula-700 rounded-full text-gray-500 text-xs font-bold">
@@ -130,30 +244,17 @@ export const Chat: React.FC<ChatProps> = ({ models, servers, onUpdateServer }) =
                         {selectedServer?.status === 'Offline' && (
                             <button 
                                 onClick={handleLaunch}
-                                className="px-3 py-1.5 bg-purple-600 hover:bg-purple-500 text-white rounded text-xs font-bold flex items-center gap-2 transition-all shadow-[0_0_10px_rgba(139,92,246,0.3)]"
+                                className="px-3 py-1 bg-purple-600 hover:bg-purple-500 text-white rounded text-xs font-bold flex items-center gap-2 transition-all shadow-[0_0_10px_rgba(139,92,246,0.3)]"
                             >
-                                <Power size={12} /> Launch Server
+                                <Power size={12} /> {selectedServer.type === 'WebGPU' ? 'Load Model (ONNX)' : 'Launch Server'}
                             </button>
                         )}
                     </div>
-                </div>
-
-                <div className="flex items-center gap-4">
-                     <div className="flex bg-nebula-950 rounded-lg p-1 border border-nebula-800">
-                        <div className={`flex items-center gap-2 px-3 py-1 rounded text-xs font-bold transition-all ${selectedServer?.acceleration !== 'CPU' ? 'bg-purple-900/40 text-purple-300' : 'text-gray-600'}`}>
-                            <Zap size={12} /> GPU
-                        </div>
-                        <div className={`flex items-center gap-2 px-3 py-1 rounded text-xs font-bold transition-all ${selectedServer?.acceleration === 'CPU' ? 'bg-blue-900/40 text-blue-300' : 'text-gray-600'}`}>
-                            <Cpu size={12} /> CPU
-                        </div>
+                    
+                    <div className="ml-auto text-xs text-gray-500 font-mono flex gap-3">
+                         <span className="flex items-center gap-1"><Zap size={10} /> {selectedServer?.acceleration}</span>
+                         <span className="flex items-center gap-1"><Box size={10} /> {selectedModel?.params}</span>
                     </div>
-                    <button 
-                        onClick={() => setMessages([])}
-                        className="p-2 text-gray-500 hover:text-red-400 hover:bg-nebula-950 rounded transition-colors"
-                        title="Clear Chat"
-                    >
-                        <Eraser size={18} />
-                    </button>
                 </div>
             </div>
 
@@ -162,7 +263,7 @@ export const Chat: React.FC<ChatProps> = ({ models, servers, onUpdateServer }) =
                 {messages.length === 0 && (
                      <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-600 opacity-50 pointer-events-none">
                         <Server size={64} className="mb-4" />
-                        <p>Select a server from the dropdown above to begin</p>
+                        <p>Select a server & model to begin</p>
                     </div>
                 )}
                 <div className="space-y-6">
@@ -200,23 +301,51 @@ export const Chat: React.FC<ChatProps> = ({ models, servers, onUpdateServer }) =
             </div>
 
             {/* Input Area */}
-            <div className="bg-nebula-900 border border-nebula-700 rounded-xl p-2 flex items-center gap-2">
-                <input 
-                    type="text" 
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-                    placeholder={selectedServer?.status === 'Online' ? "Type your message..." : "Server is offline..."}
-                    disabled={selectedServer?.status !== 'Online'}
-                    className="flex-1 bg-transparent border-none outline-none text-white px-4 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                />
-                <button 
-                    onClick={handleSend}
-                    disabled={!input.trim() || isTyping || selectedServer?.status !== 'Online'}
-                    className="p-3 bg-purple-600 hover:bg-purple-500 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
-                >
-                    <Send size={18} />
-                </button>
+            <div className="bg-nebula-900 border border-nebula-700 rounded-xl p-2">
+                {isAudioMode ? (
+                     <div className="h-16 flex items-center justify-center gap-4 relative overflow-hidden">
+                        {isRecording && (
+                            <div className="absolute inset-0 bg-red-900/10 flex items-center justify-center pointer-events-none">
+                                <div className="w-full h-1 bg-red-500/20 animate-pulse"></div>
+                            </div>
+                        )}
+                        <button 
+                             onClick={toggleAudioRecord}
+                             disabled={selectedServer?.status !== 'Online'}
+                             className={`h-12 w-12 rounded-full flex items-center justify-center transition-all ${
+                                 isRecording 
+                                 ? 'bg-red-600 animate-pulse shadow-[0_0_15px_#ef4444]' 
+                                 : 'bg-nebula-800 hover:bg-purple-600 text-white'
+                             }`}
+                        >
+                             {isRecording ? <MicOff size={20} /> : <Mic size={20} />}
+                        </button>
+                        {isRecording ? (
+                            <span className="text-red-400 font-mono text-sm animate-pulse">Recording...</span>
+                        ) : (
+                            <span className="text-gray-500 font-mono text-sm">Tap to Speak</span>
+                        )}
+                     </div>
+                ) : (
+                    <div className="flex items-center gap-2">
+                        <input 
+                            type="text" 
+                            value={input}
+                            onChange={(e) => setInput(e.target.value)}
+                            onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+                            placeholder={selectedServer?.status === 'Online' ? "Type your message..." : "Server is offline..."}
+                            disabled={selectedServer?.status !== 'Online'}
+                            className="flex-1 bg-transparent border-none outline-none text-white px-4 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                        />
+                        <button 
+                            onClick={handleSend}
+                            disabled={!input.trim() || isTyping || selectedServer?.status !== 'Online'}
+                            className="p-3 bg-purple-600 hover:bg-purple-500 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
+                        >
+                            <Send size={18} />
+                        </button>
+                    </div>
+                )}
             </div>
         </div>
     );

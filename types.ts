@@ -46,12 +46,12 @@ export interface Model {
 export interface ServerProfile {
   id: string;
   name: string;
-  type: 'Venv' | 'Llama.cpp' | 'Ollama' | 'TGI' | 'TabbyAPI';
+  type: 'Venv' | 'Llama.cpp' | 'Ollama' | 'TGI' | 'TabbyAPI' | 'WebGPU';
   path: string; // Path to executable or venv activate script
   host: string;
   port: number;
   os: 'Windows' | 'Ubuntu' | 'MacOS';
-  acceleration: 'ROCm' | 'Vulkan' | 'CUDA' | 'HYPR-RX' | 'CPU' | 'Metal';
+  acceleration: 'ROCm' | 'Vulkan' | 'CUDA' | 'HYPR-RX' | 'CPU' | 'Metal' | 'WebGPU';
   startupFlags: string;
   packages: string[]; // e.g. ["torch==2.1.2+rocm5.6", "transformers"]
   compatibleModels: string[]; // List of Model IDs

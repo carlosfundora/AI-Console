@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Model, Dataset } from '../types';
-import { Terminal, Play, Clock, Zap, Database, Cpu, Layers, Activity, Lock, AlertTriangle, CheckCircle, RotateCw, Wrench } from 'lucide-react';
+import { Terminal, Play, Clock, Zap, Database, Cpu, Layers, Activity, Lock, AlertTriangle, CheckCircle, RotateCw, Wrench, Mic } from 'lucide-react';
 
 interface TrainingProps {
   models: Model[];
@@ -9,7 +9,7 @@ interface TrainingProps {
 }
 
 export const Training: React.FC<TrainingProps> = ({ models, datasets }) => {
-  const [mode, setMode] = useState<'lora' | 'sft' | 'distill' | 'agent'>('lora');
+  const [mode, setMode] = useState<'lora' | 'sft' | 'distill' | 'agent' | 'audio'>('lora');
   const [selectedModelId, setSelectedModelId] = useState(models[0]?.id || '');
   const [datasetsConfig, setDatasetsConfig] = useState({
       primary: '',
@@ -52,7 +52,13 @@ export const Training: React.FC<TrainingProps> = ({ models, datasets }) => {
                      onClick={() => setMode('agent')}
                      className={`px-4 py-2 rounded text-sm font-bold transition-all flex items-center gap-2 ${mode === 'agent' ? 'bg-purple-600 text-white shadow-lg' : 'text-gray-400 hover:text-white'}`}
                 >
-                    <Wrench size={16} /> Agent / Tool
+                    <Wrench size={16} /> Agent
+                </button>
+                <button 
+                     onClick={() => setMode('audio')}
+                     className={`px-4 py-2 rounded text-sm font-bold transition-all flex items-center gap-2 ${mode === 'audio' ? 'bg-purple-600 text-white shadow-lg' : 'text-gray-400 hover:text-white'}`}
+                >
+                    <Mic size={16} /> Audio FT
                 </button>
             </div>
         </div>
@@ -130,7 +136,7 @@ export const Training: React.FC<TrainingProps> = ({ models, datasets }) => {
                              </div>
                         )}
 
-                        {(mode === 'sft' || mode === 'agent') && (
+                        {(mode === 'sft' || mode === 'agent' || mode === 'audio') && (
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="text-xs text-gray-500 font-bold uppercase">Epochs</label>
@@ -145,7 +151,7 @@ export const Training: React.FC<TrainingProps> = ({ models, datasets }) => {
                      </div>
                 </div>
 
-                {/* Advanced Data Mixing / Agent Config */}
+                {/* Advanced Data Mixing / Agent Config / Audio Config */}
                 {mode === 'agent' && (
                      <div className="p-5 bg-nebula-950/50 border border-nebula-800 rounded-xl">
                         <h4 className="text-purple-400 text-sm font-bold mb-4 flex items-center gap-2"><Wrench size={14}/> Tool Use Configuration</h4>
@@ -172,6 +178,57 @@ export const Training: React.FC<TrainingProps> = ({ models, datasets }) => {
                             </div>
                         </div>
                      </div>
+                )}
+
+                {mode === 'audio' && (
+                    <div className="p-5 bg-nebula-950/50 border border-nebula-800 rounded-xl">
+                        <h4 className="text-purple-400 text-sm font-bold mb-4 flex items-center gap-2"><Mic size={14}/> Audio Fine-Tuning Parameters (LFM-Audio)</h4>
+                        <div className="grid grid-cols-2 gap-8">
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="text-xs text-gray-500 font-bold uppercase mb-2 block">Audio Encoder Frozen?</label>
+                                    <div className="flex gap-4">
+                                        <label className="flex items-center gap-2 cursor-pointer">
+                                            <input type="radio" name="freeze_enc" defaultChecked className="accent-purple-500" />
+                                            <span className="text-sm text-gray-300">Yes (Adapter Only)</span>
+                                        </label>
+                                        <label className="flex items-center gap-2 cursor-pointer">
+                                            <input type="radio" name="freeze_enc" className="accent-purple-500" />
+                                            <span className="text-sm text-gray-300">No (Full FT)</span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="text-xs text-gray-500 font-bold uppercase mb-2 block">CTC Loss Weight</label>
+                                    <input type="range" min="0" max="1" step="0.1" defaultValue="0.3" className="w-full accent-purple-500" />
+                                    <div className="flex justify-between text-[10px] text-gray-500">
+                                        <span>0.0 (LLM Only)</span>
+                                        <span>0.3 (Hybrid)</span>
+                                        <span>1.0 (ASR Only)</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="text-xs text-gray-500 font-bold uppercase mb-2 block">SpecAugment Masking</label>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="text-[10px] text-gray-500">Freq Mask</label>
+                                            <input type="number" defaultValue={27} className="w-full bg-nebula-900 border border-nebula-700 rounded p-2 text-white text-xs mt-1" />
+                                        </div>
+                                        <div>
+                                            <label className="text-[10px] text-gray-500">Time Mask</label>
+                                            <input type="number" defaultValue={100} className="w-full bg-nebula-900 border border-nebula-700 rounded p-2 text-white text-xs mt-1" />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-2 p-2 bg-nebula-900 rounded border border-nebula-700">
+                                    <input type="checkbox" defaultChecked className="accent-purple-500" />
+                                    <label className="text-sm text-gray-300">Interleaved Audio/Text Data</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 )}
 
                 {(mode === 'distill' || mode === 'sft') && (

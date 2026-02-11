@@ -33,6 +33,23 @@ const MOCK_MODELS: Model[] = [
     ]
   },
   { 
+    id: 'liquid-lfm-2.5-audio', 
+    name: 'LFM 2.5 Audio 1.5B', 
+    provider: 'LiquidAI',
+    family: 'Liquid',
+    description: 'Multimodal audio model capable of ASR, TTS, and interleaved conversation. WebGPU optimized.',
+    tags: ['Audio', 'Multimodal', 'WebGPU-Ready'],
+    params: '1.5B',
+    tensorType: 'FP16',
+    lastUsed: '2026-01-19',
+    links: [
+        { type: 'HuggingFace', url: 'https://huggingface.co/LiquidAI/LFM2.5-Audio-1.5B-ONNX' }
+    ],
+    versions: [
+        { id: 'v1-onnx', name: 'ONNX WebGPU', format: 'ONNX', quantization: 'Q4_0', size: '1.1GB', created: '2026-01-15', baseModel: 'v1-fp16', status: ModelStatus.Ready, metrics: { latencyMs: 50, vramGB: 1.2 } }
+    ]
+  },
+  { 
     id: 'equall-saul-7b', 
     name: 'Saul 7B Instruct v1', 
     provider: 'Equall',
@@ -144,18 +161,18 @@ const MOCK_SERVERS: ServerProfile[] = [
         status: 'Offline'
     },
     {
-        id: 'srv-3',
-        name: 'Llama.cpp Server',
-        type: 'Llama.cpp',
-        path: './server',
-        host: '192.168.1.50',
-        port: 8081,
-        os: 'Windows',
-        acceleration: 'CUDA',
-        startupFlags: '-ngl 99 -c 8192',
-        packages: [],
-        compatibleModels: ['equall-saul-7b'],
-        status: 'Online'
+        id: 'srv-webgpu',
+        name: 'Browser WebGPU',
+        type: 'WebGPU',
+        path: 'ONNX Runtime Web',
+        host: 'localhost',
+        port: 0,
+        os: 'Ubuntu',
+        acceleration: 'WebGPU',
+        startupFlags: 'enable-unsafe-webgpu',
+        packages: ['onnxruntime-web'],
+        compatibleModels: ['liquid-lfm-2.5-audio'],
+        status: 'Offline'
     }
 ];
 
