@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { LayoutDashboard, Database, BrainCircuit, Activity, Settings as SettingsIcon, Server, Terminal, FlaskConical, Loader2, MessageSquare, Briefcase, GraduationCap } from 'lucide-react';
+import { LayoutDashboard, Database, BrainCircuit, Activity, Settings as SettingsIcon, Server, Terminal, FlaskConical, Loader2, MessageSquare, Briefcase, GraduationCap, Bot } from 'lucide-react';
 import { Dashboard } from './views/Dashboard';
 import { Benchmarks } from './views/Benchmarks';
 import { Datasets } from './views/Datasets';
@@ -13,24 +13,32 @@ import { Chat } from './views/Chat';
 import { Agents } from './views/Agents';
 import { ViewState, Model, BenchmarkResult, Dataset, ServerConfig, ModelStatus, ServerProfile, AgentConfig } from './types';
 
-// Custom Snake Icon Component to mimic VscSnake
-const SnakeIcon = ({ size = 20, className = "" }: { size?: number, className?: string }) => (
-  <svg 
-    width={size} 
-    height={size} 
-    viewBox="0 0 16 16" 
-    fill="none" 
-    xmlns="http://www.w3.org/2000/svg"
-    className={className}
-    stroke="currentColor"
-    strokeWidth="1.5"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <path d="M7.5 10.5C7.5 10.5 8.5 10.5 9.5 9.5C10.5 8.5 10.5 7.5 10.5 7.5V4.5C10.5 3.39543 9.60457 2.5 8.5 2.5H5.5C4.39543 2.5 3.5 3.39543 3.5 4.5V5.5" />
-    <path d="M8.5 5.5C8.5 5.5 7.5 5.5 6.5 6.5C5.5 7.5 5.5 8.5 5.5 8.5V11.5C5.5 12.6046 6.39543 13.5 7.5 13.5H10.5C11.6046 13.5 12.5 12.6046 12.5 11.5V10.5" />
-    <circle cx="5.5" cy="4.5" r="0.5" fill="currentColor" stroke="none"/>
-    <circle cx="10.5" cy="11.5" r="0.5" fill="currentColor" stroke="none"/>
+// --- Custom Icons matching the requested style ---
+
+const PythonIcon = ({ size = 20, className = "" }: { size?: number, className?: string }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M12 9h-7a2 2 0 0 0 -2 2v4a2 2 0 0 0 2 2h3" />
+    <path d="M12 15h7a2 2 0 0 0 2 -2v-4a2 2 0 0 0 -2 -2h-3" />
+    <path d="M8 9v-4a2 2 0 0 1 2 -2h4a2 2 0 0 1 2 2v5a2 2 0 0 1 -2 2h-4a2 2 0 0 0 -2 2v5a2 2 0 0 0 2 2h4a2 2 0 0 0 2 -2v-4" />
+    <line x1="11" y1="6" x2="11" y2="6.01" />
+    <line x1="13" y1="18" x2="13" y2="18.01" />
+  </svg>
+);
+
+const ClipboardDataIcon = ({ size = 20, className = "" }: { size?: number, className?: string }) => (
+  <svg width={size} height={size} viewBox="0 0 16 16" fill="currentColor" className={className}>
+    <path d="M4 11a1 1 0 1 1 2 0v1a1 1 0 1 1-2 0v-1zm6-4a1 1 0 1 1 2 0v5a1 1 0 1 1-2 0V7zM7 9a1 1 0 0 1 2 0v3a1 1 0 1 1-2 0V9z"/>
+    <path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z"/>
+    <path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h3zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3z"/>
+  </svg>
+);
+
+const SchoolIcon = ({ size = 20, className = "" }: { size?: number, className?: string }) => (
+  <svg width={size} height={size} viewBox="0 0 512 512" fill="currentColor" className={className}>
+    <path d="M256,32,32,144V464H112V184l144,72,144-72V464h80V144ZM256,298,136.19,238.08,256,178.16l119.81,59.92Z" fill="none" stroke="currentColor" strokeLinecap="square" strokeMiterlimit="10" strokeWidth="32"/>
+    <rect x="112" y="304" width="64" height="160" fill="none" stroke="currentColor" strokeLinecap="square" strokeMiterlimit="10" strokeWidth="32"/>
+    <rect x="224" y="304" width="64" height="160" fill="none" stroke="currentColor" strokeLinecap="square" strokeMiterlimit="10" strokeWidth="32"/>
+    <rect x="336" y="304" width="64" height="160" fill="none" stroke="currentColor" strokeLinecap="square" strokeMiterlimit="10" strokeWidth="32"/>
   </svg>
 );
 
@@ -298,16 +306,23 @@ const App: React.FC = () => {
   
   // Updated Nav Items with new icons and swaps
   const navItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: <Terminal size={20} /> }, // Swapped from Training
+    { id: 'dashboard', label: 'Dashboard', icon: <Terminal size={20} /> },
     { id: 'benchmarks', label: 'Benchmarks', icon: <Activity size={20} /> },
-    { id: 'datasets', label: 'Datasets', icon: <Database size={20} /> },
-    { id: 'training', label: 'Training', icon: <GraduationCap size={20} /> }, // New LuGraduationCap
+    { id: 'datasets', label: 'Datasets', icon: <ClipboardDataIcon size={20} /> }, // Changed to ClipboardDataIcon
+    { id: 'training', label: 'Training', icon: <SchoolIcon size={20} /> },
     { id: 'laboratory', label: 'Laboratory', icon: <FlaskConical size={20} /> },
-    { id: 'servers', label: 'Servers', icon: <SnakeIcon size={20} /> }, // New VscSnake style
-    { id: 'models', label: 'Models', icon: <BrainCircuit size={20} /> },
-    { id: 'agents', label: 'Agents / Tools', icon: <Briefcase size={20} /> },
-    { id: 'chat', label: 'Playground', icon: <MessageSquare size={20} /> }, // Renamed from Chat/Testing
+    { id: 'servers', label: 'Servers', icon: <PythonIcon size={20} /> },
+    { id: 'models', label: 'Model Registry', icon: <BrainCircuit size={20} /> },
+    { id: 'agents', label: 'Agentic Prompts', icon: <Bot size={20} /> }, // Changed to Robot (Bot) Icon
+    { id: 'chat', label: 'Playground', icon: <MessageSquare size={20} /> },
   ];
+
+  const getPageTitle = (tab: ViewState) => {
+      if (tab === 'agents') return 'Agentic Prompts';
+      if (tab === 'models') return 'Model Registry';
+      if (tab === 'chat') return 'Playground';
+      return tab;
+  };
 
   return (
     <div className="flex flex-col h-screen bg-nebula-950 text-nebula-100 font-sans overflow-hidden">
@@ -325,7 +340,7 @@ const App: React.FC = () => {
 
               {/* Breadcrumb / Title */}
               <div className="flex items-center gap-4">
-                  <h1 className="text-lg font-semibold text-white capitalize">{activeTab === 'agents' ? 'Agents & Tools' : activeTab === 'chat' ? 'Playground' : activeTab}</h1>
+                  <h1 className="text-lg font-semibold text-white capitalize">{getPageTitle(activeTab)}</h1>
                   {activeTab === 'training' && <span className="text-xs bg-purple-900/50 text-purple-300 px-2 py-1 rounded border border-purple-500/20">Active Job: Llama-SFT-v1</span>}
               </div>
           </div>
