@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { LayoutDashboard, Database, BrainCircuit, Activity, Settings as SettingsIcon, Server, Terminal, FlaskConical, Loader2, MessageSquare, Briefcase } from 'lucide-react';
+import { LayoutDashboard, Database, BrainCircuit, Activity, Settings as SettingsIcon, Server, Terminal, FlaskConical, Loader2, MessageSquare, Briefcase, GraduationCap } from 'lucide-react';
 import { Dashboard } from './views/Dashboard';
 import { Benchmarks } from './views/Benchmarks';
 import { Datasets } from './views/Datasets';
@@ -12,6 +12,27 @@ import { Settings } from './views/Settings';
 import { Chat } from './views/Chat';
 import { Agents } from './views/Agents';
 import { ViewState, Model, BenchmarkResult, Dataset, ServerConfig, ModelStatus, ServerProfile, AgentConfig } from './types';
+
+// Custom Snake Icon Component to mimic VscSnake
+const SnakeIcon = ({ size = 20, className = "" }: { size?: number, className?: string }) => (
+  <svg 
+    width={size} 
+    height={size} 
+    viewBox="0 0 16 16" 
+    fill="none" 
+    xmlns="http://www.w3.org/2000/svg"
+    className={className}
+    stroke="currentColor"
+    strokeWidth="1.5"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M7.5 10.5C7.5 10.5 8.5 10.5 9.5 9.5C10.5 8.5 10.5 7.5 10.5 7.5V4.5C10.5 3.39543 9.60457 2.5 8.5 2.5H5.5C4.39543 2.5 3.5 3.39543 3.5 4.5V5.5" />
+    <path d="M8.5 5.5C8.5 5.5 7.5 5.5 6.5 6.5C5.5 7.5 5.5 8.5 5.5 8.5V11.5C5.5 12.6046 6.39543 13.5 7.5 13.5H10.5C11.6046 13.5 12.5 12.6046 12.5 11.5V10.5" />
+    <circle cx="5.5" cy="4.5" r="0.5" fill="currentColor" stroke="none"/>
+    <circle cx="10.5" cy="11.5" r="0.5" fill="currentColor" stroke="none"/>
+  </svg>
+);
 
 // Mock Models with Versioning
 const MOCK_MODELS: Model[] = [
@@ -275,40 +296,41 @@ const App: React.FC = () => {
       setAgents(agents.filter(a => a.id !== id));
   };
   
-  // Use lucide icons for main nav for high aesthetics, emojis for content
+  // Updated Nav Items with new icons and swaps
   const navItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={20} /> },
+    { id: 'dashboard', label: 'Dashboard', icon: <Terminal size={20} /> }, // Swapped from Training
     { id: 'benchmarks', label: 'Benchmarks', icon: <Activity size={20} /> },
     { id: 'datasets', label: 'Datasets', icon: <Database size={20} /> },
-    { id: 'training', label: 'Training', icon: <Terminal size={20} /> },
+    { id: 'training', label: 'Training', icon: <GraduationCap size={20} /> }, // New LuGraduationCap
     { id: 'laboratory', label: 'Laboratory', icon: <FlaskConical size={20} /> },
-    { id: 'servers', label: 'Servers', icon: <Server size={20} /> },
+    { id: 'servers', label: 'Servers', icon: <SnakeIcon size={20} /> }, // New VscSnake style
     { id: 'models', label: 'Models', icon: <BrainCircuit size={20} /> },
     { id: 'agents', label: 'Agents / Tools', icon: <Briefcase size={20} /> },
-    { id: 'chat', label: 'Chat / Testing', icon: <MessageSquare size={20} /> }, 
+    { id: 'chat', label: 'Playground', icon: <MessageSquare size={20} /> }, // Renamed from Chat/Testing
   ];
 
   return (
     <div className="flex flex-col h-screen bg-nebula-950 text-nebula-100 font-sans overflow-hidden">
-      {/* Streamlined Top Header */}
-      <header className="h-16 bg-nebula-950 border-b border-nebula-800 flex items-center justify-between px-6 z-30 shrink-0">
-          <div className="flex items-center gap-6">
+      {/* Streamlined Top Header with Glassmorphism */}
+      <header className="h-16 bg-nebula-950/70 backdrop-blur-md border-b border-white/5 flex items-center justify-between px-6 z-30 shrink-0 relative shadow-lg">
+          <div className="absolute inset-0 bg-gradient-to-r from-purple-500/5 to-transparent pointer-events-none"></div>
+          <div className="flex items-center gap-6 relative z-10">
                {/* Logo */}
               <div className="text-xl font-black tracking-widest text-nebula-100 border-2 border-nebula-100 px-2 py-0.5">
                   R-AI
               </div>
               
               {/* Divider */}
-              <div className="h-6 w-px bg-nebula-800 mx-2"></div>
+              <div className="h-6 w-px bg-white/10 mx-2"></div>
 
               {/* Breadcrumb / Title */}
               <div className="flex items-center gap-4">
-                  <h1 className="text-lg font-semibold text-white capitalize">{activeTab === 'agents' ? 'Agents & Tools' : activeTab}</h1>
+                  <h1 className="text-lg font-semibold text-white capitalize">{activeTab === 'agents' ? 'Agents & Tools' : activeTab === 'chat' ? 'Playground' : activeTab}</h1>
                   {activeTab === 'training' && <span className="text-xs bg-purple-900/50 text-purple-300 px-2 py-1 rounded border border-purple-500/20">Active Job: Llama-SFT-v1</span>}
               </div>
           </div>
           
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-6 relative z-10">
               {SERVER_CONFIG.rocmEnabled && (
                   <div className="hidden md:flex items-center gap-2 px-3 py-1 bg-red-900/20 border border-red-500/30 rounded-full">
                       <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
@@ -323,7 +345,7 @@ const App: React.FC = () => {
               {/* Settings Button */}
               <button 
                   onClick={() => setActiveTab('settings')}
-                  className={`w-10 h-10 rounded-full border flex items-center justify-center transition-all ${activeTab === 'settings' ? 'bg-purple-600 border-purple-500 text-white shadow-lg' : 'bg-nebula-800 border-nebula-700 text-gray-400 hover:text-white hover:border-nebula-600 hover:bg-nebula-700'}`}
+                  className={`w-10 h-10 rounded-full border flex items-center justify-center transition-all ${activeTab === 'settings' ? 'bg-purple-600 border-purple-500 text-white shadow-lg' : 'bg-white/5 border-white/10 text-gray-400 hover:text-white hover:border-white/20 hover:bg-white/10'}`}
                   title="Settings"
               >
                   <SettingsIcon size={20} />
@@ -373,8 +395,8 @@ const App: React.FC = () => {
         </main>
       </div>
 
-       {/* Full Width Footer */}
-      <footer className="h-8 bg-nebula-950 border-t border-nebula-800 flex items-center justify-between px-4 text-xs text-gray-500 select-none z-40">
+       {/* Full Width Footer with Glassmorphism */}
+      <footer className="h-8 bg-nebula-950/70 backdrop-blur-md border-t border-white/5 flex items-center justify-between px-4 text-xs text-gray-500 select-none z-40 relative shadow-[0_-5px_15px_rgba(0,0,0,0.2)]">
             <div className="flex gap-4">
                 <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-green-500"></span> System Online</span>
                 <span className="flex items-center gap-1">GPU Util: 12%</span>
