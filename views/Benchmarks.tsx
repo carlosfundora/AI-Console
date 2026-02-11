@@ -1,55 +1,228 @@
-import React, { useState } from 'react';
-import { BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend, CartesianGrid, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
-import { BenchmarkResult, Model, RAGConfig } from '../types';
+
+import React, { useState, useRef } from 'react';
+import { BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend, CartesianGrid } from 'recharts';
+import { BenchmarkResult, Model, AdvancedBenchmarkConfig, BenchmarkStep, BenchmarkStepType } from '../types';
 import { analyzeBenchmarks } from '../services/geminiService';
+import { Play, Save, Plus, Settings2, Cpu, Zap, Layers, GripVertical, Trash2, MessageSquare, Database, Binary, FileText, Wrench, Search, ChevronDown, ChevronRight, X } from 'lucide-react';
 
 interface BenchmarksProps {
   results: BenchmarkResult[];
   models: Model[];
 }
 
-const DEFAULT_RAG_CONFIG: RAGConfig = {
-    id: 'rag-default',
-    name: 'Standard RAG',
-    chunkingStrategy: 'Recursive',
-    chunkSize: 512,
-    chunkOverlap: 50,
-    vectorStore: 'FAISS',
-    retrievalAlgo: 'Hybrid',
-    k: 5
+const DEFAULT_ADV_CONFIG: AdvancedBenchmarkConfig = {
+    id: 'new-config',
+    name: 'New Benchmark Pipeline',
+    backend: 'ollama',
+    modelId: '',
+    hardware: 'GPU',
+    parameters: {
+        contextSize: 4096,
+        temperature: 0.1,
+        flashAttention: true,
+        memoryLock: false,
+        continuousBatching: false,
+        keepAlive: '5m',
+        gpuLayers: 99
+    },
+    steps: []
 };
 
+const MOCK_SAVED_CONFIGS: AdvancedBenchmarkConfig[] = [
+    {
+        id: 'cfg-1',
+        name: 'Saul RAG Pipeline',
+        backend: 'ollama',
+        modelId: 'equall-saul-7b',
+        hardware: 'GPU',
+        parameters: { contextSize: 8192, temperature: 0.1, flashAttention: true, memoryLock: true, gpuLayers: 99, continuousBatching: false },
+        steps: [
+            { id: 's1', type: 'Ingestion', name: 'Parse PDFs', enabled: true, config: { docType: 'PDF', chunkSize: 512 } },
+            { id: 's2', type: 'Embedding', name: 'Vectorize (Arctic)', enabled: true, config: { modelId: 'snowflake-arctic' } },
+            { id: 's3', type: 'Generation', name: 'Answer Query', enabled: true, config: { metric: 'Throughput' } }
+        ]
+    }
+];
+
 export const Benchmarks: React.FC<BenchmarksProps> = ({ results, models }) => {
-  const [activeView, setActiveView] = useState<'matrix' | 'trends' | 'rag-config'>('matrix');
-  const [ragConfig, setRagConfig] = useState<RAGConfig>(DEFAULT_RAG_CONFIG);
+  const [activeView, setActiveView] = useState<'matrix' | 'trends' | 'config'>('matrix');
   const [analysis, setAnalysis] = useState<string>('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [configs, setConfigs] = useState<AdvancedBenchmarkConfig[]>(MOCK_SAVED_CONFIGS);
+  const [currentConfig, setCurrentConfig] = useState<AdvancedBenchmarkConfig>(DEFAULT_ADV_CONFIG);
+  
+  // Drag and Drop State
+  const [draggedStepIndex, setDraggedStepIndex] = useState<number | null>(null);
+  const [expandedStepId, setExpandedStepId] = useState<string | null>(null);
 
   // Prepare Data for Charts
   const trendData = results
-    .filter(r => r.metric === 'Accuracy' || r.metric === 'F1 Score')
+    .filter(r => r.tokensPerSecond || r.latency)
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-
-  // Hardware Comparison Data
-  const hardwareData = results.reduce((acc: any[], curr) => {
-    // Find if we have both CPU and GPU runs for same model/version/dataset
-    // For simplicitly in mock, let's just group by Model + Hardware
-    const key = `${curr.modelId}-${curr.versionId}`;
-    let item = acc.find(i => i.key === key);
-    if (!item) {
-        item = { key, model: curr.modelId, version: curr.versionId };
-        acc.push(item);
-    }
-    if (curr.hardware === 'GPU') item.gpuLatency = curr.latency;
-    if (curr.hardware === 'CPU') item.cpuLatency = curr.latency;
-    return acc;
-  }, []).filter(i => i.gpuLatency && i.cpuLatency);
 
   const handleAnalysis = async () => {
     setIsAnalyzing(true);
     const text = await analyzeBenchmarks(results, models);
     setAnalysis(text || "No analysis returned.");
     setIsAnalyzing(false);
+  };
+
+  const addStep = (type: BenchmarkStepType) => {
+      const newStep: BenchmarkStep = {
+          id: `step-${Date.now()}`,
+          type,
+          name: `New ${type} Step`,
+          enabled: true,
+          config: {
+              metric: 'Throughput',
+              chunkSize: 512,
+              overlap: 50,
+          }
+      };
+      setCurrentConfig({ ...currentConfig, steps: [...currentConfig.steps, newStep] });
+      setExpandedStepId(newStep.id);
+  };
+
+  const updateStep = (id: string, updates: Partial<BenchmarkStep>) => {
+      setCurrentConfig({
+          ...currentConfig,
+          steps: currentConfig.steps.map(s => s.id === id ? { ...s, ...updates } : s)
+      });
+  };
+  
+  const updateStepConfig = (id: string, configUpdates: any) => {
+      setCurrentConfig({
+          ...currentConfig,
+          steps: currentConfig.steps.map(s => s.id === id ? { ...s, config: { ...s.config, ...configUpdates } } : s)
+      });
+  };
+
+  const removeStep = (id: string) => {
+      setCurrentConfig({
+          ...currentConfig,
+          steps: currentConfig.steps.filter(s => s.id !== id)
+      });
+  };
+
+  const handleDragStart = (e: React.DragEvent, index: number) => {
+      setDraggedStepIndex(index);
+      e.dataTransfer.effectAllowed = "move";
+  };
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+      e.preventDefault();
+      if (draggedStepIndex === null || draggedStepIndex === index) return;
+      
+      const newSteps = [...currentConfig.steps];
+      const draggedItem = newSteps[draggedStepIndex];
+      newSteps.splice(draggedStepIndex, 1);
+      newSteps.splice(index, 0, draggedItem);
+      
+      setCurrentConfig({ ...currentConfig, steps: newSteps });
+      setDraggedStepIndex(index);
+  };
+
+  const handleDrop = () => {
+      setDraggedStepIndex(null);
+  };
+
+  const getStepIcon = (type: BenchmarkStepType) => {
+      switch(type) {
+          case 'Generation': return <MessageSquare size={16} className="text-blue-400"/>;
+          case 'RAG': return <Database size={16} className="text-purple-400"/>;
+          case 'Embedding': return <Binary size={16} className="text-green-400"/>;
+          case 'Ingestion': return <FileText size={16} className="text-yellow-400"/>;
+          case 'ToolUse': return <Wrench size={16} className="text-orange-400"/>;
+          case 'ColBERT': return <Search size={16} className="text-red-400"/>;
+      }
+  };
+
+  const renderStepConfig = (step: BenchmarkStep) => {
+      switch(step.type) {
+          case 'Ingestion':
+              return (
+                  <div className="grid grid-cols-2 gap-4">
+                      <div>
+                          <label className="text-xs text-gray-500 uppercase font-bold">Document Source Path</label>
+                          <input type="text" value={step.config.sourcePath || ''} onChange={(e) => updateStepConfig(step.id, { sourcePath: e.target.value })} className="w-full bg-nebula-950 border border-nebula-800 rounded p-2 text-sm mt-1" placeholder="/data/docs/legal" />
+                      </div>
+                      <div>
+                          <label className="text-xs text-gray-500 uppercase font-bold">Document Type</label>
+                          <select value={step.config.docType || 'PDF'} onChange={(e) => updateStepConfig(step.id, { docType: e.target.value })} className="w-full bg-nebula-950 border border-nebula-800 rounded p-2 text-sm mt-1">
+                              <option>PDF</option>
+                              <option>Markdown</option>
+                              <option>HTML</option>
+                              <option>Text</option>
+                          </select>
+                      </div>
+                      <div>
+                          <label className="text-xs text-gray-500 uppercase font-bold">Chunk Size</label>
+                          <input type="number" value={step.config.chunkSize || 512} onChange={(e) => updateStepConfig(step.id, { chunkSize: parseInt(e.target.value) })} className="w-full bg-nebula-950 border border-nebula-800 rounded p-2 text-sm mt-1" />
+                      </div>
+                      <div>
+                          <label className="text-xs text-gray-500 uppercase font-bold">Overlap</label>
+                          <input type="number" value={step.config.overlap || 50} onChange={(e) => updateStepConfig(step.id, { overlap: parseInt(e.target.value) })} className="w-full bg-nebula-950 border border-nebula-800 rounded p-2 text-sm mt-1" />
+                      </div>
+                  </div>
+              );
+          case 'Embedding':
+              return (
+                  <div className="space-y-4">
+                      <div>
+                          <label className="text-xs text-gray-500 uppercase font-bold">Embedding Model</label>
+                           <select value={step.config.modelId || ''} onChange={(e) => updateStepConfig(step.id, { modelId: e.target.value })} className="w-full bg-nebula-950 border border-nebula-800 rounded p-2 text-sm mt-1">
+                              <option value="">Default (System)</option>
+                              {models.filter(m => m.tags.includes('Embedding')).map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
+                          </select>
+                      </div>
+                      <div>
+                          <label className="text-xs text-gray-500 uppercase font-bold">Vector Store Target</label>
+                           <select value={step.config.vectorStore || 'ChromaDB'} onChange={(e) => updateStepConfig(step.id, { vectorStore: e.target.value })} className="w-full bg-nebula-950 border border-nebula-800 rounded p-2 text-sm mt-1">
+                              <option>ChromaDB</option>
+                              <option>FAISS</option>
+                              <option>Pinecone</option>
+                              <option>Milvus</option>
+                          </select>
+                      </div>
+                  </div>
+              );
+          case 'RAG':
+              return (
+                  <div className="grid grid-cols-2 gap-4">
+                       <div>
+                          <label className="text-xs text-gray-500 uppercase font-bold">Top K Retrieval</label>
+                          <input type="number" value={step.config.rerankTopK || 5} onChange={(e) => updateStepConfig(step.id, { rerankTopK: parseInt(e.target.value) })} className="w-full bg-nebula-950 border border-nebula-800 rounded p-2 text-sm mt-1" />
+                      </div>
+                       <div>
+                          <label className="text-xs text-gray-500 uppercase font-bold">Metric</label>
+                           <select value={step.config.metric || 'Semantic'} onChange={(e) => updateStepConfig(step.id, { metric: e.target.value })} className="w-full bg-nebula-950 border border-nebula-800 rounded p-2 text-sm mt-1">
+                              <option>Semantic Similarity</option>
+                              <option>Exact Match</option>
+                              <option>Retrieval Latency</option>
+                          </select>
+                      </div>
+                  </div>
+              );
+            case 'ToolUse':
+                return (
+                    <div className="space-y-4">
+                         <div>
+                            <label className="text-xs text-gray-500 uppercase font-bold">Tool Schema Definition (JSON/URL)</label>
+                            <input type="text" value={step.config.toolSchemaUrl || ''} onChange={(e) => updateStepConfig(step.id, { toolSchemaUrl: e.target.value })} className="w-full bg-nebula-950 border border-nebula-800 rounded p-2 text-sm mt-1" placeholder="https://api.example.com/openapi.json" />
+                        </div>
+                        <div>
+                             <label className="text-xs text-gray-500 uppercase font-bold">Success Metric</label>
+                             <select value={step.config.metric || 'FunctionCallValidity'} onChange={(e) => updateStepConfig(step.id, { metric: e.target.value })} className="w-full bg-nebula-950 border border-nebula-800 rounded p-2 text-sm mt-1">
+                                <option value="FunctionCallValidity">Valid JSON / Schema Compliance</option>
+                                <option value="ExactMatch">Argument Exact Match</option>
+                                <option value="Throughput">Call Latency</option>
+                            </select>
+                        </div>
+                    </div>
+                );
+          default:
+              return <div className="text-sm text-gray-500 italic">No specific configuration for this step type.</div>;
+      }
   };
 
   return (
@@ -68,13 +241,13 @@ export const Benchmarks: React.FC<BenchmarksProps> = ({ results, models }) => {
                 onClick={() => setActiveView('trends')}
                 className={`px-3 py-1.5 rounded text-sm transition-all ${activeView === 'trends' ? 'bg-nebula-700 text-white' : 'text-gray-400 hover:text-white'}`}
             >
-                Trends & Hardware
+                Trends
             </button>
             <button 
-                onClick={() => setActiveView('rag-config')}
-                className={`px-3 py-1.5 rounded text-sm transition-all ${activeView === 'rag-config' ? 'bg-purple-600 text-white' : 'text-gray-400 hover:text-white'}`}
+                onClick={() => setActiveView('config')}
+                className={`px-3 py-1.5 rounded text-sm transition-all flex items-center gap-2 ${activeView === 'config' ? 'bg-purple-600 text-white' : 'text-gray-400 hover:text-white'}`}
             >
-                RAG Config
+                <Settings2 size={14} /> Pipeline Editor
             </button>
         </div>
       </div>
@@ -85,182 +258,211 @@ export const Benchmarks: React.FC<BenchmarksProps> = ({ results, models }) => {
                 <button 
                     onClick={handleAnalysis}
                     disabled={isAnalyzing}
-                    className="bg-nebula-500 hover:bg-nebula-400 text-white px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2"
+                    className="bg-nebula-500 hover:bg-nebula-400 text-white px-4 py-2 rounded-lg text-sm flex items-center gap-2"
                 >
-                    <span>✨</span> {isAnalyzing ? 'Analyzing...' : 'Gemini Analysis'}
+                    {isAnalyzing ? 'Analyzing...' : 'Gemini Analysis'}
                 </button>
              </div>
-
-            {analysis && (
-                <div className="bg-nebula-900 border border-purple-500/30 p-6 rounded-xl relative overflow-hidden">
-                    <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-purple-500 to-transparent"></div>
-                    <h3 className="text-purple-400 font-bold mb-2 text-sm uppercase tracking-wider">Gemini Insights</h3>
-                    <div className="prose prose-invert prose-sm max-w-none text-gray-300">
-                        <pre className="whitespace-pre-wrap font-sans bg-transparent p-0 border-0">{analysis}</pre>
-                    </div>
+             
+             {analysis && (
+                <div className="bg-nebula-900 border border-purple-500/30 p-6 rounded-xl text-sm leading-relaxed text-gray-300">
+                    <h3 className="text-purple-400 font-bold mb-2">Gemini Insights</h3>
+                    <div className="markdown-body" dangerouslySetInnerHTML={{ __html: analysis.replace(/\n/g, '<br/>') }} />
                 </div>
-            )}
-            
-            <div className="bg-nebula-900 border border-nebula-700 rounded-xl overflow-hidden">
-                <table className="w-full text-left text-sm text-gray-400">
-                    <thead className="bg-nebula-950 text-gray-200 uppercase font-medium text-xs">
-                        <tr>
-                            <th className="px-6 py-4">Model</th>
-                            <th className="px-6 py-4">Version</th>
-                            <th className="px-6 py-4">Dataset</th>
-                            <th className="px-6 py-4">Hardware</th>
-                            <th className="px-6 py-4">Score</th>
-                            <th className="px-6 py-4">Latency</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-nebula-800">
-                        {results.map(res => (
-                            <tr key={res.id} className="hover:bg-nebula-800/30 transition-colors">
-                                <td className="px-6 py-4 font-medium text-white">{res.modelId}</td>
-                                <td className="px-6 py-4 font-mono text-xs">{res.versionId}</td>
-                                <td className="px-6 py-4">{res.dataset}</td>
-                                <td className="px-6 py-4">
-                                    <span className={`px-2 py-1 rounded text-xs border ${res.hardware === 'GPU' ? 'border-purple-500/30 text-purple-300 bg-purple-900/10' : 'border-gray-600 text-gray-400'}`}>
-                                        {res.hardware}
-                                    </span>
-                                </td>
-                                <td className="px-6 py-4 text-white font-bold">{res.score.toFixed(1)}</td>
-                                <td className="px-6 py-4 font-mono">{res.latency}ms</td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
+             )}
+
+            <div className="overflow-x-auto rounded-xl border border-nebula-800">
+              <table className="w-full text-left bg-nebula-900">
+                <thead className="bg-nebula-950 text-gray-400 uppercase text-xs">
+                  <tr>
+                    <th className="px-6 py-4">Model</th>
+                    <th className="px-6 py-4">Version</th>
+                    <th className="px-6 py-4">Dataset</th>
+                    <th className="px-6 py-4">Metric</th>
+                    <th className="px-6 py-4 text-right">Score</th>
+                    <th className="px-6 py-4 text-right">Tokens/s</th>
+                    <th className="px-6 py-4 text-right">Latency</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-nebula-800">
+                  {results.map((row) => (
+                    <tr key={row.id} className="hover:bg-nebula-800/50 transition-colors">
+                      <td className="px-6 py-4 font-medium text-white">{row.modelId}</td>
+                      <td className="px-6 py-4 text-gray-400">{row.versionId}</td>
+                      <td className="px-6 py-4 text-gray-400">{row.dataset}</td>
+                      <td className="px-6 py-4 text-gray-400">{row.metric}</td>
+                      <td className="px-6 py-4 text-right text-green-400 font-mono">{row.score}</td>
+                      <td className="px-6 py-4 text-right text-blue-400 font-mono">{row.tokensPerSecond?.toFixed(2) || '-'}</td>
+                      <td className="px-6 py-4 text-right text-purple-400 font-mono">{row.latency}ms</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
         </div>
       )}
 
       {activeView === 'trends' && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-fade-in flex-1 min-h-0 overflow-y-auto">
-             {/* Trend Chart */}
-             <div className="bg-nebula-900 border border-nebula-700 rounded-xl p-6 flex flex-col min-h-[300px]">
-                <h3 className="text-lg font-semibold mb-6">📈 Performance History</h3>
-                <div className="flex-1">
+         <div className="flex-1 overflow-y-auto animate-fade-in">
+             <div className="grid grid-cols-1 gap-6">
+                <div className="bg-nebula-900 border border-nebula-700 rounded-xl p-6 h-96">
+                    <h3 className="text-lg font-bold mb-4">Throughput Trends</h3>
                     <ResponsiveContainer width="100%" height="100%">
                         <LineChart data={trendData}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="#1c1c2e" vertical={false} />
-                            <XAxis dataKey="date" stroke="#6b7280" tick={{fill: '#9ca3af'}} axisLine={false} tickLine={false} />
-                            <YAxis stroke="#6b7280" tick={{fill: '#9ca3af'}} axisLine={false} tickLine={false} />
-                            <Tooltip contentStyle={{ backgroundColor: '#0a0a12', border: '1px solid #1c1c2e', borderRadius: '8px' }} />
+                            <CartesianGrid strokeDasharray="3 3" stroke="#272730" />
+                            <XAxis dataKey="date" stroke="#6b7280" fontSize={12} />
+                            <YAxis stroke="#6b7280" fontSize={12} />
+                            <Tooltip contentStyle={{ backgroundColor: '#121217', borderColor: '#272730' }} />
                             <Legend />
-                            <Line type="monotone" dataKey="score" stroke="#8b5cf6" strokeWidth={2} dot={{fill: '#8b5cf6'}} />
+                            <Line type="monotone" dataKey="tokensPerSecond" stroke="#8b5cf6" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} name="Tokens/Sec" />
                         </LineChart>
                     </ResponsiveContainer>
                 </div>
-             </div>
-
-             {/* CPU vs GPU Comparison */}
-             <div className="bg-nebula-900 border border-nebula-700 rounded-xl p-6 flex flex-col min-h-[300px]">
-                <h3 className="text-lg font-semibold mb-6">⚡ CPU vs ROCm GPU Latency</h3>
-                <div className="flex-1">
-                    <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={hardwareData} layout="vertical">
-                             <CartesianGrid strokeDasharray="3 3" stroke="#1c1c2e" horizontal={false} />
-                             <XAxis type="number" stroke="#6b7280" />
-                             <YAxis dataKey="model" type="category" width={100} stroke="#9ca3af" tick={{fontSize: 10}} />
-                             <Tooltip contentStyle={{ backgroundColor: '#0a0a12', border: '1px solid #1c1c2e', borderRadius: '8px' }} cursor={{fill: 'transparent'}} />
-                             <Legend />
-                             <Bar dataKey="cpuLatency" name="CPU (ms)" fill="#374151" radius={[0, 4, 4, 0]} barSize={20} />
-                             <Bar dataKey="gpuLatency" name="GPU (ROCm) (ms)" fill="#ec4899" radius={[0, 4, 4, 0]} barSize={20} />
+                 <div className="bg-nebula-900 border border-nebula-700 rounded-xl p-6 h-96">
+                    <h3 className="text-lg font-bold mb-4">Latency by Model</h3>
+                     <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={trendData}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#272730" />
+                            <XAxis dataKey="modelId" stroke="#6b7280" fontSize={10} angle={-15} textAnchor="end" height={60}/>
+                            <YAxis stroke="#6b7280" fontSize={12} />
+                            <Tooltip contentStyle={{ backgroundColor: '#121217', borderColor: '#272730' }} />
+                            <Bar dataKey="latency" fill="#3b82f6" radius={[4, 4, 0, 0]} name="Latency (ms)" />
                         </BarChart>
                     </ResponsiveContainer>
-                </div>
-             </div>
-             
-             {/* Radar Chart for Metrics */}
-             <div className="bg-nebula-900 border border-nebula-700 rounded-xl p-6 flex flex-col min-h-[300px] lg:col-span-2">
-                 <h3 className="text-lg font-semibold mb-6">🕸️ Distillation Efficiency</h3>
-                 <div className="flex-1">
-                     <ResponsiveContainer width="100%" height="100%">
-                         <RadarChart cx="50%" cy="50%" outerRadius="80%" data={[
-                             { subject: 'Accuracy', A: 120, B: 110, fullMark: 150 },
-                             { subject: 'Speed', A: 98, B: 130, fullMark: 150 },
-                             { subject: 'VRAM', A: 86, B: 130, fullMark: 150 },
-                             { subject: 'Throughput', A: 99, B: 100, fullMark: 150 },
-                             { subject: 'Quality', A: 85, B: 90, fullMark: 150 },
-                             { subject: 'Cost', A: 65, B: 85, fullMark: 150 },
-                         ]}>
-                             <PolarGrid stroke="#1c1c2e" />
-                             <PolarAngleAxis dataKey="subject" tick={{ fill: '#9ca3af' }} />
-                             <PolarRadiusAxis angle={30} domain={[0, 150]} tick={false} axisLine={false} />
-                             <Radar name="Teacher (Llama-70b)" dataKey="B" stroke="#8b5cf6" fill="#8b5cf6" fillOpacity={0.3} />
-                             <Radar name="Student (LFM 1.2b)" dataKey="A" stroke="#10b981" fill="#10b981" fillOpacity={0.3} />
-                             <Legend />
-                             <Tooltip contentStyle={{ backgroundColor: '#0a0a12', border: '1px solid #1c1c2e' }} />
-                         </RadarChart>
-                     </ResponsiveContainer>
                  </div>
              </div>
-          </div>
+         </div>
       )}
 
-      {activeView === 'rag-config' && (
-          <div className="flex-1 bg-nebula-900 border border-nebula-700 rounded-xl p-8 animate-fade-in overflow-y-auto">
-                <div className="max-w-2xl mx-auto space-y-8">
-                    <div>
-                        <h3 className="text-xl font-bold mb-2">RAG Benchmark Configuration</h3>
-                        <p className="text-gray-400 text-sm">Customize how your embedding models are tested against your vector store stack.</p>
-                    </div>
+      {activeView === 'config' && (
+          <div className="flex h-full gap-6 animate-fade-in overflow-hidden">
+              {/* Left Sidebar: Step Palette */}
+              <div className="w-64 flex flex-col gap-4">
+                  <div className="p-4 bg-nebula-900 border border-nebula-700 rounded-xl">
+                      <h3 className="text-sm font-bold text-gray-300 mb-4 uppercase tracking-wider">Pipeline Components</h3>
+                      <div className="space-y-2">
+                          <button onClick={() => addStep('Ingestion')} className="w-full flex items-center gap-3 p-3 bg-nebula-950 border border-nebula-800 rounded hover:border-yellow-500/50 hover:bg-yellow-900/10 transition-all text-sm group text-left">
+                              <FileText size={16} className="text-yellow-500" />
+                              <span className="text-gray-400 group-hover:text-yellow-200">Data Ingestion</span>
+                          </button>
+                          <button onClick={() => addStep('Embedding')} className="w-full flex items-center gap-3 p-3 bg-nebula-950 border border-nebula-800 rounded hover:border-green-500/50 hover:bg-green-900/10 transition-all text-sm group text-left">
+                              <Binary size={16} className="text-green-500" />
+                              <span className="text-gray-400 group-hover:text-green-200">Embedding</span>
+                          </button>
+                          <button onClick={() => addStep('RAG')} className="w-full flex items-center gap-3 p-3 bg-nebula-950 border border-nebula-800 rounded hover:border-purple-500/50 hover:bg-purple-900/10 transition-all text-sm group text-left">
+                              <Database size={16} className="text-purple-500" />
+                              <span className="text-gray-400 group-hover:text-purple-200">RAG Retrieval</span>
+                          </button>
+                          <button onClick={() => addStep('ColBERT')} className="w-full flex items-center gap-3 p-3 bg-nebula-950 border border-nebula-800 rounded hover:border-red-500/50 hover:bg-red-900/10 transition-all text-sm group text-left">
+                              <Search size={16} className="text-red-500" />
+                              <span className="text-gray-400 group-hover:text-red-200">ColBERT Rerank</span>
+                          </button>
+                           <button onClick={() => addStep('ToolUse')} className="w-full flex items-center gap-3 p-3 bg-nebula-950 border border-nebula-800 rounded hover:border-orange-500/50 hover:bg-orange-900/10 transition-all text-sm group text-left">
+                              <Wrench size={16} className="text-orange-500" />
+                              <span className="text-gray-400 group-hover:text-orange-200">Tool / Agent</span>
+                          </button>
+                           <button onClick={() => addStep('Generation')} className="w-full flex items-center gap-3 p-3 bg-nebula-950 border border-nebula-800 rounded hover:border-blue-500/50 hover:bg-blue-900/10 transition-all text-sm group text-left">
+                              <MessageSquare size={16} className="text-blue-500" />
+                              <span className="text-gray-400 group-hover:text-blue-200">Generation</span>
+                          </button>
+                      </div>
+                  </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="space-y-3">
-                            <label className="text-sm font-medium text-gray-300">Chunking Strategy</label>
-                            <select 
-                                value={ragConfig.chunkingStrategy}
-                                onChange={(e) => setRagConfig({...ragConfig, chunkingStrategy: e.target.value as any})}
-                                className="w-full bg-nebula-950 border border-nebula-700 rounded-lg p-3 text-white focus:ring-2 focus:ring-purple-500 outline-none"
-                            >
-                                <option value="Fixed">Fixed Size</option>
-                                <option value="Recursive">Recursive Character</option>
-                                <option value="Semantic">Semantic (AI)</option>
-                            </select>
-                        </div>
-                        <div className="space-y-3">
-                            <label className="text-sm font-medium text-gray-300">Chunk Size (tokens)</label>
-                            <input 
-                                type="number" 
-                                value={ragConfig.chunkSize}
-                                onChange={(e) => setRagConfig({...ragConfig, chunkSize: Number(e.target.value)})}
-                                className="w-full bg-nebula-950 border border-nebula-700 rounded-lg p-3 text-white focus:ring-2 focus:ring-purple-500 outline-none"
-                            />
-                        </div>
-                         <div className="space-y-3">
-                            <label className="text-sm font-medium text-gray-300">Vector Store</label>
-                            <select 
-                                value={ragConfig.vectorStore}
-                                onChange={(e) => setRagConfig({...ragConfig, vectorStore: e.target.value as any})}
-                                className="w-full bg-nebula-950 border border-nebula-700 rounded-lg p-3 text-white focus:ring-2 focus:ring-purple-500 outline-none"
-                            >
-                                <option value="FAISS">FAISS (Local)</option>
-                                <option value="ChromaDB">ChromaDB</option>
-                                <option value="Pinecone">Pinecone (Cloud)</option>
-                                <option value="Milvus">Milvus</option>
-                            </select>
-                        </div>
-                         <div className="space-y-3">
-                            <label className="text-sm font-medium text-gray-300">Retrieval Algorithm</label>
-                            <select 
-                                value={ragConfig.retrievalAlgo}
-                                onChange={(e) => setRagConfig({...ragConfig, retrievalAlgo: e.target.value as any})}
-                                className="w-full bg-nebula-950 border border-nebula-700 rounded-lg p-3 text-white focus:ring-2 focus:ring-purple-500 outline-none"
-                            >
-                                <option value="Cosine">Cosine Similarity</option>
-                                <option value="MMR">Max Marginal Relevance (MMR)</option>
-                                <option value="BM25">BM25 (Keyword)</option>
-                                <option value="Hybrid">Hybrid (Vector + Keyword)</option>
-                            </select>
-                        </div>
-                    </div>
-                    
-                    <div className="pt-6 border-t border-nebula-800 flex justify-end gap-3">
-                        <button className="px-4 py-2 rounded-lg text-sm text-gray-400 hover:text-white border border-transparent hover:border-nebula-700">Reset Default</button>
-                        <button className="px-6 py-2 rounded-lg text-sm font-semibold bg-purple-600 hover:bg-purple-500 text-white shadow-lg shadow-purple-900/20">Save Configuration</button>
-                    </div>
-                </div>
+                  <div className="p-4 bg-nebula-900 border border-nebula-700 rounded-xl flex-1">
+                      <h3 className="text-sm font-bold text-gray-300 mb-4 uppercase tracking-wider">Global Settings</h3>
+                       <div className="space-y-4">
+                           <div>
+                               <label className="text-xs text-gray-500 block mb-1">Context Size</label>
+                               <input type="number" value={currentConfig.parameters.contextSize} className="w-full bg-nebula-950 border border-nebula-800 rounded p-2 text-sm text-white" />
+                           </div>
+                           <div>
+                               <label className="text-xs text-gray-500 block mb-1">Temperature</label>
+                               <input type="number" step="0.1" value={currentConfig.parameters.temperature} className="w-full bg-nebula-950 border border-nebula-800 rounded p-2 text-sm text-white" />
+                           </div>
+                           <div className="flex items-center gap-2">
+                               <input type="checkbox" checked={currentConfig.parameters.flashAttention} className="accent-purple-500" />
+                               <label className="text-xs text-gray-400">Flash Attention</label>
+                           </div>
+                       </div>
+                  </div>
+              </div>
+
+              {/* Main Canvas: Pipeline Builder */}
+              <div className="flex-1 flex flex-col min-w-0 bg-nebula-900/50 border border-nebula-700 rounded-xl overflow-hidden relative">
+                  <div className="p-4 border-b border-nebula-700 flex justify-between items-center bg-nebula-900">
+                       <div className="flex items-center gap-2">
+                           <Layers size={18} className="text-purple-400" />
+                           <input 
+                                value={currentConfig.name}
+                                onChange={(e) => setCurrentConfig({...currentConfig, name: e.target.value})}
+                                className="bg-transparent text-lg font-bold text-white outline-none placeholder-gray-600"
+                                placeholder="Pipeline Name"
+                           />
+                       </div>
+                       <div className="flex gap-2">
+                           <button className="px-4 py-2 bg-nebula-800 hover:bg-nebula-700 text-white text-xs font-bold rounded border border-nebula-600">Load Template</button>
+                           <button className="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold rounded flex items-center gap-2">
+                               <Play size={14} fill="currentColor"/> Run Benchmark
+                           </button>
+                       </div>
+                  </div>
+
+                  <div className="flex-1 overflow-y-auto p-6 space-y-4 relative">
+                      {currentConfig.steps.length === 0 && (
+                          <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-600 pointer-events-none">
+                              <Layers size={48} className="mb-4 opacity-20" />
+                              <p>Drag & Drop steps or click to add from sidebar</p>
+                          </div>
+                      )}
+
+                      {currentConfig.steps.map((step, index) => (
+                          <div 
+                            key={step.id} 
+                            draggable
+                            onDragStart={(e) => handleDragStart(e, index)}
+                            onDragOver={(e) => handleDragOver(e, index)}
+                            onDrop={handleDrop}
+                            className={`bg-nebula-950 border ${expandedStepId === step.id ? 'border-purple-500 ring-1 ring-purple-500/50' : 'border-nebula-700'} rounded-lg transition-all shadow-lg group`}
+                          >
+                              <div className="flex items-center p-3 gap-3 cursor-grab active:cursor-grabbing hover:bg-nebula-900/50 transition-colors rounded-t-lg">
+                                  <GripVertical size={16} className="text-gray-600" />
+                                  <div className="p-2 bg-nebula-900 rounded border border-nebula-800">
+                                      {getStepIcon(step.type)}
+                                  </div>
+                                  <div className="flex-1">
+                                      <div className="flex items-center gap-2">
+                                          <span className="text-sm font-bold text-gray-200">{step.name}</span>
+                                          <span className="text-[10px] bg-nebula-800 px-2 rounded text-gray-500">{step.type}</span>
+                                      </div>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                      <button onClick={() => setExpandedStepId(expandedStepId === step.id ? null : step.id)} className="p-1 hover:bg-nebula-800 rounded text-gray-400">
+                                          {expandedStepId === step.id ? <ChevronDown size={16}/> : <ChevronRight size={16}/>}
+                                      </button>
+                                      <button onClick={() => removeStep(step.id)} className="p-1 hover:bg-red-900/30 hover:text-red-400 rounded text-gray-600">
+                                          <X size={16} />
+                                      </button>
+                                  </div>
+                              </div>
+                              
+                              {expandedStepId === step.id && (
+                                  <div className="p-4 border-t border-nebula-800 bg-nebula-900/30 animate-fade-in">
+                                      <div className="mb-4">
+                                          <label className="text-xs text-gray-500 uppercase font-bold">Step Name</label>
+                                          <input 
+                                            type="text" 
+                                            value={step.name} 
+                                            onChange={(e) => updateStep(step.id, { name: e.target.value })}
+                                            className="w-full bg-nebula-950 border border-nebula-800 rounded p-2 text-sm mt-1 text-white focus:border-purple-500 outline-none" 
+                                          />
+                                      </div>
+                                      {renderStepConfig(step)}
+                                  </div>
+                              )}
+                          </div>
+                      ))}
+                  </div>
+              </div>
           </div>
       )}
     </div>

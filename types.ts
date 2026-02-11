@@ -1,3 +1,4 @@
+
 export enum ModelStatus {
   Ready = 'Ready',
   Training = 'Training',
@@ -35,9 +36,26 @@ export interface Model {
   family: 'Llama' | 'Mistral' | 'Gemma' | 'Liquid' | 'Bert' | 'Other';
   description: string;
   tags: string[]; // e.g., "ROCm Optimized", "Embedding"
+  params: string; // e.g., "7B", "70B"
+  tensorType: string; // e.g., "F16", "BF16", "Q8"
   links: ModelLink[];
   versions: ModelVersion[];
   lastUsed: string;
+}
+
+export interface ServerProfile {
+  id: string;
+  name: string;
+  type: 'Venv' | 'Llama.cpp' | 'Ollama' | 'TGI' | 'TabbyAPI';
+  path: string; // Path to executable or venv activate script
+  host: string;
+  port: number;
+  os: 'Windows' | 'Ubuntu' | 'MacOS';
+  acceleration: 'ROCm' | 'Vulkan' | 'CUDA' | 'HYPR-RX' | 'CPU' | 'Metal';
+  startupFlags: string;
+  packages: string[]; // e.g. ["torch==2.1.2+rocm5.6", "transformers"]
+  compatibleModels: string[]; // List of Model IDs
+  status: 'Online' | 'Offline' | 'Starting';
 }
 
 export interface RAGConfig {
@@ -51,6 +69,54 @@ export interface RAGConfig {
   k: number;
 }
 
+export type BenchmarkStepType = 'Generation' | 'RAG' | 'Embedding' | 'Ingestion' | 'ToolUse' | 'ColBERT';
+
+export interface BenchmarkStep {
+    id: string;
+    type: BenchmarkStepType;
+    name: string;
+    enabled: boolean;
+    config: {
+        modelId?: string;
+        datasetId?: string;
+        // RAG/Ingest/ColBERT
+        chunkSize?: number;
+        overlap?: number;
+        vectorStore?: string;
+        rerankTopK?: number;
+        // Tool
+        toolSchemaUrl?: string;
+        metric?: 'ExactMatch' | 'Semantic' | 'FunctionCallValidity' | 'Throughput';
+        // Ingestion
+        sourcePath?: string;
+        docType?: 'PDF' | 'Markdown' | 'HTML';
+    };
+}
+
+export interface AdvancedBenchmarkConfig {
+  id: string;
+  name: string;
+  backend: 'llama.cpp (Vulkan)' | 'llama-python' | 'ollama' | 'pytest' | 'transformers' | 'torch-directml';
+  modelId: string; // Default model if not overridden in step
+  versionId?: string; 
+  hardware: 'GPU' | 'CPU' | 'Dual-GPU';
+  
+  parameters: {
+      contextSize: number;
+      temperature: number;
+      gpuLayers?: number; // -ngl
+      threads?: number;
+      flashAttention: boolean; // --flash-attn
+      memoryLock: boolean; // --mlock
+      continuousBatching: boolean; // --cont-batching
+      keepAlive?: string; // "5m"
+  };
+
+  steps: BenchmarkStep[]; // Dynamic Pipeline
+  
+  customEnvPath?: string;
+}
+
 export interface BenchmarkResult {
   id: string;
   modelId: string;
@@ -58,12 +124,15 @@ export interface BenchmarkResult {
   dataset: string;
   score: number; // Primary metric
   latency: number; // ms
+  tokensPerSecond?: number; // New throughput metric
   hardware: 'CPU' | 'GPU' | 'NPU';
   hardwareName: string; // e.g. "AMD Radeon PRO W7900"
   date: string;
   metric: string; 
   type: 'Core' | 'RAG' | 'Custom';
   ragConfig?: RAGConfig;
+  advancedConfigId?: string;
+  notes?: string; // e.g. "Flash Attn ON"
 }
 
 export interface Dataset {
@@ -92,4 +161,17 @@ export interface LabArtifact {
     created: string;
 }
 
-export type ViewState = 'dashboard' | 'benchmarks' | 'datasets' | 'training' | 'laboratory' | 'models' | 'compute';
+export interface AppSettings {
+    directories: {
+        ollamaPath: string;
+        venvPytorch: string;
+        venvTransformers: string;
+        mergeKitPath: string;
+        modelStore: string;
+        blobStore: string;
+        resultsDir: string;
+        datasetsDir: string;
+    }
+}
+
+export type ViewState = 'dashboard' | 'benchmarks' | 'datasets' | 'training' | 'laboratory' | 'models' | 'servers' | 'compute' | 'settings';

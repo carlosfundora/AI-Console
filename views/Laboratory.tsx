@@ -78,38 +78,35 @@ export const Laboratory: React.FC<LaboratoryProps> = ({ models }) => {
   };
 
   return (
-    <div className="flex h-full gap-6 text-nebula-100 font-mono">
+    <div className="flex h-full gap-8 text-nebula-100 font-sans">
         {/* Main Chamber */}
-        <div className="flex-1 flex flex-col gap-6">
+        <div className="flex-1 flex flex-col gap-6 min-w-0">
             
-            {/* Control Panel Header */}
-            <div className="bg-nebula-900 border border-nebula-700 p-4 rounded-xl shadow-lg flex justify-between items-center">
-                <div className="flex items-center gap-4">
-                    <div className="p-3 bg-nebula-800 rounded-lg border border-purple-500/30">
-                        <FlaskConical size={24} className="text-purple-400" />
-                    </div>
-                    <div>
-                        <h2 className="text-2xl font-bold text-white tracking-wider">REPLICATOR LAB</h2>
-                        <p className="text-xs text-purple-400/80 uppercase tracking-[0.2em]">Molecular Synthesis & Extraction</p>
-                    </div>
+            {/* Standard Header Style matching Benchmarks/Datasets */}
+            <div className="flex justify-between items-center">
+                <div>
+                     <h2 className="text-2xl font-bold flex items-center gap-2">
+                        <FlaskConical className="text-purple-500" /> Laboratory
+                     </h2>
+                     <p className="text-sm text-gray-400 mt-1">Experimental model synthesis, extraction, and surgery.</p>
                 </div>
                 
-                <div className="flex bg-nebula-800 rounded-lg p-1 border border-nebula-700">
+                <div className="flex bg-nebula-900 rounded-lg p-1 border border-nebula-700">
                     <button 
                         onClick={() => setMode('merge')}
-                        className={`px-4 py-2 rounded text-sm font-bold transition-all flex items-center gap-2 ${mode === 'merge' ? 'bg-purple-600 text-white shadow-[0_0_15px_rgba(139,92,246,0.5)]' : 'text-gray-400 hover:text-white'}`}
+                        className={`px-4 py-2 rounded text-sm font-bold transition-all flex items-center gap-2 ${mode === 'merge' ? 'bg-purple-600 text-white shadow-lg' : 'text-gray-400 hover:text-white'}`}
                     >
                         <Merge size={16} /> MergeKit
                     </button>
                     <button 
                          onClick={() => setMode('extract')}
-                         className={`px-4 py-2 rounded text-sm font-bold transition-all flex items-center gap-2 ${mode === 'extract' ? 'bg-purple-600 text-white shadow-[0_0_15px_rgba(139,92,246,0.5)]' : 'text-gray-400 hover:text-white'}`}
+                         className={`px-4 py-2 rounded text-sm font-bold transition-all flex items-center gap-2 ${mode === 'extract' ? 'bg-purple-600 text-white shadow-lg' : 'text-gray-400 hover:text-white'}`}
                     >
                         <Scissors size={16} /> Extraction
                     </button>
                     <button 
                          onClick={() => setMode('medusa')}
-                         className={`px-4 py-2 rounded text-sm font-bold transition-all flex items-center gap-2 ${mode === 'medusa' ? 'bg-purple-600 text-white shadow-[0_0_15px_rgba(139,92,246,0.5)]' : 'text-gray-400 hover:text-white'}`}
+                         className={`px-4 py-2 rounded text-sm font-bold transition-all flex items-center gap-2 ${mode === 'medusa' ? 'bg-purple-600 text-white shadow-lg' : 'text-gray-400 hover:text-white'}`}
                     >
                         <Dna size={16} /> Medusa
                     </button>
@@ -117,9 +114,9 @@ export const Laboratory: React.FC<LaboratoryProps> = ({ models }) => {
             </div>
 
             {/* Workspace */}
-            <div className="flex-1 bg-nebula-900/80 border border-nebula-700 rounded-xl p-6 relative overflow-hidden backdrop-blur-sm">
-                <div className="absolute top-0 right-0 p-4 opacity-10 pointer-events-none">
-                    <Zap size={200} className="text-purple-500" />
+            <div className="flex-1 bg-nebula-900 border border-nebula-700 rounded-xl p-6 relative overflow-hidden backdrop-blur-sm">
+                <div className="absolute top-0 right-0 p-8 opacity-5 pointer-events-none">
+                    <Zap size={200} />
                 </div>
 
                 {mode === 'merge' && (
@@ -132,7 +129,7 @@ export const Laboratory: React.FC<LaboratoryProps> = ({ models }) => {
                                         <button 
                                             key={m}
                                             onClick={() => setMergeMethod(m)}
-                                            className={`p-3 rounded border text-left transition-all ${mergeMethod === m ? 'bg-purple-900/30 border-purple-500 text-purple-200 shadow-[inset_0_0_10px_rgba(139,92,246,0.2)]' : 'bg-nebula-950 border-nebula-800 text-gray-400 hover:border-purple-500/50 hover:text-gray-200'}`}
+                                            className={`p-3 rounded border text-left transition-all ${mergeMethod === m ? 'bg-purple-900/30 border-purple-500 text-purple-200' : 'bg-nebula-950 border-nebula-800 text-gray-400 hover:border-purple-500/50 hover:text-gray-200'}`}
                                         >
                                             <div className="flex justify-between">
                                                 <span className="font-bold">{getMergeMethodInfo(m).label}</span>
@@ -147,7 +144,7 @@ export const Laboratory: React.FC<LaboratoryProps> = ({ models }) => {
                             <div className="space-y-6">
                                 <div className="space-y-2">
                                     <label className="text-purple-400 text-sm font-bold uppercase">Target Output Path</label>
-                                    <input type="text" className="w-full bg-nebula-950/50 border border-nebula-700 rounded p-3 text-gray-200 font-mono focus:border-purple-500 outline-none" placeholder="./models/merged/chimera-v1" />
+                                    <input type="text" className="w-full bg-nebula-950 border border-nebula-700 rounded p-3 text-gray-200 font-mono focus:border-purple-500 outline-none" placeholder="./models/merged/chimera-v1" />
                                 </div>
 
                                 <div className="p-4 bg-nebula-950/50 border border-nebula-800 rounded-lg">
