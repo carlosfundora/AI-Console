@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { LayoutDashboard, Database, BrainCircuit, Activity, Settings as SettingsIcon, Server, Terminal, FlaskConical, Loader2, MessageSquare } from 'lucide-react';
+import { LayoutDashboard, Database, BrainCircuit, Activity, Settings as SettingsIcon, Server, Terminal, FlaskConical, Loader2, MessageSquare, Briefcase } from 'lucide-react';
 import { Dashboard } from './views/Dashboard';
 import { Benchmarks } from './views/Benchmarks';
 import { Datasets } from './views/Datasets';
@@ -10,7 +10,8 @@ import { Laboratory } from './views/Laboratory';
 import { Servers } from './views/Servers';
 import { Settings } from './views/Settings';
 import { Chat } from './views/Chat';
-import { ViewState, Model, BenchmarkResult, Dataset, ServerConfig, ModelStatus, ServerProfile } from './types';
+import { Agents } from './views/Agents';
+import { ViewState, Model, BenchmarkResult, Dataset, ServerConfig, ModelStatus, ServerProfile, AgentConfig } from './types';
 
 // Mock Models with Versioning
 const MOCK_MODELS: Model[] = [
@@ -27,6 +28,20 @@ const MOCK_MODELS: Model[] = [
     links: [
         { type: 'HuggingFace', url: 'https://huggingface.co/LiquidAI/LFM2.5-1.2B-Thinking' }
     ],
+    documentation: `
+# Liquid LFM-2.5
+This model is optimized for **structured reasoning** tasks.
+
+## Usage
+\`\`\`python
+from transformers import AutoModelForCausalLM
+model = AutoModelForCausalLM.from_pretrained("LiquidAI/LFM2.5-1.2B")
+\`\`\`
+
+## Key Features
+- Dynamic memory management
+- High throughput for JSON generation
+    `,
     versions: [
         { id: 'v1-q5_k_m', name: 'Q5_K_M GGUF', format: 'GGUF', quantization: 'Q5_K_M', size: '804MB', created: '2026-01-10', baseModel: 'v1-fp16', status: ModelStatus.Ready, metrics: { latencyMs: 200, vramGB: 0.8 } },
         { id: 'v1-q4_0', name: 'Q4_0 RAG', format: 'GGUF', quantization: 'Q4_0', size: '663MB', created: '2026-01-11', baseModel: 'v1-fp16', status: ModelStatus.Ready }
@@ -45,6 +60,18 @@ const MOCK_MODELS: Model[] = [
     links: [
         { type: 'HuggingFace', url: 'https://huggingface.co/LiquidAI/LFM2.5-Audio-1.5B-ONNX' }
     ],
+    documentation: `
+# LFM Audio 1.5B
+A compact multimodal model for edge devices.
+
+## WebGPU Inference
+Ensure your browser supports WebGPU and you have enabled unsafe-webgpu flags if necessary.
+
+## Capabilities
+1. ASR (Automatic Speech Recognition)
+2. TTS (Text to Speech)
+3. Speech-to-Speech
+    `,
     versions: [
         { id: 'v1-onnx', name: 'ONNX WebGPU', format: 'ONNX', quantization: 'Q4_0', size: '1.1GB', created: '2026-01-15', baseModel: 'v1-fp16', status: ModelStatus.Ready, metrics: { latencyMs: 50, vramGB: 1.2 } }
     ]
@@ -100,6 +127,29 @@ const MOCK_MODELS: Model[] = [
         { id: 'v1-ollama', name: 'Ollama', format: 'Ollama', quantization: 'FP16', size: '670MB', created: '2026-01-01', baseModel: 'None', status: ModelStatus.Ready }
     ]
   }
+];
+
+const MOCK_AGENTS: AgentConfig[] = [
+    {
+        id: 'agent-1',
+        name: 'Data Analyst',
+        description: 'Python-enabled agent for CSV analysis.',
+        systemPrompt: 'You are an expert data analyst. Use the python_repl tool to execute pandas code. Always visualize data when possible.',
+        toolsSchema: '[\n  {\n    "type": "function",\n    "function": {\n      "name": "python_repl",\n      "description": "Executes python code",\n      "parameters": { "type": "object", "properties": { "code": { "type": "string" } } }\n    }\n  }\n]',
+        envVars: [{ key: 'PANDAS_VERSION', value: '2.1.0' }],
+        externalPaths: ['/scripts/analysis_utils.py'],
+        lastModified: '2026-01-18'
+    },
+    {
+        id: 'agent-2',
+        name: 'Search Assistant',
+        description: 'General purpose assistant with web search capability.',
+        systemPrompt: 'You are a helpful assistant. If you do not know the answer, use the search_tool to find it.',
+        toolsSchema: '[\n  {\n    "type": "function",\n    "function": {\n      "name": "search_tool",\n      "description": "Searches the web",\n      "parameters": { "type": "object", "properties": { "query": { "type": "string" } } }\n    }\n  }\n]',
+        envVars: [],
+        externalPaths: [],
+        lastModified: '2026-01-15'
+    }
 ];
 
 const MOCK_BENCHMARKS: BenchmarkResult[] = [
@@ -179,6 +229,7 @@ const MOCK_SERVERS: ServerProfile[] = [
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<ViewState>('dashboard');
   const [servers, setServers] = useState<ServerProfile[]>(MOCK_SERVERS);
+  const [agents, setAgents] = useState<AgentConfig[]>(MOCK_AGENTS);
   
   const handleUpdateServer = (updated: ServerProfile) => {
       setServers(servers.map(s => s.id === updated.id ? updated : s));
@@ -191,16 +242,29 @@ const App: React.FC = () => {
   const handleAddServer = (newServer: ServerProfile) => {
       setServers([...servers, newServer]);
   };
+
+  const handleSaveAgent = (agent: AgentConfig) => {
+      if (agents.find(a => a.id === agent.id)) {
+          setAgents(agents.map(a => a.id === agent.id ? agent : a));
+      } else {
+          setAgents([...agents, agent]);
+      }
+  };
+
+  const handleDeleteAgent = (id: string) => {
+      setAgents(agents.filter(a => a.id !== id));
+  };
   
   // Use lucide icons for main nav for high aesthetics, emojis for content
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={20} /> },
-    { id: 'servers', label: 'Servers', icon: <Server size={20} /> },
-    { id: 'models', label: 'Models', icon: <BrainCircuit size={20} /> },
     { id: 'benchmarks', label: 'Benchmarks', icon: <Activity size={20} /> },
     { id: 'datasets', label: 'Datasets', icon: <Database size={20} /> },
     { id: 'training', label: 'Training', icon: <Terminal size={20} /> },
     { id: 'laboratory', label: 'Laboratory', icon: <FlaskConical size={20} /> },
+    { id: 'servers', label: 'Servers', icon: <Server size={20} /> },
+    { id: 'models', label: 'Models', icon: <BrainCircuit size={20} /> },
+    { id: 'agents', label: 'Agents / Tools', icon: <Briefcase size={20} /> },
     { id: 'chat', label: 'Chat / Testing', icon: <MessageSquare size={20} /> }, 
   ];
 
@@ -219,7 +283,7 @@ const App: React.FC = () => {
 
               {/* Breadcrumb / Title */}
               <div className="flex items-center gap-4">
-                  <h1 className="text-lg font-semibold text-white capitalize">{activeTab}</h1>
+                  <h1 className="text-lg font-semibold text-white capitalize">{activeTab === 'agents' ? 'Agents & Tools' : activeTab}</h1>
                   {activeTab === 'training' && <span className="text-xs bg-purple-900/50 text-purple-300 px-2 py-1 rounded border border-purple-500/20">Active Job: Llama-SFT-v1</span>}
               </div>
           </div>
@@ -281,8 +345,9 @@ const App: React.FC = () => {
               {activeTab === 'laboratory' && <Laboratory models={MOCK_MODELS} />}
               {activeTab === 'servers' && <Servers servers={servers} models={MOCK_MODELS} onUpdateServer={handleUpdateServer} onDeleteServer={handleDeleteServer} onAddServer={handleAddServer} />}
               {activeTab === 'models' && <Models models={MOCK_MODELS} servers={servers} />}
+              {activeTab === 'agents' && <Agents agents={agents} onSaveAgent={handleSaveAgent} onDeleteAgent={handleDeleteAgent} />}
               {activeTab === 'settings' && <Settings />}
-              {activeTab === 'chat' && <Chat models={MOCK_MODELS} servers={servers} onUpdateServer={handleUpdateServer} />}
+              {activeTab === 'chat' && <Chat models={MOCK_MODELS} servers={servers} agents={agents} onUpdateServer={handleUpdateServer} />}
             </div>
           </div>
         </main>

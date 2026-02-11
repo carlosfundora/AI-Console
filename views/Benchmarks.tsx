@@ -3,7 +3,7 @@ import React, { useState, useRef } from 'react';
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend, CartesianGrid } from 'recharts';
 import { BenchmarkResult, Model, AdvancedBenchmarkConfig, BenchmarkStep, BenchmarkStepType } from '../types';
 import { analyzeBenchmarks } from '../services/geminiService';
-import { Play, Save, Plus, Settings2, Cpu, Zap, Layers, GripVertical, Trash2, MessageSquare, Database, Binary, FileText, Wrench, Search, ChevronDown, ChevronRight, X } from 'lucide-react';
+import { Play, Save, Plus, Settings2, Cpu, Zap, Layers, GripVertical, Trash2, MessageSquare, Database, Binary, FileText, Wrench, Search, ChevronDown, ChevronRight, X, Sparkles, ArrowRight, Loader2 } from 'lucide-react';
 
 interface BenchmarksProps {
   results: BenchmarkResult[];
@@ -45,7 +45,7 @@ const MOCK_SAVED_CONFIGS: AdvancedBenchmarkConfig[] = [
 ];
 
 export const Benchmarks: React.FC<BenchmarksProps> = ({ results, models }) => {
-  const [activeView, setActiveView] = useState<'matrix' | 'trends' | 'config'>('matrix');
+  const [activeView, setActiveView] = useState<'matrix' | 'trends' | 'config' | 'analysis'>('matrix');
   const [analysis, setAnalysis] = useState<string>('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [configs, setConfigs] = useState<AdvancedBenchmarkConfig[]>(MOCK_SAVED_CONFIGS);
@@ -243,6 +243,12 @@ export const Benchmarks: React.FC<BenchmarksProps> = ({ results, models }) => {
             >
                 Trends
             </button>
+             <button 
+                onClick={() => setActiveView('analysis')}
+                className={`px-3 py-1.5 rounded text-sm transition-all flex items-center gap-2 ${activeView === 'analysis' ? 'bg-nebula-700 text-white' : 'text-gray-400 hover:text-white'}`}
+            >
+                <Sparkles size={14} className={isAnalyzing ? 'animate-pulse text-purple-400' : ''}/> Analysis
+            </button>
             <button 
                 onClick={() => setActiveView('config')}
                 className={`px-3 py-1.5 rounded text-sm transition-all flex items-center gap-2 ${activeView === 'config' ? 'bg-purple-600 text-white' : 'text-gray-400 hover:text-white'}`}
@@ -254,23 +260,6 @@ export const Benchmarks: React.FC<BenchmarksProps> = ({ results, models }) => {
 
       {activeView === 'matrix' && (
         <div className="space-y-6 animate-fade-in flex-1 overflow-y-auto">
-             <div className="flex justify-end">
-                <button 
-                    onClick={handleAnalysis}
-                    disabled={isAnalyzing}
-                    className="bg-nebula-500 hover:bg-nebula-400 text-white px-4 py-2 rounded-lg text-sm flex items-center gap-2"
-                >
-                    {isAnalyzing ? 'Analyzing...' : 'Gemini Analysis'}
-                </button>
-             </div>
-             
-             {analysis && (
-                <div className="bg-nebula-900 border border-purple-500/30 p-6 rounded-xl text-sm leading-relaxed text-gray-300">
-                    <h3 className="text-purple-400 font-bold mb-2">Gemini Insights</h3>
-                    <div className="markdown-body" dangerouslySetInnerHTML={{ __html: analysis.replace(/\n/g, '<br/>') }} />
-                </div>
-             )}
-
             <div className="overflow-x-auto rounded-xl border border-nebula-800">
               <table className="w-full text-left bg-nebula-900">
                 <thead className="bg-nebula-950 text-gray-400 uppercase text-xs">
@@ -299,6 +288,38 @@ export const Benchmarks: React.FC<BenchmarksProps> = ({ results, models }) => {
                 </tbody>
               </table>
             </div>
+        </div>
+      )}
+
+      {activeView === 'analysis' && (
+        <div className="flex-1 animate-fade-in flex flex-col">
+             <div className="flex justify-between items-center mb-6">
+                 <div>
+                     <h3 className="text-lg font-bold text-white flex items-center gap-2"><Sparkles className="text-purple-400"/> AI Performance Insights</h3>
+                     <p className="text-gray-400 text-sm mt-1">Generate deep analysis of benchmark trends using Gemini 1.5 Pro.</p>
+                 </div>
+                <button 
+                    onClick={handleAnalysis}
+                    disabled={isAnalyzing}
+                    className="bg-purple-600 hover:bg-purple-500 text-white px-6 py-2 rounded-lg text-sm font-bold flex items-center gap-2 shadow-lg transition-all"
+                >
+                    {isAnalyzing ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
+                    {isAnalyzing ? 'Generating Report...' : 'Generate Analysis'}
+                </button>
+             </div>
+             
+             <div className="flex-1 bg-nebula-900 border border-purple-500/20 rounded-xl p-8 overflow-y-auto">
+                 {analysis ? (
+                    <div className="prose prose-invert max-w-none">
+                        <div dangerouslySetInnerHTML={{ __html: analysis.replace(/\n/g, '<br/>') }} />
+                    </div>
+                 ) : (
+                     <div className="h-full flex flex-col items-center justify-center text-gray-600 opacity-50">
+                         <Sparkles size={64} className="mb-4" />
+                         <p>Click generate to analyze {results.length} benchmark results</p>
+                     </div>
+                 )}
+             </div>
         </div>
       )}
 
@@ -407,7 +428,7 @@ export const Benchmarks: React.FC<BenchmarksProps> = ({ results, models }) => {
                        </div>
                   </div>
 
-                  <div className="flex-1 overflow-y-auto p-6 space-y-4 relative">
+                  <div className="flex-1 overflow-y-auto p-6 space-y-2 relative bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-nebula-800/20 via-nebula-950 to-nebula-950">
                       {currentConfig.steps.length === 0 && (
                           <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-600 pointer-events-none">
                               <Layers size={48} className="mb-4 opacity-20" />
@@ -416,49 +437,62 @@ export const Benchmarks: React.FC<BenchmarksProps> = ({ results, models }) => {
                       )}
 
                       {currentConfig.steps.map((step, index) => (
-                          <div 
-                            key={step.id} 
-                            draggable
-                            onDragStart={(e) => handleDragStart(e, index)}
-                            onDragOver={(e) => handleDragOver(e, index)}
-                            onDrop={handleDrop}
-                            className={`bg-nebula-950 border ${expandedStepId === step.id ? 'border-purple-500 ring-1 ring-purple-500/50' : 'border-nebula-700'} rounded-lg transition-all shadow-lg group`}
-                          >
-                              <div className="flex items-center p-3 gap-3 cursor-grab active:cursor-grabbing hover:bg-nebula-900/50 transition-colors rounded-t-lg">
-                                  <GripVertical size={16} className="text-gray-600" />
-                                  <div className="p-2 bg-nebula-900 rounded border border-nebula-800">
-                                      {getStepIcon(step.type)}
-                                  </div>
-                                  <div className="flex-1">
-                                      <div className="flex items-center gap-2">
-                                          <span className="text-sm font-bold text-gray-200">{step.name}</span>
-                                          <span className="text-[10px] bg-nebula-800 px-2 rounded text-gray-500">{step.type}</span>
-                                      </div>
-                                  </div>
-                                  <div className="flex items-center gap-2">
-                                      <button onClick={() => setExpandedStepId(expandedStepId === step.id ? null : step.id)} className="p-1 hover:bg-nebula-800 rounded text-gray-400">
-                                          {expandedStepId === step.id ? <ChevronDown size={16}/> : <ChevronRight size={16}/>}
-                                      </button>
-                                      <button onClick={() => removeStep(step.id)} className="p-1 hover:bg-red-900/30 hover:text-red-400 rounded text-gray-600">
-                                          <X size={16} />
-                                      </button>
-                                  </div>
-                              </div>
-                              
-                              {expandedStepId === step.id && (
-                                  <div className="p-4 border-t border-nebula-800 bg-nebula-900/30 animate-fade-in">
-                                      <div className="mb-4">
-                                          <label className="text-xs text-gray-500 uppercase font-bold">Step Name</label>
-                                          <input 
-                                            type="text" 
-                                            value={step.name} 
-                                            onChange={(e) => updateStep(step.id, { name: e.target.value })}
-                                            className="w-full bg-nebula-950 border border-nebula-800 rounded p-2 text-sm mt-1 text-white focus:border-purple-500 outline-none" 
-                                          />
-                                      </div>
-                                      {renderStepConfig(step)}
-                                  </div>
-                              )}
+                          <div key={step.id} className="relative">
+                            {/* Connector Line */}
+                            {index > 0 && (
+                                <div className="absolute -top-4 left-8 w-0.5 h-4 bg-nebula-700 z-0"></div>
+                            )}
+                            
+                            <div 
+                                draggable
+                                onDragStart={(e) => handleDragStart(e, index)}
+                                onDragOver={(e) => handleDragOver(e, index)}
+                                onDrop={handleDrop}
+                                className={`relative z-10 bg-nebula-950 border ${expandedStepId === step.id ? 'border-purple-500 ring-1 ring-purple-500/50' : 'border-nebula-700'} rounded-lg transition-all shadow-lg group`}
+                            >
+                                <div className="flex items-center p-3 gap-3 cursor-grab active:cursor-grabbing hover:bg-nebula-900/50 transition-colors rounded-t-lg">
+                                    <GripVertical size={16} className="text-gray-600" />
+                                    <div className="p-2 bg-nebula-900 rounded border border-nebula-800 shadow-sm">
+                                        {getStepIcon(step.type)}
+                                    </div>
+                                    <div className="flex-1">
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-sm font-bold text-gray-200">{step.name}</span>
+                                            <span className="text-[10px] bg-nebula-800 px-2 rounded text-gray-500 border border-nebula-700">{step.type}</span>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <button onClick={() => setExpandedStepId(expandedStepId === step.id ? null : step.id)} className="p-1 hover:bg-nebula-800 rounded text-gray-400">
+                                            {expandedStepId === step.id ? <ChevronDown size={16}/> : <ChevronRight size={16}/>}
+                                        </button>
+                                        <button onClick={() => removeStep(step.id)} className="p-1 hover:bg-red-900/30 hover:text-red-400 rounded text-gray-600">
+                                            <X size={16} />
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                {expandedStepId === step.id && (
+                                    <div className="p-4 border-t border-nebula-800 bg-nebula-900/30 animate-fade-in">
+                                        <div className="mb-4">
+                                            <label className="text-xs text-gray-500 uppercase font-bold">Step Name</label>
+                                            <input 
+                                                type="text" 
+                                                value={step.name} 
+                                                onChange={(e) => updateStep(step.id, { name: e.target.value })}
+                                                className="w-full bg-nebula-950 border border-nebula-800 rounded p-2 text-sm mt-1 text-white focus:border-purple-500 outline-none" 
+                                            />
+                                        </div>
+                                        {renderStepConfig(step)}
+                                    </div>
+                                )}
+                            </div>
+                            
+                            {/* Down Arrow for Flow visualization */}
+                            {index < currentConfig.steps.length - 1 && (
+                                <div className="flex justify-start pl-7 py-1">
+                                    <ArrowRight className="rotate-90 text-nebula-700" size={16} />
+                                </div>
+                            )}
                           </div>
                       ))}
                   </div>

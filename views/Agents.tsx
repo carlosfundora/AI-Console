@@ -1,0 +1,268 @@
+
+import React, { useState } from 'react';
+import { AgentConfig } from '../types';
+import { Briefcase, Code, Plus, Save, Trash2, Key, FolderOpen, Bot, FileJson, X } from 'lucide-react';
+
+interface AgentsProps {
+    agents: AgentConfig[];
+    onSaveAgent: (agent: AgentConfig) => void;
+    onDeleteAgent: (id: string) => void;
+}
+
+const EMPTY_AGENT: AgentConfig = {
+    id: '',
+    name: 'New Agent',
+    description: '',
+    systemPrompt: '',
+    toolsSchema: '[]',
+    envVars: [],
+    externalPaths: [],
+    lastModified: new Date().toISOString().split('T')[0]
+};
+
+export const Agents: React.FC<AgentsProps> = ({ agents, onSaveAgent, onDeleteAgent }) => {
+    const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
+    const [currentAgent, setCurrentAgent] = useState<AgentConfig>(EMPTY_AGENT);
+
+    const handleSelectAgent = (agent: AgentConfig) => {
+        setSelectedAgentId(agent.id);
+        setCurrentAgent({ ...agent });
+    };
+
+    const handleCreateNew = () => {
+        const newAgent = { ...EMPTY_AGENT, id: `agent-${Date.now()}` };
+        setCurrentAgent(newAgent);
+        setSelectedAgentId(newAgent.id);
+    };
+
+    const handleSave = () => {
+        onSaveAgent({ ...currentAgent, lastModified: new Date().toISOString().split('T')[0] });
+    };
+
+    const handleDelete = () => {
+        if (selectedAgentId) {
+            onDeleteAgent(selectedAgentId);
+            setSelectedAgentId(null);
+            setCurrentAgent(EMPTY_AGENT);
+        }
+    };
+
+    const addEnvVar = () => {
+        setCurrentAgent({
+            ...currentAgent,
+            envVars: [...currentAgent.envVars, { key: '', value: '' }]
+        });
+    };
+
+    const updateEnvVar = (index: number, field: 'key' | 'value', val: string) => {
+        const newEnv = [...currentAgent.envVars];
+        newEnv[index][field] = val;
+        setCurrentAgent({ ...currentAgent, envVars: newEnv });
+    };
+
+    const removeEnvVar = (index: number) => {
+        const newEnv = currentAgent.envVars.filter((_, i) => i !== index);
+        setCurrentAgent({ ...currentAgent, envVars: newEnv });
+    };
+
+    const addPath = () => {
+        setCurrentAgent({
+            ...currentAgent,
+            externalPaths: [...currentAgent.externalPaths, '']
+        });
+    };
+
+    const updatePath = (index: number, val: string) => {
+        const newPaths = [...currentAgent.externalPaths];
+        newPaths[index] = val;
+        setCurrentAgent({ ...currentAgent, externalPaths: newPaths });
+    };
+
+    const removePath = (index: number) => {
+        const newPaths = currentAgent.externalPaths.filter((_, i) => i !== index);
+        setCurrentAgent({ ...currentAgent, externalPaths: newPaths });
+    };
+
+    return (
+        <div className="flex h-full gap-6 animate-fade-in">
+            {/* Sidebar List */}
+            <div className="w-72 flex flex-col gap-4 bg-nebula-900 border border-nebula-700 rounded-xl p-4 shadow-lg">
+                <div className="flex justify-between items-center border-b border-nebula-800 pb-4">
+                    <h3 className="font-bold text-gray-200 flex items-center gap-2">
+                        <Bot className="text-purple-500" /> Agents & Tools
+                    </h3>
+                    <button 
+                        onClick={handleCreateNew} 
+                        className="p-1.5 bg-purple-600 hover:bg-purple-500 text-white rounded transition-colors"
+                        title="Create New Agent"
+                    >
+                        <Plus size={16} />
+                    </button>
+                </div>
+                
+                <div className="flex-1 overflow-y-auto space-y-2">
+                    {agents.length === 0 && (
+                        <div className="text-sm text-gray-500 text-center py-8 italic">No agents defined.</div>
+                    )}
+                    {agents.map(agent => (
+                        <div 
+                            key={agent.id}
+                            onClick={() => handleSelectAgent(agent)}
+                            className={`p-3 rounded-lg cursor-pointer border transition-all ${
+                                selectedAgentId === agent.id 
+                                ? 'bg-purple-900/30 border-purple-500 text-white' 
+                                : 'bg-nebula-950 border-nebula-800 text-gray-400 hover:border-purple-500/30 hover:text-gray-200'
+                            }`}
+                        >
+                            <div className="font-bold text-sm truncate">{agent.name}</div>
+                            <div className="text-[10px] opacity-70 mt-1 truncate">{agent.description || 'No description'}</div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+
+            {/* Editor Area */}
+            <div className="flex-1 bg-nebula-900 border border-nebula-700 rounded-xl flex flex-col overflow-hidden">
+                {selectedAgentId ? (
+                    <div className="flex flex-col h-full">
+                        {/* Header */}
+                        <div className="p-4 border-b border-nebula-800 flex justify-between items-center bg-nebula-950/50">
+                            <div className="flex-1 mr-4">
+                                <input 
+                                    type="text" 
+                                    value={currentAgent.name} 
+                                    onChange={(e) => setCurrentAgent({...currentAgent, name: e.target.value})}
+                                    className="bg-transparent text-lg font-bold text-white outline-none w-full placeholder-gray-600"
+                                    placeholder="Agent Name"
+                                />
+                                <input 
+                                    type="text" 
+                                    value={currentAgent.description} 
+                                    onChange={(e) => setCurrentAgent({...currentAgent, description: e.target.value})}
+                                    className="bg-transparent text-xs text-gray-400 outline-none w-full mt-1 placeholder-gray-600"
+                                    placeholder="Short description of the agent's capability..."
+                                />
+                            </div>
+                            <div className="flex gap-2">
+                                <button 
+                                    onClick={handleDelete}
+                                    className="px-3 py-2 text-red-400 hover:bg-red-900/20 rounded text-sm transition-colors border border-transparent hover:border-red-900/50"
+                                >
+                                    <Trash2 size={16} />
+                                </button>
+                                <button 
+                                    onClick={handleSave}
+                                    className="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded text-sm font-bold flex items-center gap-2 shadow-lg transition-colors"
+                                >
+                                    <Save size={16} /> Save Agent
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Content */}
+                        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                            
+                            {/* System Prompt */}
+                            <div className="space-y-2">
+                                <label className="text-xs uppercase text-purple-400 font-bold flex items-center gap-2">
+                                    <Briefcase size={14} /> System Prompt / Instructions
+                                </label>
+                                <textarea 
+                                    value={currentAgent.systemPrompt}
+                                    onChange={(e) => setCurrentAgent({...currentAgent, systemPrompt: e.target.value})}
+                                    className="w-full h-40 bg-nebula-950 border border-nebula-800 rounded-lg p-4 text-sm text-gray-300 focus:border-purple-500 outline-none font-mono leading-relaxed resize-none"
+                                    placeholder="You are a helpful assistant..."
+                                />
+                            </div>
+
+                            {/* Tools Schema */}
+                            <div className="space-y-2">
+                                <label className="text-xs uppercase text-purple-400 font-bold flex items-center gap-2">
+                                    <FileJson size={14} /> Tool Definitions (JSON Schema)
+                                </label>
+                                <div className="relative">
+                                    <textarea 
+                                        value={currentAgent.toolsSchema}
+                                        onChange={(e) => setCurrentAgent({...currentAgent, toolsSchema: e.target.value})}
+                                        className="w-full h-48 bg-nebula-950 border border-nebula-800 rounded-lg p-4 text-xs text-green-400 focus:border-purple-500 outline-none font-mono resize-none"
+                                        spellCheck={false}
+                                    />
+                                    <div className="absolute top-2 right-2 text-[10px] text-gray-600 bg-nebula-900 px-2 py-1 rounded">JSON</div>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                                {/* Environment Variables */}
+                                <div className="bg-nebula-950/50 border border-nebula-800 rounded-lg p-4">
+                                    <div className="flex justify-between items-center mb-3">
+                                        <label className="text-xs uppercase text-gray-500 font-bold flex items-center gap-2">
+                                            <Key size={14} /> Environment Variables
+                                        </label>
+                                        <button onClick={addEnvVar} className="text-[10px] bg-nebula-900 hover:bg-nebula-800 px-2 py-1 rounded text-purple-400 border border-nebula-700">
+                                            + Add Var
+                                        </button>
+                                    </div>
+                                    <div className="space-y-2 max-h-40 overflow-y-auto">
+                                        {currentAgent.envVars.map((env, i) => (
+                                            <div key={i} className="flex gap-2">
+                                                <input 
+                                                    placeholder="KEY" 
+                                                    value={env.key}
+                                                    onChange={(e) => updateEnvVar(i, 'key', e.target.value)}
+                                                    className="flex-1 bg-nebula-900 border border-nebula-700 rounded p-1.5 text-xs text-gray-300 outline-none focus:border-purple-500 font-mono"
+                                                />
+                                                <input 
+                                                    placeholder="VALUE" 
+                                                    value={env.value}
+                                                    onChange={(e) => updateEnvVar(i, 'value', e.target.value)}
+                                                    className="flex-1 bg-nebula-900 border border-nebula-700 rounded p-1.5 text-xs text-gray-300 outline-none focus:border-purple-500 font-mono"
+                                                />
+                                                <button onClick={() => removeEnvVar(i)} className="text-gray-500 hover:text-red-400 px-1">
+                                                    <X size={14} />
+                                                </button>
+                                            </div>
+                                        ))}
+                                        {currentAgent.envVars.length === 0 && <div className="text-xs text-gray-600 italic">No environment variables defined.</div>}
+                                    </div>
+                                </div>
+
+                                {/* External Paths */}
+                                <div className="bg-nebula-950/50 border border-nebula-800 rounded-lg p-4">
+                                    <div className="flex justify-between items-center mb-3">
+                                        <label className="text-xs uppercase text-gray-500 font-bold flex items-center gap-2">
+                                            <FolderOpen size={14} /> External Paths / Includes
+                                        </label>
+                                        <button onClick={addPath} className="text-[10px] bg-nebula-900 hover:bg-nebula-800 px-2 py-1 rounded text-purple-400 border border-nebula-700">
+                                            + Add Path
+                                        </button>
+                                    </div>
+                                    <div className="space-y-2 max-h-40 overflow-y-auto">
+                                        {currentAgent.externalPaths.map((path, i) => (
+                                            <div key={i} className="flex gap-2">
+                                                <input 
+                                                    placeholder="/path/to/script.py or ./config/" 
+                                                    value={path}
+                                                    onChange={(e) => updatePath(i, e.target.value)}
+                                                    className="flex-1 bg-nebula-900 border border-nebula-700 rounded p-1.5 text-xs text-gray-300 outline-none focus:border-purple-500 font-mono"
+                                                />
+                                                <button onClick={() => removePath(i)} className="text-gray-500 hover:text-red-400 px-1">
+                                                    <X size={14} />
+                                                </button>
+                                            </div>
+                                        ))}
+                                        {currentAgent.externalPaths.length === 0 && <div className="text-xs text-gray-600 italic">No external paths linked.</div>}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                ) : (
+                    <div className="flex-1 flex flex-col items-center justify-center text-gray-600 opacity-50">
+                        <Bot size={64} className="mb-4" />
+                        <p>Select an agent to edit or create a new one.</p>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+};

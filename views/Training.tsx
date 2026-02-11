@@ -46,7 +46,7 @@ export const Training: React.FC<TrainingProps> = ({ models, datasets }) => {
                      onClick={() => setMode('distill')}
                      className={`px-4 py-2 rounded text-sm font-bold transition-all flex items-center gap-2 ${mode === 'distill' ? 'bg-purple-600 text-white shadow-lg' : 'text-gray-400 hover:text-white'}`}
                 >
-                    <Cpu size={16} /> Distill
+                    <Cpu size={16} /> DistillKit
                 </button>
                  <button 
                      onClick={() => setMode('agent')}

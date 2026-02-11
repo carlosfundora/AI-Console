@@ -1,4 +1,5 @@
 
+
 export enum ModelStatus {
   Ready = 'Ready',
   Training = 'Training',
@@ -41,6 +42,7 @@ export interface Model {
   links: ModelLink[];
   versions: ModelVersion[];
   lastUsed: string;
+  documentation?: string; // Markdown content for model documentation
 }
 
 export interface ServerProfile {
@@ -161,17 +163,32 @@ export interface LabArtifact {
     created: string;
 }
 
+export interface AgentConfig {
+  id: string;
+  name: string;
+  description: string;
+  systemPrompt: string;
+  toolsSchema: string; // JSON string representing the tools array
+  envVars: { key: string; value: string }[];
+  externalPaths: string[];
+  lastModified: string;
+}
+
 export interface AppSettings {
     directories: {
         ollamaPath: string;
         venvPytorch: string;
         venvTransformers: string;
         mergeKitPath: string;
+        distillKitPath: string;
+        medusaPath: string;
+        adaptersDir: string;
         modelStore: string;
         blobStore: string;
         resultsDir: string;
         datasetsDir: string;
+        agentsDir: string;
     }
 }
 
-export type ViewState = 'dashboard' | 'benchmarks' | 'datasets' | 'training' | 'laboratory' | 'models' | 'servers' | 'chat' | 'settings';
+export type ViewState = 'dashboard' | 'benchmarks' | 'datasets' | 'training' | 'laboratory' | 'models' | 'servers' | 'chat' | 'settings' | 'agents';

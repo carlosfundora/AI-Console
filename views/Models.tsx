@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Model, ModelVersion, ServerProfile } from '../types';
-import { GitBranch, Box, FileCode, Tag, ExternalLink, Cpu, Terminal, Scale, X, BarChart2, Filter, Check, Server } from 'lucide-react';
+import { GitBranch, Box, FileCode, Tag, ExternalLink, Cpu, Terminal, Scale, X, BarChart2, Filter, Check, Server, FileText } from 'lucide-react';
 
 interface ModelsProps {
   models: Model[];
@@ -13,6 +13,7 @@ export const Models: React.FC<ModelsProps> = ({ models, servers }) => {
   const [selectedVersionIds, setSelectedVersionIds] = useState<Set<string>>(new Set());
   const [showComparison, setShowComparison] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [detailTab, setDetailTab] = useState<'overview' | 'versions' | 'docs'>('overview');
 
   // Filters
   const [showFilters, setShowFilters] = useState(false);
@@ -122,209 +123,270 @@ export const Models: React.FC<ModelsProps> = ({ models, servers }) => {
       </div>
 
       <div className="flex gap-6 flex-1 min-h-0">
-        {/* Model List/Grid */}
+        {/* Model List/Grid - Compact Mode */}
         <div className={`flex-1 overflow-y-auto ${selectedModel ? 'hidden lg:block lg:w-1/2' : 'w-full'}`}>
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                 {filteredModels.map(model => (
                     <div 
                         key={model.id} 
-                        onClick={() => { setSelectedModel(model); setSelectedVersionIds(new Set()); setShowComparison(false); }}
-                        className={`bg-nebula-900 border ${selectedModel?.id === model.id ? 'border-purple-500' : 'border-nebula-700'} rounded-xl p-5 hover:border-purple-500/50 transition-all cursor-pointer group relative overflow-hidden`}
+                        onClick={() => { setSelectedModel(model); setSelectedVersionIds(new Set()); setShowComparison(false); setDetailTab('overview'); }}
+                        className={`bg-nebula-900 border ${selectedModel?.id === model.id ? 'border-purple-500' : 'border-nebula-700'} rounded-xl p-3 hover:border-purple-500/50 transition-all cursor-pointer group relative overflow-hidden`}
                     >
                         <div className="flex justify-between items-start mb-2">
-                            <span className="text-xs bg-nebula-800 text-purple-300 px-2 py-1 rounded border border-nebula-700">{model.provider}</span>
-                            <span className="text-gray-500 text-xs font-mono">{model.versions.length} versions</span>
+                            <span className="text-[10px] bg-nebula-800 text-purple-300 px-1.5 py-0.5 rounded border border-nebula-700">{model.provider}</span>
+                            <span className="text-gray-500 text-[10px] font-mono">{model.versions.length} ver</span>
                         </div>
-                        <h3 className="text-lg font-bold text-white mb-2">{model.name}</h3>
+                        <h3 className="text-sm font-bold text-white mb-2 truncate" title={model.name}>{model.name}</h3>
                         
-                        <div className="flex items-center gap-2 mb-3">
-                             <span className="text-xs flex items-center gap-1 bg-nebula-950 px-2 py-0.5 rounded border border-nebula-800 text-gray-300" title="Parameter Count">
+                        <div className="flex items-center gap-2 mb-2">
+                             <span className="text-[10px] flex items-center gap-1 bg-nebula-950 px-1.5 py-0.5 rounded border border-nebula-800 text-gray-300" title="Parameter Count">
                                 <Scale size={10} /> {model.params}
                              </span>
-                             <span className="text-xs flex items-center gap-1 bg-nebula-950 px-2 py-0.5 rounded border border-nebula-800 text-gray-300" title="Tensor Type">
+                             <span className="text-[10px] flex items-center gap-1 bg-nebula-950 px-1.5 py-0.5 rounded border border-nebula-800 text-gray-300" title="Tensor Type">
                                 <Cpu size={10} /> {model.tensorType}
                              </span>
                         </div>
 
-                        <p className="text-xs text-gray-400 mb-4 line-clamp-2">{model.description}</p>
+                        <p className="text-[10px] text-gray-400 mb-2 line-clamp-2 leading-relaxed">{model.description}</p>
                         
-                        <div className="flex flex-wrap gap-2 mb-4">
-                            {model.tags.map(tag => (
-                                <span key={tag} className="text-[10px] px-2 py-0.5 rounded-full bg-nebula-950 border border-nebula-800 text-gray-400">
+                        <div className="flex flex-wrap gap-1 mb-2">
+                            {model.tags.slice(0, 3).map(tag => (
+                                <span key={tag} className="text-[9px] px-1.5 py-0.5 rounded-full bg-nebula-950 border border-nebula-800 text-gray-500">
                                     {tag}
                                 </span>
                             ))}
                         </div>
 
-                        <div className="flex items-center gap-4 text-xs text-gray-500 pt-3 border-t border-nebula-800">
+                        <div className="flex items-center gap-3 text-[10px] text-gray-600 pt-2 border-t border-nebula-800/50">
                              <div className="flex items-center gap-1">
-                                <GitBranch size={14} />
-                                {model.versions[0]?.format || 'Unknown'}
+                                <GitBranch size={10} />
+                                {model.versions[0]?.format || '?'}
                              </div>
                              <div className="flex items-center gap-1">
-                                <Box size={14} />
-                                {model.versions[0]?.size || 'Unknown'}
+                                <Box size={10} />
+                                {model.versions[0]?.size || '?'}
                              </div>
                         </div>
                     </div>
                 ))}
                 
                  {/* Add New Placeholder */}
-                <div className="border-2 border-dashed border-nebula-800 rounded-xl p-5 flex flex-col items-center justify-center text-gray-600 hover:text-purple-400 hover:border-purple-500/30 transition-all cursor-pointer min-h-[200px]">
-                    <span className="text-4xl mb-2">+</span>
-                    <span className="font-medium">Connect Repo</span>
+                <div className="border-2 border-dashed border-nebula-800 rounded-xl p-3 flex flex-col items-center justify-center text-gray-600 hover:text-purple-400 hover:border-purple-500/30 transition-all cursor-pointer min-h-[160px]">
+                    <span className="text-2xl mb-1">+</span>
+                    <span className="font-medium text-xs">Connect Repo</span>
                 </div>
              </div>
         </div>
 
         {/* Model Detail & Versions View */}
         {selectedModel && (
-            <div className="w-full lg:w-1/2 bg-nebula-900 border border-nebula-700 rounded-xl flex flex-col overflow-hidden animate-fade-in relative">
+            <div className="w-full lg:w-1/2 bg-nebula-900 border border-nebula-700 rounded-xl flex flex-col overflow-hidden animate-fade-in relative shadow-2xl">
                 <div className="p-6 border-b border-nebula-800 bg-nebula-950/30">
                     <div className="flex justify-between items-start mb-4">
                         <div>
-                            <h2 className="text-2xl font-bold text-white">{selectedModel.name}</h2>
-                            <p className="text-purple-400 text-sm">{selectedModel.provider} • {selectedModel.family}</p>
+                            <h2 className="text-xl font-bold text-white">{selectedModel.name}</h2>
+                            <p className="text-purple-400 text-xs mt-1">{selectedModel.provider} • {selectedModel.family}</p>
                         </div>
                         <button onClick={() => setSelectedModel(null)} className="lg:hidden text-gray-400 hover:text-white">Close</button>
                     </div>
-                    
-                    <div className="flex gap-4 mb-4 text-sm text-gray-300">
-                        <div className="flex flex-col">
-                            <span className="text-[10px] text-gray-500 uppercase">Params</span>
-                            <span className="font-mono">{selectedModel.params}</span>
-                        </div>
-                        <div className="flex flex-col">
-                            <span className="text-[10px] text-gray-500 uppercase">Tensor</span>
-                            <span className="font-mono">{selectedModel.tensorType}</span>
-                        </div>
-                         <div className="flex flex-col">
-                            <span className="text-[10px] text-gray-500 uppercase">Last Used</span>
-                            <span className="font-mono">{selectedModel.lastUsed}</span>
-                        </div>
-                    </div>
 
-                    <p className="text-gray-400 text-sm mb-4">{selectedModel.description}</p>
-                    
-                    <div className="flex flex-wrap gap-3 mb-4">
-                        {selectedModel.links.map((link, i) => (
-                            <a 
-                                key={i} 
-                                href={link.url} 
-                                target="_blank" 
-                                rel="noopener noreferrer"
-                                className="flex items-center gap-2 bg-nebula-800 hover:bg-nebula-700 border border-nebula-700 px-3 py-1.5 rounded-md text-xs transition-colors"
-                            >
-                                <ExternalLink size={12} />
-                                {link.type}
-                            </a>
-                        ))}
-                    </div>
-
-                    {/* Compatible Servers Section */}
-                    <div className="bg-nebula-900 border border-nebula-800 rounded-lg p-3">
-                         <div className="text-xs text-gray-500 uppercase font-bold mb-2 flex items-center gap-2">
-                             <Server size={12} /> Compatible Servers
-                         </div>
-                         <div className="flex flex-wrap gap-2">
-                             {getCompatibleServers(selectedModel.id).length > 0 ? (
-                                 getCompatibleServers(selectedModel.id).map(srv => (
-                                     <div key={srv.id} className="flex items-center gap-2 px-2 py-1 bg-green-900/20 border border-green-500/30 rounded text-green-400 text-xs">
-                                         <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div>
-                                         {srv.name}
-                                     </div>
-                                 ))
-                             ) : (
-                                 <span className="text-xs text-gray-600 italic">No configured servers explicitly support this model.</span>
-                             )}
-                         </div>
+                    <div className="flex gap-2 border-b border-nebula-800">
+                        <button 
+                            onClick={() => setDetailTab('overview')}
+                            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${detailTab === 'overview' ? 'border-purple-500 text-white' : 'border-transparent text-gray-500 hover:text-gray-300'}`}
+                        >
+                            Overview
+                        </button>
+                        <button 
+                            onClick={() => setDetailTab('versions')}
+                            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${detailTab === 'versions' ? 'border-purple-500 text-white' : 'border-transparent text-gray-500 hover:text-gray-300'}`}
+                        >
+                            Versions <span className="text-[10px] bg-nebula-800 px-1.5 rounded-full ml-1">{selectedModel.versions.length}</span>
+                        </button>
+                        <button 
+                            onClick={() => setDetailTab('docs')}
+                            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${detailTab === 'docs' ? 'border-purple-500 text-white' : 'border-transparent text-gray-500 hover:text-gray-300'}`}
+                        >
+                            Documentation
+                        </button>
                     </div>
                 </div>
 
-                <div className="flex-1 overflow-y-auto p-6 pb-20">
-                    <div className="flex justify-between items-center mb-4">
-                        <h3 className="font-semibold text-lg flex items-center gap-2">
-                            <GitBranch size={18} className="text-purple-500" />
-                            Version History
-                        </h3>
-                        
-                        {selectedVersionIds.size > 1 && (
-                             <button 
-                                onClick={() => setShowComparison(true)}
-                                className="flex items-center gap-2 px-3 py-1 bg-purple-600 hover:bg-purple-500 text-white rounded text-xs font-bold animate-fade-in"
-                            >
-                                <BarChart2 size={12} /> Compare ({selectedVersionIds.size})
-                            </button>
-                        )}
-                    </div>
-
-                    <div className="space-y-4">
-                        {selectedModel.versions.map((ver) => (
-                            <div 
-                                key={ver.id} 
-                                onClick={() => toggleVersionSelection(ver.id)}
-                                className={`bg-nebula-950 border rounded-lg p-4 transition-all cursor-pointer relative ${selectedVersionIds.has(ver.id) ? 'border-purple-500 bg-purple-900/10' : 'border-nebula-800 hover:border-purple-500/30'}`}
-                            >
-                                <div className="absolute top-4 right-4">
-                                     <input 
-                                        type="checkbox" 
-                                        checked={selectedVersionIds.has(ver.id)} 
-                                        onChange={() => {}}
-                                        className="accent-purple-500 w-4 h-4 cursor-pointer" 
-                                     />
+                <div className="flex-1 overflow-y-auto p-6 pb-20 bg-nebula-900">
+                    {detailTab === 'overview' && (
+                        <div className="space-y-6 animate-fade-in">
+                             <div className="flex gap-4 text-sm text-gray-300">
+                                <div className="flex flex-col bg-nebula-950/50 p-3 rounded border border-nebula-800 flex-1">
+                                    <span className="text-[10px] text-gray-500 uppercase">Params</span>
+                                    <span className="font-mono font-bold">{selectedModel.params}</span>
                                 </div>
-
-                                <div className="flex justify-between items-start mb-3 pr-8">
-                                    <div className="flex items-center gap-3">
-                                        <div className="p-2 bg-nebula-900 rounded text-purple-400">
-                                            {ver.format === 'GGUF' ? <Box size={16} /> : ver.format === 'Ollama' ? <Terminal size={16} /> : <FileCode size={16} />}
-                                        </div>
-                                        <div>
-                                            <h4 className="font-bold text-sm text-gray-200">{ver.name}</h4>
-                                            <p className="text-[10px] text-gray-500 font-mono">{ver.id} • {ver.created}</p>
-                                        </div>
-                                    </div>
-                                    <div className="text-right mr-6">
-                                        <span className={`text-xs px-2 py-0.5 rounded ${ver.status === 'Ready' ? 'bg-green-900/30 text-green-400' : 'bg-yellow-900/30 text-yellow-400'}`}>
-                                            {ver.status}
-                                        </span>
-                                    </div>
+                                <div className="flex flex-col bg-nebula-950/50 p-3 rounded border border-nebula-800 flex-1">
+                                    <span className="text-[10px] text-gray-500 uppercase">Tensor</span>
+                                    <span className="font-mono font-bold">{selectedModel.tensorType}</span>
                                 </div>
-
-                                <div className="grid grid-cols-2 gap-4 text-xs text-gray-400 bg-nebula-900/50 p-3 rounded mb-3">
-                                    <div>
-                                        <span className="block text-gray-600">Quantization</span>
-                                        <span className="font-mono text-gray-300">{ver.quantization}</span>
-                                    </div>
-                                    <div>
-                                        <span className="block text-gray-600">Size</span>
-                                        <span className="font-mono text-gray-300">{ver.size}</span>
-                                    </div>
-                                    {ver.metrics && (
-                                        <>
-                                            <div>
-                                                <span className="block text-gray-600">Latency (GPU)</span>
-                                                <span className="font-mono text-gray-300">{ver.metrics.latencyMs} ms</span>
-                                            </div>
-                                            <div>
-                                                <span className="block text-gray-600">VRAM</span>
-                                                <span className="font-mono text-gray-300">{ver.metrics.vramGB} GB</span>
-                                            </div>
-                                        </>
-                                    )}
-                                </div>
-
-                                <div className="flex gap-2">
-                                    <button 
-                                        onClick={(e) => { e.stopPropagation(); }}
-                                        className="flex-1 bg-purple-600/10 hover:bg-purple-600/20 text-purple-400 border border-purple-600/30 py-1.5 rounded text-xs transition-colors"
-                                    >
-                                        Load
-                                    </button>
+                                <div className="flex flex-col bg-nebula-950/50 p-3 rounded border border-nebula-800 flex-1">
+                                    <span className="text-[10px] text-gray-500 uppercase">Last Used</span>
+                                    <span className="font-mono font-bold">{selectedModel.lastUsed}</span>
                                 </div>
                             </div>
-                        ))}
-                    </div>
+
+                            <div>
+                                <h4 className="text-sm font-bold text-gray-400 uppercase mb-2">Description</h4>
+                                <p className="text-gray-300 text-sm leading-relaxed bg-nebula-950/30 p-4 rounded border border-nebula-800/50">{selectedModel.description}</p>
+                            </div>
+                            
+                            <div>
+                                <h4 className="text-sm font-bold text-gray-400 uppercase mb-2">External Links</h4>
+                                <div className="flex flex-wrap gap-3">
+                                    {selectedModel.links.map((link, i) => (
+                                        <a 
+                                            key={i} 
+                                            href={link.url} 
+                                            target="_blank" 
+                                            rel="noopener noreferrer"
+                                            className="flex items-center gap-2 bg-nebula-800 hover:bg-nebula-700 border border-nebula-700 px-3 py-2 rounded-md text-sm transition-colors text-purple-300 hover:text-white"
+                                        >
+                                            <ExternalLink size={14} />
+                                            {link.type}
+                                        </a>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Compatible Servers Section */}
+                            <div>
+                                <h4 className="text-sm font-bold text-gray-400 uppercase mb-2">Compatible Servers</h4>
+                                <div className="bg-nebula-950 border border-nebula-800 rounded-lg p-3">
+                                    <div className="flex flex-wrap gap-2">
+                                        {getCompatibleServers(selectedModel.id).length > 0 ? (
+                                            getCompatibleServers(selectedModel.id).map(srv => (
+                                                <div key={srv.id} className="flex items-center gap-2 px-3 py-1.5 bg-green-900/20 border border-green-500/30 rounded text-green-400 text-xs font-bold">
+                                                    <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div>
+                                                    {srv.name}
+                                                </div>
+                                            ))
+                                        ) : (
+                                            <span className="text-xs text-gray-600 italic">No configured servers explicitly support this model.</span>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {detailTab === 'versions' && (
+                        <div className="space-y-4 animate-fade-in">
+                             <div className="flex justify-between items-center mb-2">
+                                <h3 className="font-semibold text-sm flex items-center gap-2 text-gray-400">
+                                    <GitBranch size={16} />
+                                    Available Checkpoints
+                                </h3>
+                                
+                                {selectedVersionIds.size > 1 && (
+                                    <button 
+                                        onClick={() => setShowComparison(true)}
+                                        className="flex items-center gap-2 px-3 py-1 bg-purple-600 hover:bg-purple-500 text-white rounded text-xs font-bold animate-fade-in"
+                                    >
+                                        <BarChart2 size={12} /> Compare ({selectedVersionIds.size})
+                                    </button>
+                                )}
+                            </div>
+
+                            {selectedModel.versions.map((ver) => (
+                                <div 
+                                    key={ver.id} 
+                                    onClick={() => toggleVersionSelection(ver.id)}
+                                    className={`bg-nebula-950 border rounded-lg p-4 transition-all cursor-pointer relative ${selectedVersionIds.has(ver.id) ? 'border-purple-500 bg-purple-900/10' : 'border-nebula-800 hover:border-purple-500/30'}`}
+                                >
+                                    <div className="absolute top-4 right-4">
+                                        <input 
+                                            type="checkbox" 
+                                            checked={selectedVersionIds.has(ver.id)} 
+                                            onChange={() => {}}
+                                            className="accent-purple-500 w-4 h-4 cursor-pointer" 
+                                        />
+                                    </div>
+
+                                    <div className="flex justify-between items-start mb-3 pr-8">
+                                        <div className="flex items-center gap-3">
+                                            <div className="p-2 bg-nebula-900 rounded text-purple-400">
+                                                {ver.format === 'GGUF' ? <Box size={16} /> : ver.format === 'Ollama' ? <Terminal size={16} /> : <FileCode size={16} />}
+                                            </div>
+                                            <div>
+                                                <h4 className="font-bold text-sm text-gray-200">{ver.name}</h4>
+                                                <p className="text-[10px] text-gray-500 font-mono">{ver.id} • {ver.created}</p>
+                                            </div>
+                                        </div>
+                                        <div className="text-right mr-6">
+                                            <span className={`text-xs px-2 py-0.5 rounded ${ver.status === 'Ready' ? 'bg-green-900/30 text-green-400' : 'bg-yellow-900/30 text-yellow-400'}`}>
+                                                {ver.status}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-4 text-xs text-gray-400 bg-nebula-900/50 p-3 rounded mb-3">
+                                        <div>
+                                            <span className="block text-gray-600">Quantization</span>
+                                            <span className="font-mono text-gray-300">{ver.quantization}</span>
+                                        </div>
+                                        <div>
+                                            <span className="block text-gray-600">Size</span>
+                                            <span className="font-mono text-gray-300">{ver.size}</span>
+                                        </div>
+                                        {ver.metrics && (
+                                            <>
+                                                <div>
+                                                    <span className="block text-gray-600">Latency (GPU)</span>
+                                                    <span className="font-mono text-gray-300">{ver.metrics.latencyMs} ms</span>
+                                                </div>
+                                                <div>
+                                                    <span className="block text-gray-600">VRAM</span>
+                                                    <span className="font-mono text-gray-300">{ver.metrics.vramGB} GB</span>
+                                                </div>
+                                            </>
+                                        )}
+                                    </div>
+
+                                    <div className="flex gap-2">
+                                        <button 
+                                            onClick={(e) => { e.stopPropagation(); }}
+                                            className="flex-1 bg-purple-600/10 hover:bg-purple-600/20 text-purple-400 border border-purple-600/30 py-1.5 rounded text-xs transition-colors"
+                                        >
+                                            Load to Server
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    {detailTab === 'docs' && (
+                        <div className="space-y-4 animate-fade-in h-full flex flex-col">
+                            <div className="flex justify-between items-center mb-2">
+                                <h3 className="font-semibold text-sm flex items-center gap-2 text-gray-400">
+                                    <FileText size={16} />
+                                    Model Documentation
+                                </h3>
+                                <button className="text-xs bg-nebula-800 hover:bg-nebula-700 px-3 py-1.5 rounded text-gray-300 border border-nebula-700">
+                                    Edit Markdown
+                                </button>
+                            </div>
+                            
+                            <div className="flex-1 bg-nebula-950 border border-nebula-800 rounded-lg p-6 overflow-y-auto">
+                                {selectedModel.documentation ? (
+                                    <div className="prose prose-invert prose-sm max-w-none">
+                                        <div dangerouslySetInnerHTML={{ __html: selectedModel.documentation.replace(/\n/g, '<br/>').replace(/# (.*)/g, '<h1 class="text-xl font-bold mb-4 text-purple-300">$1</h1>').replace(/## (.*)/g, '<h2 class="text-lg font-bold mt-4 mb-2 text-purple-200">$1</h2>').replace(/```python([\s\S]*?)```/g, '<pre class="bg-gray-900 p-3 rounded my-2 text-xs font-mono text-green-400">$1</pre>') }} />
+                                    </div>
+                                ) : (
+                                    <div className="h-full flex flex-col items-center justify-center text-gray-600 opacity-60">
+                                        <FileText size={48} className="mb-4" />
+                                        <p>No documentation available for this model.</p>
+                                        <button className="mt-4 text-purple-400 hover:text-purple-300 text-sm underline">Add README</button>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* Comparison Overlay */}
