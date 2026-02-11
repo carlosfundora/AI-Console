@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { LayoutDashboard, Database, BrainCircuit, Activity, Settings as SettingsIcon, Server, Terminal, FlaskConical, Loader2 } from 'lucide-react';
+import { LayoutDashboard, Database, BrainCircuit, Activity, Settings as SettingsIcon, Server, Terminal, FlaskConical, Loader2, MessageSquare } from 'lucide-react';
 import { Dashboard } from './views/Dashboard';
 import { Benchmarks } from './views/Benchmarks';
 import { Datasets } from './views/Datasets';
@@ -9,6 +9,7 @@ import { Training } from './views/Training';
 import { Laboratory } from './views/Laboratory';
 import { Servers } from './views/Servers';
 import { Settings } from './views/Settings';
+import { Chat } from './views/Chat';
 import { ViewState, Model, BenchmarkResult, Dataset, ServerConfig, ModelStatus, ServerProfile } from './types';
 
 // Mock Models with Versioning
@@ -183,7 +184,7 @@ const App: React.FC = () => {
     { id: 'datasets', label: 'Datasets', icon: <Database size={20} /> },
     { id: 'training', label: 'Training', icon: <Terminal size={20} /> },
     { id: 'laboratory', label: 'Laboratory', icon: <FlaskConical size={20} /> },
-    { id: 'compute', label: 'Compute', icon: <SettingsIcon size={20} /> }, // Using Settings icon for Compute generally, as it was in original list
+    { id: 'chat', label: 'Chat / Testing', icon: <MessageSquare size={20} /> }, 
   ];
 
   return (
@@ -264,15 +265,7 @@ const App: React.FC = () => {
               {activeTab === 'servers' && <Servers servers={servers} models={MOCK_MODELS} onUpdateServer={handleUpdateServer} onDeleteServer={handleDeleteServer} onAddServer={handleAddServer} />}
               {activeTab === 'models' && <Models models={MOCK_MODELS} servers={servers} />}
               {activeTab === 'settings' && <Settings />}
-              {activeTab === 'compute' && (
-                  <div className="flex items-center justify-center h-full text-gray-500">
-                      <div className="text-center">
-                          <Server size={48} className="mx-auto mb-4 opacity-50" />
-                          <h2 className="text-xl font-bold mb-2">Compute Configuration</h2>
-                          <p>Server management and cloud provider API settings would go here.</p>
-                      </div>
-                  </div>
-              )}
+              {activeTab === 'chat' && <Chat models={MOCK_MODELS} servers={servers} onUpdateServer={handleUpdateServer} />}
             </div>
           </div>
         </main>

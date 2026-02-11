@@ -174,4 +174,4 @@ export interface AppSettings {
     }
 }
 
-export type ViewState = 'dashboard' | 'benchmarks' | 'datasets' | 'training' | 'laboratory' | 'models' | 'servers' | 'compute' | 'settings';
+export type ViewState = 'dashboard' | 'benchmarks' | 'datasets' | 'training' | 'laboratory' | 'models' | 'servers' | 'chat' | 'settings';

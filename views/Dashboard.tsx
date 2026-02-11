@@ -55,11 +55,34 @@ const highScores = [
 export const Dashboard: React.FC<DashboardProps> = ({ serverConfig }) => {
   const [slideIndex, setSlideIndex] = useState(0);
 
-  const nextSlide = () => setSlideIndex((prev) => (prev + 1) % 3);
-  const prevSlide = () => setSlideIndex((prev) => (prev - 1 + 3) % 3);
+  const nextSlide = () => setSlideIndex((prev) => (prev + 1) % 4);
+  const prevSlide = () => setSlideIndex((prev) => (prev - 1 + 4) % 4);
 
   return (
     <div className="space-y-6 animate-fade-in pb-10">
+      {/* Alerts Moved to Top */}
+      <div className="bg-nebula-900 border border-nebula-700 rounded-xl p-6">
+        <h3 className="text-lg font-semibold mb-4">🚀 Recent Alerts</h3>
+        <div className="space-y-3">
+          <div className="flex items-center gap-4 p-3 bg-nebula-950/50 rounded-lg border border-nebula-700/50">
+            <span className="text-green-400 text-xl">✅</span>
+            <div>
+              <p className="text-sm font-medium">Fine-tuning Completed</p>
+              <p className="text-xs text-gray-500">Llama-3-8b-SFT-v2 finished successfully in 4h 20m.</p>
+            </div>
+            <span className="ml-auto text-xs text-gray-600">10m ago</span>
+          </div>
+          <div className="flex items-center gap-4 p-3 bg-nebula-950/50 rounded-lg border border-nebula-700/50">
+            <span className="text-yellow-400 text-xl">⚠️</span>
+            <div>
+              <p className="text-sm font-medium">High VRAM Usage</p>
+              <p className="text-xs text-gray-500">Process ID 4590 spiked to 95% VRAM usage.</p>
+            </div>
+            <span className="ml-auto text-xs text-gray-600">1h ago</span>
+          </div>
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard title="Active Models" value="3" icon="🧠" trend="+1 Loaded" trendUp={true} />
         <StatCard title="Total VRAM" value={`${serverConfig.vramTotal} GB`} icon="💾" />
@@ -85,9 +108,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ serverConfig }) => {
 
             {/* Slide 0: VRAM & Load */}
             {slideIndex === 0 && (
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-fade-in">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-fade-in h-[450px]">
                     {/* VRAM Usage */}
-                    <div className="bg-nebula-900 border border-nebula-700 rounded-xl p-6 lg:col-span-1 flex flex-col items-center justify-center relative overflow-hidden h-[350px]">
+                    <div className="bg-nebula-900 border border-nebula-700 rounded-xl p-6 lg:col-span-1 flex flex-col items-center justify-center relative overflow-hidden">
                     <div className="absolute top-0 right-0 p-4 opacity-5">
                         <span className="text-6xl">💾</span>
                     </div>
@@ -123,9 +146,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ serverConfig }) => {
                     </div>
 
                     {/* GPU Load History */}
-                    <div className="bg-nebula-900 border border-nebula-700 rounded-xl p-6 lg:col-span-2 h-[350px]">
+                    <div className="bg-nebula-900 border border-nebula-700 rounded-xl p-6 lg:col-span-2">
                     <h3 className="text-lg font-semibold mb-4">⚡ GPU Load History</h3>
-                    <div className="h-64 w-full">
+                    <div className="h-full max-h-[350px] w-full">
                         <ResponsiveContainer width="100%" height="100%">
                         <AreaChart data={activityData}>
                             <defs>
@@ -150,7 +173,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ serverConfig }) => {
 
             {/* Slide 1: Active Tasks */}
             {slideIndex === 1 && (
-                <div className="bg-nebula-900 border border-nebula-700 rounded-xl p-6 h-[350px] animate-fade-in flex flex-col">
+                <div className="bg-nebula-900 border border-nebula-700 rounded-xl p-6 h-[450px] animate-fade-in flex flex-col">
                     <h3 className="text-lg font-semibold mb-6 flex items-center gap-2">
                         <List className="text-blue-500" /> Active Operations & Tasks
                     </h3>
@@ -177,7 +200,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ serverConfig }) => {
 
             {/* Slide 2: High Scores */}
             {slideIndex === 2 && (
-                <div className="bg-nebula-900 border border-nebula-700 rounded-xl p-6 h-[350px] animate-fade-in flex flex-col">
+                <div className="bg-nebula-900 border border-nebula-700 rounded-xl p-6 h-[450px] animate-fade-in flex flex-col">
                         <h3 className="text-lg font-semibold mb-6 flex items-center gap-2">
                         <Trophy className="text-yellow-500" /> Laboratory Records
                     </h3>
@@ -196,82 +219,62 @@ export const Dashboard: React.FC<DashboardProps> = ({ serverConfig }) => {
                 </div>
             )}
 
+            {/* Slide 3: Health & Throughput (Moved from bottom row) */}
+            {slideIndex === 3 && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 h-[450px] animate-fade-in">
+                    {/* System Health Radar */}
+                    <div className="bg-nebula-900 border border-nebula-700 rounded-xl p-6 flex flex-col">
+                        <h3 className="text-lg font-semibold mb-2">🛡️ System Health Matrix</h3>
+                        <p className="text-xs text-gray-500 mb-4">Real-time telemetry across sub-systems</p>
+                        <div className="flex-1 min-h-0">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <RadarChart cx="50%" cy="50%" outerRadius="70%" data={healthData}>
+                                    <PolarGrid stroke="#272730" />
+                                    <PolarAngleAxis dataKey="subject" tick={{ fill: '#9ca3af', fontSize: 12 }} />
+                                    <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
+                                    <Radar
+                                        name="Status"
+                                        dataKey="A"
+                                        stroke="#10b981"
+                                        strokeWidth={2}
+                                        fill="#10b981"
+                                        fillOpacity={0.3}
+                                    />
+                                    <Tooltip contentStyle={{ backgroundColor: '#0a0a12', border: '1px solid #1c1c2e', borderRadius: '8px' }} />
+                                </RadarChart>
+                            </ResponsiveContainer>
+                        </div>
+                    </div>
+
+                    {/* Model Throughput Bar */}
+                    <div className="bg-nebula-900 border border-nebula-700 rounded-xl p-6 flex flex-col">
+                        <h3 className="text-lg font-semibold mb-2">📊 Daily Token Throughput</h3>
+                        <p className="text-xs text-gray-500 mb-4">Total generation output by model family</p>
+                        <div className="flex-1 min-h-0">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart data={throughputData} layout="vertical">
+                                    <CartesianGrid strokeDasharray="3 3" stroke="#1c1c2e" horizontal={false} />
+                                    <XAxis type="number" stroke="#4b5563" tick={{fontSize: 10}} />
+                                    <YAxis dataKey="name" type="category" width={80} stroke="#9ca3af" tick={{fontSize: 11}} />
+                                    <Tooltip cursor={{fill: 'transparent'}} contentStyle={{ backgroundColor: '#0a0a12', border: '1px solid #1c1c2e', borderRadius: '8px' }} />
+                                    <Bar dataKey="tokens" fill="#8884d8" radius={[0, 4, 4, 0]}>
+                                        {throughputData.map((entry, index) => (
+                                            <Cell key={`cell-${index}`} fill={entry.color} />
+                                        ))}
+                                    </Bar>
+                                </BarChart>
+                            </ResponsiveContainer>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Pagination Indicators */}
             <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
-                {[0, 1, 2].map(i => (
+                {[0, 1, 2, 3].map(i => (
                     <div key={i} className={`w-1.5 h-1.5 rounded-full transition-all ${slideIndex === i ? 'bg-purple-500 w-4' : 'bg-gray-700'}`}></div>
                 ))}
             </div>
-      </div>
-
-      {/* Advanced Visualization Row */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* System Health Radar */}
-          <div className="bg-nebula-900 border border-nebula-700 rounded-xl p-6">
-              <h3 className="text-lg font-semibold mb-2">🛡️ System Health Matrix</h3>
-              <p className="text-xs text-gray-500 mb-4">Real-time telemetry across sub-systems</p>
-              <div className="h-64 w-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                      <RadarChart cx="50%" cy="50%" outerRadius="80%" data={healthData}>
-                          <PolarGrid stroke="#272730" />
-                          <PolarAngleAxis dataKey="subject" tick={{ fill: '#9ca3af', fontSize: 12 }} />
-                          <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
-                          <Radar
-                              name="Status"
-                              dataKey="A"
-                              stroke="#10b981"
-                              strokeWidth={2}
-                              fill="#10b981"
-                              fillOpacity={0.3}
-                          />
-                          <Tooltip contentStyle={{ backgroundColor: '#0a0a12', border: '1px solid #1c1c2e', borderRadius: '8px' }} />
-                      </RadarChart>
-                  </ResponsiveContainer>
-              </div>
-          </div>
-
-          {/* Model Throughput Bar */}
-           <div className="bg-nebula-900 border border-nebula-700 rounded-xl p-6">
-              <h3 className="text-lg font-semibold mb-2">📊 Daily Token Throughput</h3>
-              <p className="text-xs text-gray-500 mb-4">Total generation output by model family</p>
-              <div className="h-64 w-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={throughputData} layout="vertical">
-                          <CartesianGrid strokeDasharray="3 3" stroke="#1c1c2e" horizontal={false} />
-                          <XAxis type="number" stroke="#4b5563" tick={{fontSize: 10}} />
-                          <YAxis dataKey="name" type="category" width={80} stroke="#9ca3af" tick={{fontSize: 11}} />
-                          <Tooltip cursor={{fill: 'transparent'}} contentStyle={{ backgroundColor: '#0a0a12', border: '1px solid #1c1c2e', borderRadius: '8px' }} />
-                          <Bar dataKey="tokens" fill="#8884d8" radius={[0, 4, 4, 0]}>
-                            {throughputData.map((entry, index) => (
-                                <Cell key={`cell-${index}`} fill={entry.color} />
-                            ))}
-                          </Bar>
-                      </BarChart>
-                  </ResponsiveContainer>
-              </div>
-          </div>
-      </div>
-
-      <div className="bg-nebula-900 border border-nebula-700 rounded-xl p-6">
-        <h3 className="text-lg font-semibold mb-4">🚀 Recent Alerts</h3>
-        <div className="space-y-3">
-          <div className="flex items-center gap-4 p-3 bg-nebula-950/50 rounded-lg border border-nebula-700/50">
-            <span className="text-green-400 text-xl">✅</span>
-            <div>
-              <p className="text-sm font-medium">Fine-tuning Completed</p>
-              <p className="text-xs text-gray-500">Llama-3-8b-SFT-v2 finished successfully in 4h 20m.</p>
-            </div>
-            <span className="ml-auto text-xs text-gray-600">10m ago</span>
-          </div>
-          <div className="flex items-center gap-4 p-3 bg-nebula-950/50 rounded-lg border border-nebula-700/50">
-            <span className="text-yellow-400 text-xl">⚠️</span>
-            <div>
-              <p className="text-sm font-medium">High VRAM Usage</p>
-              <p className="text-xs text-gray-500">Process ID 4590 spiked to 95% VRAM usage.</p>
-            </div>
-            <span className="ml-auto text-xs text-gray-600">1h ago</span>
-          </div>
-        </div>
       </div>
     </div>
   );
