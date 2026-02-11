@@ -1,0 +1,5 @@
+{
+  "name": "Replicator AI",
+  "description": "A dark-themed, single-page AI operations console for benchmarking, training, and model management using Gemini for intelligent analysis.",
+  "requestFramePermissions": []
+}
