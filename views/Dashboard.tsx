@@ -95,13 +95,15 @@ export const Dashboard: React.FC<DashboardProps> = ({ serverConfig }) => {
            {/* Navigation Arrows */}
             <button 
                 onClick={prevSlide}
-                className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-3 z-20 p-2 bg-nebula-800 border border-nebula-700 rounded-full text-gray-400 hover:text-white hover:bg-nebula-700 shadow-lg transition-all opacity-0 group-hover:opacity-100"
+                aria-label="Previous slide"
+                className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-3 z-20 p-2 bg-nebula-800 border border-nebula-700 rounded-full text-gray-400 hover:text-white hover:bg-nebula-700 shadow-lg transition-all opacity-0 group-hover:opacity-100 focus:opacity-100 focus:translate-x-0 focus:outline-none focus:ring-2 focus:ring-purple-500"
             >
                 <ChevronLeft size={24} />
             </button>
             <button 
                 onClick={nextSlide}
-                className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-3 z-20 p-2 bg-nebula-800 border border-nebula-700 rounded-full text-gray-400 hover:text-white hover:bg-nebula-700 shadow-lg transition-all opacity-0 group-hover:opacity-100"
+                aria-label="Next slide"
+                className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-3 z-20 p-2 bg-nebula-800 border border-nebula-700 rounded-full text-gray-400 hover:text-white hover:bg-nebula-700 shadow-lg transition-all opacity-0 group-hover:opacity-100 focus:opacity-100 focus:translate-x-0 focus:outline-none focus:ring-2 focus:ring-purple-500"
             >
                 <ChevronRight size={24} />
             </button>
