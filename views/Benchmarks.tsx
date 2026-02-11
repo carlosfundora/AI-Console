@@ -1,9 +1,9 @@
 
-import React, { useState, useRef } from 'react';
-import { BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend, CartesianGrid } from 'recharts';
-import { BenchmarkResult, Model, AdvancedBenchmarkConfig, BenchmarkStep, BenchmarkStepType } from '../types';
+import React, { useState } from 'react';
+import { BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend, CartesianGrid, PieChart, Pie, Cell } from 'recharts';
+import { BenchmarkResult, Model, AdvancedBenchmarkConfig, BenchmarkStep, BenchmarkStepType, MockDataSource } from '../types';
 import { analyzeBenchmarks } from '../services/geminiService';
-import { Play, Save, Plus, Settings2, Cpu, Zap, Layers, GripVertical, Trash2, MessageSquare, Database, Binary, FileText, Wrench, Search, ChevronDown, ChevronRight, X, Sparkles, ArrowRight, Loader2 } from 'lucide-react';
+import { Play, Settings2, MessageSquare, Database, Binary, FileText, Wrench, Search, ChevronDown, ChevronRight, X, Sparkles, ArrowRight, Loader2, File, Code, Table, Plus, Trash2, Expand, Clock, Info, Layers, GripVertical } from 'lucide-react';
 
 interface BenchmarksProps {
   results: BenchmarkResult[];
@@ -44,12 +44,24 @@ const MOCK_SAVED_CONFIGS: AdvancedBenchmarkConfig[] = [
     }
 ];
 
+const INITIAL_MOCK_DATA: MockDataSource[] = [
+    { id: 'm1', name: 'Contract_Law_101.pdf', type: 'PDF', size: '4.2 MB', date: '2025-12-01', path: '/data/docs/Contract_Law_101.pdf' },
+    { id: 'm2', name: 'Nvidia_10K_2025.pdf', type: 'PDF', size: '12.8 MB', date: '2026-01-10', path: '/data/docs/Nvidia_10K.pdf' },
+    { id: 'm3', name: 'System_Prompts_v2.txt', type: 'Prompt', size: '12 KB', date: '2026-01-15', path: '/data/prompts/sys_v2.txt' },
+    { id: 'm4', name: 'Customer_Support_Q4.sql', type: 'SQL', size: '450 MB', date: '2026-01-18', path: '/data/sql/cust_q4.db' },
+];
+
 export const Benchmarks: React.FC<BenchmarksProps> = ({ results, models }) => {
-  const [activeView, setActiveView] = useState<'matrix' | 'trends' | 'config' | 'analysis'>('matrix');
+  const [activeView, setActiveView] = useState<'matrix' | 'trends' | 'config' | 'analysis' | 'data'>('matrix');
   const [analysis, setAnalysis] = useState<string>('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [configs, setConfigs] = useState<AdvancedBenchmarkConfig[]>(MOCK_SAVED_CONFIGS);
   const [currentConfig, setCurrentConfig] = useState<AdvancedBenchmarkConfig>(DEFAULT_ADV_CONFIG);
+  
+  // Data Management State
+  const [mockData, setMockData] = useState<MockDataSource[]>(INITIAL_MOCK_DATA);
+
+  // Detail Modal State
+  const [selectedResult, setSelectedResult] = useState<BenchmarkResult | null>(null);
   
   // Drag and Drop State
   const [draggedStepIndex, setDraggedStepIndex] = useState<number | null>(null);
@@ -124,6 +136,25 @@ export const Benchmarks: React.FC<BenchmarksProps> = ({ results, models }) => {
 
   const handleDrop = () => {
       setDraggedStepIndex(null);
+  };
+
+  // Mock Data Management
+  const addMockData = (type: 'PDF' | 'Prompt' | 'SQL') => {
+      const name = prompt(`Enter ${type} filename:`);
+      if (name) {
+          setMockData([...mockData, {
+              id: `m-${Date.now()}`,
+              name,
+              type,
+              size: '0 KB',
+              date: new Date().toISOString().split('T')[0],
+              path: `/data/mock/${name}`
+          }]);
+      }
+  };
+
+  const removeMockData = (id: string) => {
+      setMockData(mockData.filter(m => m.id !== id));
   };
 
   const getStepIcon = (type: BenchmarkStepType) => {
@@ -225,8 +256,66 @@ export const Benchmarks: React.FC<BenchmarksProps> = ({ results, models }) => {
       }
   };
 
+  const renderDataView = () => (
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-fade-in h-full overflow-hidden pb-4">
+          <div className="bg-nebula-900 border border-nebula-700 rounded-xl p-4 flex flex-col">
+              <div className="flex justify-between items-center mb-4 border-b border-nebula-800 pb-2">
+                  <h3 className="font-bold text-gray-200 flex items-center gap-2"><FileText size={16} className="text-blue-400" /> Documents (PDF/HTML)</h3>
+                  <button onClick={() => addMockData('PDF')} className="p-1 hover:bg-nebula-800 rounded text-gray-400 hover:text-white"><Plus size={16}/></button>
+              </div>
+              <div className="flex-1 overflow-y-auto space-y-2">
+                  {mockData.filter(m => m.type === 'PDF').map(m => (
+                      <div key={m.id} className="p-3 bg-nebula-950/50 rounded flex justify-between items-start group hover:bg-nebula-800 transition-colors">
+                          <div>
+                              <div className="text-sm text-gray-300 font-medium truncate w-40" title={m.name}>{m.name}</div>
+                              <div className="text-[10px] text-gray-500">{m.size} • {m.date}</div>
+                          </div>
+                          <button onClick={() => removeMockData(m.id)} className="text-gray-600 hover:text-red-400 opacity-0 group-hover:opacity-100"><Trash2 size={14}/></button>
+                      </div>
+                  ))}
+              </div>
+          </div>
+
+          <div className="bg-nebula-900 border border-nebula-700 rounded-xl p-4 flex flex-col">
+              <div className="flex justify-between items-center mb-4 border-b border-nebula-800 pb-2">
+                  <h3 className="font-bold text-gray-200 flex items-center gap-2"><Code size={16} className="text-green-400" /> Prompts (Txt/Json)</h3>
+                  <button onClick={() => addMockData('Prompt')} className="p-1 hover:bg-nebula-800 rounded text-gray-400 hover:text-white"><Plus size={16}/></button>
+              </div>
+              <div className="flex-1 overflow-y-auto space-y-2">
+                  {mockData.filter(m => m.type === 'Prompt').map(m => (
+                      <div key={m.id} className="p-3 bg-nebula-950/50 rounded flex justify-between items-start group hover:bg-nebula-800 transition-colors">
+                          <div>
+                              <div className="text-sm text-gray-300 font-medium truncate w-40" title={m.name}>{m.name}</div>
+                              <div className="text-[10px] text-gray-500">{m.size} • {m.date}</div>
+                          </div>
+                          <button onClick={() => removeMockData(m.id)} className="text-gray-600 hover:text-red-400 opacity-0 group-hover:opacity-100"><Trash2 size={14}/></button>
+                      </div>
+                  ))}
+              </div>
+          </div>
+
+          <div className="bg-nebula-900 border border-nebula-700 rounded-xl p-4 flex flex-col">
+              <div className="flex justify-between items-center mb-4 border-b border-nebula-800 pb-2">
+                  <h3 className="font-bold text-gray-200 flex items-center gap-2"><Table size={16} className="text-orange-400" /> Structured (SQL/CSV)</h3>
+                  <button onClick={() => addMockData('SQL')} className="p-1 hover:bg-nebula-800 rounded text-gray-400 hover:text-white"><Plus size={16}/></button>
+              </div>
+              <div className="flex-1 overflow-y-auto space-y-2">
+                  {mockData.filter(m => m.type === 'SQL').map(m => (
+                      <div key={m.id} className="p-3 bg-nebula-950/50 rounded flex justify-between items-start group hover:bg-nebula-800 transition-colors">
+                          <div>
+                              <div className="text-sm text-gray-300 font-medium truncate w-40" title={m.name}>{m.name}</div>
+                              <div className="text-[10px] text-gray-500">{m.size} • {m.date}</div>
+                          </div>
+                          <button onClick={() => removeMockData(m.id)} className="text-gray-600 hover:text-red-400 opacity-0 group-hover:opacity-100"><Trash2 size={14}/></button>
+                      </div>
+                  ))}
+              </div>
+          </div>
+      </div>
+  );
+
   return (
-    <div className="space-y-6 h-full flex flex-col">
+    <div className="space-y-6 h-full flex flex-col relative">
       {/* Header Controls */}
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">📊 Benchmarks & Analytics</h2>
@@ -250,6 +339,12 @@ export const Benchmarks: React.FC<BenchmarksProps> = ({ results, models }) => {
                 <Sparkles size={14} className={isAnalyzing ? 'animate-pulse text-purple-400' : ''}/> Analysis
             </button>
             <button 
+                onClick={() => setActiveView('data')}
+                className={`px-3 py-1.5 rounded text-sm transition-all flex items-center gap-2 ${activeView === 'data' ? 'bg-nebula-700 text-white' : 'text-gray-400 hover:text-white'}`}
+            >
+                <Database size={14} /> Data Sources
+            </button>
+            <button 
                 onClick={() => setActiveView('config')}
                 className={`px-3 py-1.5 rounded text-sm transition-all flex items-center gap-2 ${activeView === 'config' ? 'bg-purple-600 text-white' : 'text-gray-400 hover:text-white'}`}
             >
@@ -271,11 +366,16 @@ export const Benchmarks: React.FC<BenchmarksProps> = ({ results, models }) => {
                     <th className="px-6 py-4 text-right">Score</th>
                     <th className="px-6 py-4 text-right">Tokens/s</th>
                     <th className="px-6 py-4 text-right">Latency</th>
+                    <th className="px-6 py-4"></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-nebula-800">
                   {results.map((row) => (
-                    <tr key={row.id} className="hover:bg-nebula-800/50 transition-colors">
+                    <tr 
+                        key={row.id} 
+                        onClick={() => setSelectedResult(row)}
+                        className="hover:bg-nebula-800/50 transition-colors cursor-pointer group"
+                    >
                       <td className="px-6 py-4 font-medium text-white">{row.modelId}</td>
                       <td className="px-6 py-4 text-gray-400">{row.versionId}</td>
                       <td className="px-6 py-4 text-gray-400">{row.dataset}</td>
@@ -283,6 +383,9 @@ export const Benchmarks: React.FC<BenchmarksProps> = ({ results, models }) => {
                       <td className="px-6 py-4 text-right text-green-400 font-mono">{row.score}</td>
                       <td className="px-6 py-4 text-right text-blue-400 font-mono">{row.tokensPerSecond?.toFixed(2) || '-'}</td>
                       <td className="px-6 py-4 text-right text-purple-400 font-mono">{row.latency}ms</td>
+                      <td className="px-6 py-4 text-right">
+                          <Expand size={16} className="text-gray-600 group-hover:text-white" />
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -290,6 +393,95 @@ export const Benchmarks: React.FC<BenchmarksProps> = ({ results, models }) => {
             </div>
         </div>
       )}
+
+      {/* Result Detail Modal */}
+      {selectedResult && (
+          <div className="absolute inset-0 bg-nebula-950/95 backdrop-blur-md z-50 flex items-center justify-center p-8 animate-fade-in">
+              <div className="bg-nebula-900 border border-nebula-700 rounded-2xl w-full max-w-4xl h-[80vh] flex flex-col shadow-2xl relative overflow-hidden">
+                  <div className="p-6 border-b border-nebula-700 flex justify-between items-start bg-nebula-950/50">
+                      <div>
+                          <div className="flex items-center gap-3">
+                              <h2 className="text-2xl font-bold text-white">{selectedResult.modelId}</h2>
+                              <span className="text-xs bg-nebula-800 px-2 py-1 rounded text-purple-300 border border-nebula-700">{selectedResult.type} Benchmark</span>
+                          </div>
+                          <p className="text-sm text-gray-400 mt-2 flex items-center gap-4">
+                              <span><Binary size={12} className="inline mr-1"/> {selectedResult.versionId}</span>
+                              <span><Database size={12} className="inline mr-1"/> {selectedResult.dataset}</span>
+                              <span><Clock size={12} className="inline mr-1"/> {selectedResult.date}</span>
+                          </p>
+                      </div>
+                      <button onClick={() => setSelectedResult(null)} className="p-2 hover:bg-nebula-800 rounded text-gray-400 hover:text-white transition-colors">
+                          <X size={24} />
+                      </button>
+                  </div>
+
+                  <div className="flex-1 overflow-y-auto p-8">
+                      {/* Top Level Metrics */}
+                      <div className="grid grid-cols-4 gap-6 mb-8">
+                          <div className="bg-nebula-950 p-4 rounded-xl border border-nebula-800">
+                              <div className="text-xs text-gray-500 uppercase font-bold mb-1">Score ({selectedResult.metric})</div>
+                              <div className="text-3xl font-black text-green-400">{selectedResult.score}</div>
+                          </div>
+                          <div className="bg-nebula-950 p-4 rounded-xl border border-nebula-800">
+                              <div className="text-xs text-gray-500 uppercase font-bold mb-1">Throughput</div>
+                              <div className="text-3xl font-black text-blue-400">{selectedResult.tokensPerSecond ? selectedResult.tokensPerSecond.toFixed(1) : '-'} <span className="text-sm text-gray-600 font-normal">t/s</span></div>
+                          </div>
+                          <div className="bg-nebula-950 p-4 rounded-xl border border-nebula-800">
+                              <div className="text-xs text-gray-500 uppercase font-bold mb-1">Total Latency</div>
+                              <div className="text-3xl font-black text-purple-400">{selectedResult.latency} <span className="text-sm text-gray-600 font-normal">ms</span></div>
+                          </div>
+                          <div className="bg-nebula-950 p-4 rounded-xl border border-nebula-800">
+                              <div className="text-xs text-gray-500 uppercase font-bold mb-1">Hardware</div>
+                              <div className="text-sm font-medium text-gray-200 mt-2">{selectedResult.hardwareName}</div>
+                          </div>
+                      </div>
+
+                      {/* Detailed Segments / Pipeline Steps */}
+                      {selectedResult.segments && selectedResult.segments.length > 0 ? (
+                          <div className="space-y-4">
+                              <h3 className="text-lg font-bold text-white flex items-center gap-2"><Layers size={18} className="text-yellow-500"/> Pipeline Execution Breakdown</h3>
+                              <div className="bg-nebula-950 rounded-xl border border-nebula-800 overflow-hidden">
+                                  <div className="grid grid-cols-12 gap-4 p-3 bg-nebula-900 border-b border-nebula-800 text-xs font-bold text-gray-500 uppercase">
+                                      <div className="col-span-4">Step Name</div>
+                                      <div className="col-span-2">Type</div>
+                                      <div className="col-span-2 text-right">Duration</div>
+                                      <div className="col-span-4 text-right">Relative Impact</div>
+                                  </div>
+                                  {selectedResult.segments.map((seg, idx) => (
+                                      <div key={idx} className="grid grid-cols-12 gap-4 p-4 border-b border-nebula-800/50 last:border-0 hover:bg-nebula-900/30 transition-colors">
+                                          <div className="col-span-4 font-medium text-gray-200">{seg.stepName}</div>
+                                          <div className="col-span-2 text-xs text-gray-500 flex items-center gap-2">
+                                              <div className="p-1 bg-nebula-900 rounded border border-nebula-800">
+                                                  {getStepIcon(seg.type)}
+                                              </div>
+                                              {seg.type}
+                                          </div>
+                                          <div className="col-span-2 text-right font-mono text-purple-300">{seg.duration}ms</div>
+                                          <div className="col-span-4 flex items-center gap-2">
+                                              <div className="flex-1 h-2 bg-nebula-900 rounded-full overflow-hidden">
+                                                  <div 
+                                                    className="h-full bg-purple-600 rounded-full" 
+                                                    style={{ width: `${Math.max(5, (seg.duration / selectedResult.latency) * 100)}%` }}
+                                                  ></div>
+                                              </div>
+                                              <span className="text-xs text-gray-500 w-12 text-right">{((seg.duration / selectedResult.latency) * 100).toFixed(1)}%</span>
+                                          </div>
+                                      </div>
+                                  ))}
+                              </div>
+                          </div>
+                      ) : (
+                          <div className="p-8 bg-nebula-950/50 border border-nebula-800 border-dashed rounded-xl flex flex-col items-center justify-center text-gray-500">
+                              <Info size={32} className="mb-2 opacity-50" />
+                              <p>No granular segment data available for this run.</p>
+                          </div>
+                      )}
+                  </div>
+              </div>
+          </div>
+      )}
+
+      {activeView === 'data' && renderDataView()}
 
       {activeView === 'analysis' && (
         <div className="flex-1 animate-fade-in flex flex-col">

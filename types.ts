@@ -119,6 +119,15 @@ export interface AdvancedBenchmarkConfig {
   customEnvPath?: string;
 }
 
+export interface BenchmarkSegmentResult {
+    stepId: string;
+    stepName: string;
+    type: BenchmarkStepType;
+    duration: number; // ms
+    score?: number;
+    notes?: string;
+}
+
 export interface BenchmarkResult {
   id: string;
   modelId: string;
@@ -135,6 +144,7 @@ export interface BenchmarkResult {
   ragConfig?: RAGConfig;
   advancedConfigId?: string;
   notes?: string; // e.g. "Flash Attn ON"
+  segments?: BenchmarkSegmentResult[]; // Granular breakdown
 }
 
 export interface Dataset {
@@ -172,6 +182,15 @@ export interface AgentConfig {
   envVars: { key: string; value: string }[];
   externalPaths: string[];
   lastModified: string;
+}
+
+export interface MockDataSource {
+    id: string;
+    name: string;
+    type: 'PDF' | 'Prompt' | 'SQL';
+    size?: string;
+    path?: string;
+    date: string;
 }
 
 export interface AppSettings {

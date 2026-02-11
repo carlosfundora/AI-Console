@@ -161,7 +161,27 @@ const MOCK_BENCHMARKS: BenchmarkResult[] = [
   { id: 'b3', modelId: 'liquid-lfm-2.5-1.2b', versionId: 'v1-q5_k_m', dataset: 'Legal-Structure', score: 98, latency: 269, tokensPerSecond: 264.9, hardware: 'GPU', hardwareName: 'AMD RX 6700 XT (Vulkan)', date: '2026-01-11', metric: 'JSON Validity', type: 'Core', notes: 'Structured Output' },
   
   // Pipeline Tests
-  { id: 'b4', modelId: 'equall-saul-7b', versionId: 'v1-q4_k_m', dataset: 'Legal-Complex', score: 95, latency: 19610, tokensPerSecond: 45, hardware: 'GPU', hardwareName: 'AMD RX 6700 XT', date: '2026-01-11', metric: 'Accuracy', type: 'RAG', notes: 'LFM2.5 Pipeline + Dual Embed' },
+  { 
+      id: 'b4', 
+      modelId: 'equall-saul-7b', 
+      versionId: 'v1-q4_k_m', 
+      dataset: 'Legal-Complex', 
+      score: 95, 
+      latency: 19610, 
+      tokensPerSecond: 45, 
+      hardware: 'GPU', 
+      hardwareName: 'AMD RX 6700 XT', 
+      date: '2026-01-11', 
+      metric: 'Accuracy', 
+      type: 'RAG', 
+      notes: 'LFM2.5 Pipeline + Dual Embed',
+      segments: [
+          { stepId: 's1', stepName: 'PDF Ingestion', type: 'Ingestion', duration: 500 },
+          { stepId: 's2', stepName: 'Hybrid Search (Chroma)', type: 'RAG', duration: 400 },
+          { stepId: 's3', stepName: 'Reranking (ColBERT)', type: 'ColBERT', duration: 1200 },
+          { stepId: 's4', stepName: 'Generation (Saul-7B)', type: 'Generation', duration: 17510 }
+      ]
+  },
   
   // Embeddings
   { id: 'b5', modelId: 'mixedbread-embed', versionId: 'v1-base', dataset: 'Legal-Docs-50', score: 100, latency: 76, hardware: 'GPU', hardwareName: 'AMD RX 6700 XT', date: '2026-01-11', metric: 'Retrieval Time', type: 'RAG', notes: 'Single Doc' },
