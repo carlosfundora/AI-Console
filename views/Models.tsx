@@ -430,6 +430,22 @@ export const Models: React.FC<ModelsProps> = ({ models, servers }) => {
                                                 ))}
                                             </tr>
                                             <tr>
+                                                <td className="px-4 py-3 font-medium bg-nebula-950/50">Perplexity</td>
+                                                {getSelectedVersions().map(v => (
+                                                    <td key={v.id} className="px-4 py-3 border-l border-nebula-800 font-mono">
+                                                        {v.metrics?.perplexity ? v.metrics.perplexity.toFixed(2) : '-'}
+                                                    </td>
+                                                ))}
+                                            </tr>
+                                            <tr>
+                                                <td className="px-4 py-3 font-medium bg-nebula-950/50">Accuracy (MMLU)</td>
+                                                {getSelectedVersions().map(v => (
+                                                    <td key={v.id} className="px-4 py-3 border-l border-nebula-800 font-mono">
+                                                        {v.metrics?.accuracy ? `${v.metrics.accuracy}%` : '-'}
+                                                    </td>
+                                                ))}
+                                            </tr>
+                                            <tr>
                                                 <td className="px-4 py-3 font-medium bg-nebula-950/50">Latency (Est.)</td>
                                                 {getSelectedVersions().map(v => (
                                                     <td key={v.id} className={`px-4 py-3 border-l border-nebula-800 font-mono ${v.metrics?.latencyMs && v.metrics.latencyMs < 500 ? 'text-green-400' : ''}`}>
