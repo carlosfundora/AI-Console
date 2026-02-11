@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { LayoutDashboard, Database, BrainCircuit, Activity, Settings as SettingsIcon, Server, Terminal, FlaskConical } from 'lucide-react';
+import { LayoutDashboard, Database, BrainCircuit, Activity, Settings as SettingsIcon, Server, Terminal, FlaskConical, Loader2 } from 'lucide-react';
 import { Dashboard } from './views/Dashboard';
 import { Benchmarks } from './views/Benchmarks';
 import { Datasets } from './views/Datasets';
@@ -275,20 +275,27 @@ const App: React.FC = () => {
               )}
             </div>
           </div>
-
-          {/* Footer Info Bar */}
-          <footer className="h-8 bg-nebula-950 border-t border-nebula-800 flex items-center justify-between px-4 text-xs text-gray-500 select-none">
-              <div className="flex gap-4">
-                  <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-green-500"></span> System Online</span>
-                  <span className="flex items-center gap-1">GPU Util: 12%</span>
-                  <span className="flex items-center gap-1">VRAM: 8/12 GB</span>
-              </div>
-              <div>
-                  Replicator AI v2.2.0-Lab
-              </div>
-          </footer>
         </main>
       </div>
+
+       {/* Full Width Footer */}
+      <footer className="h-8 bg-nebula-950 border-t border-nebula-800 flex items-center justify-between px-4 text-xs text-gray-500 select-none z-40">
+            <div className="flex gap-4">
+                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-green-500"></span> System Online</span>
+                <span className="flex items-center gap-1">GPU Util: 12%</span>
+                <span className="flex items-center gap-1">VRAM: 8/12 GB</span>
+            </div>
+            
+             {/* Global Loading Indicator */}
+            <div className="flex items-center gap-2 text-purple-400 animate-pulse">
+                <Loader2 size={12} className="animate-spin" />
+                <span>Processing Background Tasks...</span>
+            </div>
+
+            <div>
+                Replicator AI v2.2.0-Lab
+            </div>
+      </footer>
     </div>
   );
 };
