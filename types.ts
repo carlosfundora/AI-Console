@@ -1,5 +1,4 @@
 
-
 export enum ModelStatus {
   Ready = 'Ready',
   Training = 'Training',
@@ -27,6 +26,7 @@ export interface ModelVersion {
     latencyMs?: number;
     accuracy?: number;
     vramGB?: number;
+    tokensPerSecond?: number;
   };
 }
 
@@ -71,15 +71,17 @@ export interface RAGConfig {
   k: number;
 }
 
-export type BenchmarkStepType = 'Generation' | 'RAG' | 'Embedding' | 'Ingestion' | 'ToolUse' | 'ColBERT';
+export type BenchmarkStepType = 'Phase' | 'Generation' | 'RAG' | 'Embedding' | 'Ingestion' | 'ToolUse' | 'ColBERT';
 
 export interface BenchmarkStep {
     id: string;
     type: BenchmarkStepType;
     name: string;
     enabled: boolean;
+    serverId?: string; // Specific server for this step
+    modelId?: string; // Specific model for this step
+    substeps?: BenchmarkStep[]; // For Phases containing other steps
     config: {
-        modelId?: string;
         datasetId?: string;
         // RAG/Ingest/ColBERT
         chunkSize?: number;
@@ -112,6 +114,7 @@ export interface AdvancedBenchmarkConfig {
       memoryLock: boolean; // --mlock
       continuousBatching: boolean; // --cont-batching
       keepAlive?: string; // "5m"
+      warmup: boolean; // Preload/Warmup
   };
 
   steps: BenchmarkStep[]; // Dynamic Pipeline

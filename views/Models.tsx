@@ -324,7 +324,7 @@ export const Models: React.FC<ModelsProps> = ({ models, servers }) => {
                                         </div>
                                     </div>
 
-                                    <div className="grid grid-cols-2 gap-4 text-xs text-gray-400 bg-nebula-900/50 p-3 rounded mb-3">
+                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-xs text-gray-400 bg-nebula-900/50 p-3 rounded mb-3">
                                         <div>
                                             <span className="block text-gray-600">Quantization</span>
                                             <span className="font-mono text-gray-300">{ver.quantization}</span>
@@ -336,12 +336,20 @@ export const Models: React.FC<ModelsProps> = ({ models, servers }) => {
                                         {ver.metrics && (
                                             <>
                                                 <div>
+                                                    <span className="block text-gray-600">Speed</span>
+                                                    <span className="font-mono text-blue-400 font-bold">{ver.metrics.tokensPerSecond ? `${ver.metrics.tokensPerSecond} t/s` : '-'}</span>
+                                                </div>
+                                                <div>
                                                     <span className="block text-gray-600">Latency (GPU)</span>
                                                     <span className="font-mono text-gray-300">{ver.metrics.latencyMs} ms</span>
                                                 </div>
                                                 <div>
                                                     <span className="block text-gray-600">VRAM</span>
                                                     <span className="font-mono text-gray-300">{ver.metrics.vramGB} GB</span>
+                                                </div>
+                                                <div>
+                                                    <span className="block text-gray-600">Perplexity</span>
+                                                    <span className="font-mono text-gray-300">{ver.metrics.perplexity || '-'}</span>
                                                 </div>
                                             </>
                                         )}
@@ -420,6 +428,14 @@ export const Models: React.FC<ModelsProps> = ({ models, servers }) => {
                                             <tr>
                                                 <td className="px-4 py-3 font-medium bg-nebula-950/50">Size</td>
                                                 {getSelectedVersions().map(v => <td key={v.id} className="px-4 py-3 border-l border-nebula-800 font-mono">{v.size}</td>)}
+                                            </tr>
+                                            <tr>
+                                                <td className="px-4 py-3 font-medium bg-nebula-950/50">Token Speed (t/s)</td>
+                                                {getSelectedVersions().map(v => (
+                                                    <td key={v.id} className="px-4 py-3 border-l border-nebula-800 font-mono font-bold text-blue-400">
+                                                        {v.metrics?.tokensPerSecond ? v.metrics.tokensPerSecond.toFixed(1) : '-'}
+                                                    </td>
+                                                ))}
                                             </tr>
                                             <tr>
                                                 <td className="px-4 py-3 font-medium bg-nebula-950/50">VRAM Usage</td>

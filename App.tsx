@@ -33,12 +33,12 @@ const ClipboardDataIcon = ({ size = 20, className = "" }: { size?: number, class
   </svg>
 );
 
-const SchoolIcon = ({ size = 20, className = "" }: { size?: number, className?: string }) => (
-  <svg width={size} height={size} viewBox="0 0 512 512" fill="currentColor" className={className}>
-    <path d="M256,32,32,144V464H112V184l144,72,144-72V464h80V144ZM256,298,136.19,238.08,256,178.16l119.81,59.92Z" fill="none" stroke="currentColor" strokeLinecap="square" strokeMiterlimit="10" strokeWidth="32"/>
-    <rect x="112" y="304" width="64" height="160" fill="none" stroke="currentColor" strokeLinecap="square" strokeMiterlimit="10" strokeWidth="32"/>
-    <rect x="224" y="304" width="64" height="160" fill="none" stroke="currentColor" strokeLinecap="square" strokeMiterlimit="10" strokeWidth="32"/>
-    <rect x="336" y="304" width="64" height="160" fill="none" stroke="currentColor" strokeLinecap="square" strokeMiterlimit="10" strokeWidth="32"/>
+const DraftingCompassIcon = ({ size = 20, className = "" }: { size?: number, className?: string }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <circle cx="12" cy="5" r="2" />
+    <path d="m12 7 7.53 13" />
+    <path d="m12 7-7.53 13" />
+    <path d="M5 19h14" />
   </svg>
 );
 
@@ -47,7 +47,7 @@ const MOCK_MODELS: Model[] = [
   { 
     id: 'liquid-lfm-2.5-1.2b', 
     name: 'LFM 2.5 1.2B Instruct', 
-    provider: 'LiquidAI',
+    provider: 'LiquidAI', 
     family: 'Liquid',
     description: 'Efficient reasoning model. Excellent for pipeline pre-processing and structured output.',
     tags: ['Reasoning', 'Efficient', 'Pipeline-Ready'],
@@ -72,8 +72,40 @@ model = AutoModelForCausalLM.from_pretrained("LiquidAI/LFM2.5-1.2B")
 - High throughput for JSON generation
     `,
     versions: [
-        { id: 'v1-q5_k_m', name: 'Q5_K_M GGUF', format: 'GGUF', quantization: 'Q5_K_M', size: '804MB', created: '2026-01-10', baseModel: 'v1-fp16', status: ModelStatus.Ready, metrics: { latencyMs: 200, vramGB: 0.8 } },
-        { id: 'v1-q4_0', name: 'Q4_0 RAG', format: 'GGUF', quantization: 'Q4_0', size: '663MB', created: '2026-01-11', baseModel: 'v1-fp16', status: ModelStatus.Ready }
+        { 
+          id: 'v1-q5_k_m', 
+          name: 'Q5_K_M GGUF', 
+          format: 'GGUF', 
+          quantization: 'Q5_K_M', 
+          size: '804MB', 
+          created: '2026-01-10', 
+          baseModel: 'v1-fp16', 
+          status: ModelStatus.Ready, 
+          metrics: { 
+            latencyMs: 200, 
+            vramGB: 0.8,
+            perplexity: 5.4,
+            accuracy: 68.2,
+            tokensPerSecond: 95.4
+          } 
+        },
+        { 
+          id: 'v1-q4_0', 
+          name: 'Q4_0 RAG', 
+          format: 'GGUF', 
+          quantization: 'Q4_0', 
+          size: '663MB', 
+          created: '2026-01-11', 
+          baseModel: 'v1-fp16', 
+          status: ModelStatus.Ready,
+          metrics: { 
+            latencyMs: 180, 
+            vramGB: 0.7,
+            perplexity: 5.8,
+            accuracy: 65.1,
+            tokensPerSecond: 102.1
+          }
+        }
     ]
   },
   { 
@@ -102,7 +134,23 @@ Ensure your browser supports WebGPU and you have enabled unsafe-webgpu flags if 
 3. Speech-to-Speech
     `,
     versions: [
-        { id: 'v1-onnx', name: 'ONNX WebGPU', format: 'ONNX', quantization: 'Q4_0', size: '1.1GB', created: '2026-01-15', baseModel: 'v1-fp16', status: ModelStatus.Ready, metrics: { latencyMs: 50, vramGB: 1.2 } }
+        { 
+          id: 'v1-onnx', 
+          name: 'ONNX WebGPU', 
+          format: 'ONNX', 
+          quantization: 'Q4_0', 
+          size: '1.1GB', 
+          created: '2026-01-15', 
+          baseModel: 'v1-fp16', 
+          status: ModelStatus.Ready, 
+          metrics: { 
+            latencyMs: 50, 
+            vramGB: 1.2,
+            perplexity: 6.1,
+            accuracy: 62.5,
+            tokensPerSecond: 45.0
+          } 
+        }
     ]
   },
   { 
@@ -119,9 +167,57 @@ Ensure your browser supports WebGPU and you have enabled unsafe-webgpu flags if 
         { type: 'HuggingFace', url: 'https://huggingface.co/Equall/Saul-7B-Instruct-v1' }
     ],
     versions: [
-        { id: 'v1-q4_k_m', name: 'Q4_K_M (Recommended)', format: 'Ollama', quantization: 'Q4_K_M', size: '4.4GB', created: '2025-12-05', baseModel: 'Mistral-7B', status: ModelStatus.Ready, metrics: { latencyMs: 1500, vramGB: 4.4 } },
-        { id: 'v1-q8_0', name: 'Q8_0 (High Precision)', format: 'Ollama', quantization: 'Q8_0', size: '7.7GB', created: '2025-12-05', baseModel: 'Mistral-7B', status: ModelStatus.Ready },
-        { id: 'v1-q2_k', name: 'Q2_K (Draft)', format: 'Ollama', quantization: 'Q2_K', size: '2.7GB', created: '2025-12-05', baseModel: 'Mistral-7B', status: ModelStatus.Ready }
+        { 
+          id: 'v1-q4_k_m', 
+          name: 'Q4_K_M (Recommended)', 
+          format: 'Ollama', 
+          quantization: 'Q4_K_M', 
+          size: '4.4GB', 
+          created: '2025-12-05', 
+          baseModel: 'Mistral-7B', 
+          status: ModelStatus.Ready, 
+          metrics: { 
+            latencyMs: 1500, 
+            vramGB: 4.4,
+            perplexity: 4.1,
+            accuracy: 74.3,
+            tokensPerSecond: 65.3
+          } 
+        },
+        { 
+          id: 'v1-q8_0', 
+          name: 'Q8_0 (High Precision)', 
+          format: 'Ollama', 
+          quantization: 'Q8_0', 
+          size: '7.7GB', 
+          created: '2025-12-05', 
+          baseModel: 'Mistral-7B', 
+          status: ModelStatus.Ready,
+          metrics: {
+            latencyMs: 2100,
+            vramGB: 8.2,
+            perplexity: 3.8,
+            accuracy: 76.1,
+            tokensPerSecond: 42.8
+          }
+        },
+        { 
+          id: 'v1-q2_k', 
+          name: 'Q2_K (Draft)', 
+          format: 'Ollama', 
+          quantization: 'Q2_K', 
+          size: '2.7GB', 
+          created: '2025-12-05', 
+          baseModel: 'Mistral-7B', 
+          status: ModelStatus.Ready,
+          metrics: {
+            latencyMs: 1100,
+            vramGB: 3.1,
+            perplexity: 8.9,
+            accuracy: 58.2,
+            tokensPerSecond: 88.5
+          }
+        }
     ]
   },
   { 
@@ -138,13 +234,28 @@ Ensure your browser supports WebGPU and you have enabled unsafe-webgpu flags if 
         { type: 'HuggingFace', url: 'https://huggingface.co/mixedbread-ai/mxbai-embed-large-v1' }
     ],
     versions: [
-        { id: 'v1-base', name: 'Base', format: 'Safetensors', quantization: 'FP16', size: '1.2GB', created: '2023-10-10', baseModel: 'None', status: ModelStatus.Ready }
+        { 
+          id: 'v1-base', 
+          name: 'Base', 
+          format: 'Safetensors', 
+          quantization: 'FP16', 
+          size: '1.2GB', 
+          created: '2023-10-10', 
+          baseModel: 'None', 
+          status: ModelStatus.Ready,
+          metrics: {
+            latencyMs: 15,
+            vramGB: 1.5,
+            accuracy: 92.4, // MTEB Score
+            tokensPerSecond: 0 // N/A for embedding
+          }
+        }
     ]
   },
   { 
     id: 'snowflake-arctic', 
     name: 'snowflake-arctic-embed:335m', 
-    provider: 'Snowflake',
+    provider: 'Snowflake', 
     family: 'Bert',
     description: 'Dense embedding model used for dual-embedding strategies.',
     tags: ['Embedding'],
@@ -153,7 +264,22 @@ Ensure your browser supports WebGPU and you have enabled unsafe-webgpu flags if 
     lastUsed: '2026-01-11',
     links: [],
     versions: [
-        { id: 'v1-ollama', name: 'Ollama', format: 'Ollama', quantization: 'FP16', size: '670MB', created: '2026-01-01', baseModel: 'None', status: ModelStatus.Ready }
+        { 
+          id: 'v1-ollama', 
+          name: 'Ollama', 
+          format: 'Ollama', 
+          quantization: 'FP16', 
+          size: '670MB', 
+          created: '2026-01-01', 
+          baseModel: 'None', 
+          status: ModelStatus.Ready,
+          metrics: {
+            latencyMs: 12,
+            vramGB: 0.7,
+            accuracy: 91.8,
+            tokensPerSecond: 0
+          }
+        }
     ]
   }
 ];
@@ -308,12 +434,12 @@ const App: React.FC = () => {
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: <Terminal size={20} /> },
     { id: 'benchmarks', label: 'Benchmarks', icon: <Activity size={20} /> },
-    { id: 'datasets', label: 'Datasets', icon: <ClipboardDataIcon size={20} /> }, // Changed to ClipboardDataIcon
-    { id: 'training', label: 'Training', icon: <SchoolIcon size={20} /> },
+    { id: 'datasets', label: 'Datasets', icon: <ClipboardDataIcon size={20} /> },
+    { id: 'training', label: 'Training', icon: <DraftingCompassIcon size={20} /> }, // Changed to DraftingCompassIcon
     { id: 'laboratory', label: 'Laboratory', icon: <FlaskConical size={20} /> },
     { id: 'servers', label: 'Servers', icon: <PythonIcon size={20} /> },
     { id: 'models', label: 'Model Registry', icon: <BrainCircuit size={20} /> },
-    { id: 'agents', label: 'Agentic Prompts', icon: <Bot size={20} /> }, // Changed to Robot (Bot) Icon
+    { id: 'agents', label: 'Agentic Prompts', icon: <Bot size={20} /> },
     { id: 'chat', label: 'Playground', icon: <MessageSquare size={20} /> },
   ];
 
@@ -396,7 +522,7 @@ const App: React.FC = () => {
           <div className="flex-1 overflow-auto p-8 relative">
             <div className="max-w-7xl mx-auto h-full">
               {activeTab === 'dashboard' && <Dashboard serverConfig={SERVER_CONFIG} />}
-              {activeTab === 'benchmarks' && <Benchmarks results={MOCK_BENCHMARKS} models={MOCK_MODELS} />}
+              {activeTab === 'benchmarks' && <Benchmarks results={MOCK_BENCHMARKS} models={MOCK_MODELS} servers={servers} />}
               {activeTab === 'datasets' && <Datasets datasets={MOCK_DATASETS} />}
               {activeTab === 'training' && <Training models={MOCK_MODELS} datasets={MOCK_DATASETS} />}
               {activeTab === 'laboratory' && <Laboratory models={MOCK_MODELS} />}

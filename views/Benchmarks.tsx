@@ -1,13 +1,13 @@
 
 import React, { useState } from 'react';
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend, CartesianGrid, PieChart, Pie, Cell } from 'recharts';
-import { BenchmarkResult, Model, AdvancedBenchmarkConfig, BenchmarkStep, BenchmarkStepType, MockDataSource } from '../types';
-import { analyzeBenchmarks } from '../services/geminiService';
-import { Play, Settings2, MessageSquare, Database, Binary, FileText, Wrench, Search, ChevronDown, ChevronRight, X, Sparkles, ArrowRight, Loader2, File, Code, Table, Plus, Trash2, Expand, Clock, Info, Layers, GripVertical } from 'lucide-react';
+import { BenchmarkResult, Model, AdvancedBenchmarkConfig, BenchmarkStep, BenchmarkStepType, MockDataSource, ServerProfile } from '../types';
+import { Play, Settings2, MessageSquare, Database, Binary, FileText, Wrench, Search, ChevronDown, ChevronRight, X, ArrowRight, Loader2, File, Code, Table, Plus, Trash2, Expand, Clock, Info, Layers, GripVertical, Save, FolderOpen, Flame, Box, Server } from 'lucide-react';
 
 interface BenchmarksProps {
   results: BenchmarkResult[];
   models: Model[];
+  servers: ServerProfile[];
 }
 
 const DEFAULT_ADV_CONFIG: AdvancedBenchmarkConfig = {
@@ -23,7 +23,8 @@ const DEFAULT_ADV_CONFIG: AdvancedBenchmarkConfig = {
         memoryLock: false,
         continuousBatching: false,
         keepAlive: '5m',
-        gpuLayers: 99
+        gpuLayers: 99,
+        warmup: true
     },
     steps: []
 };
@@ -35,10 +36,13 @@ const MOCK_SAVED_CONFIGS: AdvancedBenchmarkConfig[] = [
         backend: 'ollama',
         modelId: 'equall-saul-7b',
         hardware: 'GPU',
-        parameters: { contextSize: 8192, temperature: 0.1, flashAttention: true, memoryLock: true, gpuLayers: 99, continuousBatching: false },
+        parameters: { contextSize: 8192, temperature: 0.1, flashAttention: true, memoryLock: true, gpuLayers: 99, continuousBatching: false, warmup: true },
         steps: [
             { id: 's1', type: 'Ingestion', name: 'Parse PDFs', enabled: true, config: { docType: 'PDF', chunkSize: 512 } },
-            { id: 's2', type: 'Embedding', name: 'Vectorize (Arctic)', enabled: true, config: { modelId: 'snowflake-arctic' } },
+            { id: 's2', type: 'Phase', name: 'Retrieval Phase', enabled: true, config: {}, substeps: [
+                { id: 's2-1', type: 'Embedding', name: 'HyDE Gen', enabled: true, modelId: 'snowflake-arctic', config: {} },
+                { id: 's2-2', type: 'RAG', name: 'Vector Search', enabled: true, config: { rerankTopK: 10 } }
+            ]},
             { id: 's3', type: 'Generation', name: 'Answer Query', enabled: true, config: { metric: 'Throughput' } }
         ]
     }
@@ -51,11 +55,11 @@ const INITIAL_MOCK_DATA: MockDataSource[] = [
     { id: 'm4', name: 'Customer_Support_Q4.sql', type: 'SQL', size: '450 MB', date: '2026-01-18', path: '/data/sql/cust_q4.db' },
 ];
 
-export const Benchmarks: React.FC<BenchmarksProps> = ({ results, models }) => {
-  const [activeView, setActiveView] = useState<'matrix' | 'trends' | 'config' | 'analysis' | 'data'>('matrix');
-  const [analysis, setAnalysis] = useState<string>('');
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
+export const Benchmarks: React.FC<BenchmarksProps> = ({ results, models, servers }) => {
+  const [activeView, setActiveView] = useState<'matrix' | 'trends' | 'config' | 'data'>('matrix');
   const [currentConfig, setCurrentConfig] = useState<AdvancedBenchmarkConfig>(DEFAULT_ADV_CONFIG);
+  const [savedConfigs, setSavedConfigs] = useState<AdvancedBenchmarkConfig[]>(MOCK_SAVED_CONFIGS);
+  const [showLoadMenu, setShowLoadMenu] = useState(false);
   
   // Data Management State
   const [mockData, setMockData] = useState<MockDataSource[]>(INITIAL_MOCK_DATA);
@@ -72,50 +76,121 @@ export const Benchmarks: React.FC<BenchmarksProps> = ({ results, models }) => {
     .filter(r => r.tokensPerSecond || r.latency)
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
-  const handleAnalysis = async () => {
-    setIsAnalyzing(true);
-    const text = await analyzeBenchmarks(results, models);
-    setAnalysis(text || "No analysis returned.");
-    setIsAnalyzing(false);
-  };
-
-  const addStep = (type: BenchmarkStepType) => {
+  const addStep = (type: BenchmarkStepType, parentId?: string) => {
       const newStep: BenchmarkStep = {
           id: `step-${Date.now()}`,
           type,
-          name: `New ${type} Step`,
+          name: `New ${type} ${parentId ? 'Sub-step' : 'Step'}`,
           enabled: true,
+          substeps: type === 'Phase' ? [] : undefined,
           config: {
               metric: 'Throughput',
               chunkSize: 512,
               overlap: 50,
           }
       };
-      setCurrentConfig({ ...currentConfig, steps: [...currentConfig.steps, newStep] });
+
+      if (parentId) {
+          // Add as substep
+          setCurrentConfig({
+              ...currentConfig,
+              steps: currentConfig.steps.map(s => {
+                  if (s.id === parentId && s.substeps) {
+                      return { ...s, substeps: [...s.substeps, newStep] };
+                  }
+                  return s;
+              })
+          });
+      } else {
+          // Add as root step
+          setCurrentConfig({ ...currentConfig, steps: [...currentConfig.steps, newStep] });
+      }
+      
       setExpandedStepId(newStep.id);
   };
 
   const updateStep = (id: string, updates: Partial<BenchmarkStep>) => {
+      const updateRecursive = (steps: BenchmarkStep[]): BenchmarkStep[] => {
+          return steps.map(s => {
+              if (s.id === id) return { ...s, ...updates };
+              if (s.substeps) return { ...s, substeps: updateRecursive(s.substeps) };
+              return s;
+          });
+      };
+      
       setCurrentConfig({
           ...currentConfig,
-          steps: currentConfig.steps.map(s => s.id === id ? { ...s, ...updates } : s)
+          steps: updateRecursive(currentConfig.steps)
       });
   };
   
   const updateStepConfig = (id: string, configUpdates: any) => {
+      const updateRecursive = (steps: BenchmarkStep[]): BenchmarkStep[] => {
+          return steps.map(s => {
+              if (s.id === id) return { ...s, config: { ...s.config, ...configUpdates } };
+              if (s.substeps) return { ...s, substeps: updateRecursive(s.substeps) };
+              return s;
+          });
+      };
+
       setCurrentConfig({
           ...currentConfig,
-          steps: currentConfig.steps.map(s => s.id === id ? { ...s, config: { ...s.config, ...configUpdates } } : s)
+          steps: updateRecursive(currentConfig.steps)
       });
   };
 
   const removeStep = (id: string) => {
+      const removeRecursive = (steps: BenchmarkStep[]): BenchmarkStep[] => {
+          return steps.filter(s => s.id !== id).map(s => ({
+              ...s,
+              substeps: s.substeps ? removeRecursive(s.substeps) : undefined
+          }));
+      };
+
       setCurrentConfig({
           ...currentConfig,
-          steps: currentConfig.steps.filter(s => s.id !== id)
+          steps: removeRecursive(currentConfig.steps)
       });
   };
 
+  // Global Config Updates
+  const updateParameter = (key: keyof AdvancedBenchmarkConfig['parameters'], value: any) => {
+      setCurrentConfig({
+          ...currentConfig,
+          parameters: {
+              ...currentConfig.parameters,
+              [key]: value
+          }
+      });
+  };
+
+  const handleSaveConfig = () => {
+      if (currentConfig.id === 'new-config' || !currentConfig.id) {
+          const newId = `cfg-${Date.now()}`;
+          const newConfig = { ...currentConfig, id: newId };
+          setSavedConfigs([...savedConfigs, newConfig]);
+          setCurrentConfig(newConfig);
+      } else {
+          setSavedConfigs(savedConfigs.map(c => c.id === currentConfig.id ? currentConfig : c));
+      }
+  };
+
+  const handleLoadConfig = (config: AdvancedBenchmarkConfig) => {
+      // Deep copy to prevent reference issues
+      setCurrentConfig(JSON.parse(JSON.stringify(config)));
+      setShowLoadMenu(false);
+  };
+
+  const handleNewConfig = () => {
+      setCurrentConfig({
+          ...DEFAULT_ADV_CONFIG,
+          id: 'new-config',
+          parameters: { ...DEFAULT_ADV_CONFIG.parameters },
+          steps: []
+      });
+  };
+
+  // Drag and Drop only supported for top-level steps for now to maintain stability
   const handleDragStart = (e: React.DragEvent, index: number) => {
       setDraggedStepIndex(index);
       e.dataTransfer.effectAllowed = "move";
@@ -165,13 +240,74 @@ export const Benchmarks: React.FC<BenchmarksProps> = ({ results, models }) => {
           case 'Ingestion': return <FileText size={16} className="text-yellow-400"/>;
           case 'ToolUse': return <Wrench size={16} className="text-orange-400"/>;
           case 'ColBERT': return <Search size={16} className="text-red-400"/>;
+          case 'Phase': return <Layers size={16} className="text-gray-300"/>;
       }
   };
 
   const renderStepConfig = (step: BenchmarkStep) => {
-      switch(step.type) {
-          case 'Ingestion':
-              return (
+      return (
+          <div className="space-y-4">
+              {/* Common Server/Model Override */}
+              <div className="grid grid-cols-2 gap-4 bg-nebula-950/50 p-3 rounded border border-nebula-800">
+                  <div>
+                      <label className="text-xs text-gray-500 uppercase font-bold flex items-center gap-1"><Server size={10}/> Server Override</label>
+                      <select 
+                        value={step.serverId || ''} 
+                        onChange={(e) => updateStep(step.id, { serverId: e.target.value })}
+                        className="w-full bg-nebula-900 border border-nebula-800 rounded p-2 text-sm mt-1 text-gray-300"
+                      >
+                          <option value="">Default (Global)</option>
+                          {servers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                      </select>
+                  </div>
+                   <div>
+                      <label className="text-xs text-gray-500 uppercase font-bold flex items-center gap-1"><Box size={10}/> Model Override</label>
+                      <select 
+                        value={step.modelId || ''} 
+                        onChange={(e) => updateStep(step.id, { modelId: e.target.value })}
+                        className="w-full bg-nebula-900 border border-nebula-800 rounded p-2 text-sm mt-1 text-gray-300"
+                      >
+                          <option value="">Default (Global)</option>
+                          {models.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
+                      </select>
+                  </div>
+              </div>
+
+              {step.type === 'Phase' && (
+                  <div className="space-y-2">
+                       <label className="text-xs text-gray-500 uppercase font-bold">Sub-steps</label>
+                       <div className="space-y-2 pl-2 border-l-2 border-nebula-800">
+                           {step.substeps?.map((sub, idx) => (
+                               <div key={sub.id} className="bg-nebula-950 border border-nebula-800 rounded p-3 flex items-center justify-between">
+                                   <div className="flex items-center gap-2">
+                                       <span className="text-xs font-mono text-gray-500">{idx + 1}.</span>
+                                       {getStepIcon(sub.type)}
+                                       <span className="text-sm text-gray-300">{sub.name}</span>
+                                   </div>
+                                    <div className="flex items-center gap-2">
+                                        <button onClick={() => setExpandedStepId(expandedStepId === sub.id ? null : sub.id)} className="p-1 hover:bg-nebula-800 rounded text-gray-400">
+                                            {expandedStepId === sub.id ? <ChevronDown size={14}/> : <ChevronRight size={14}/>}
+                                        </button>
+                                        <button onClick={() => removeStep(sub.id)} className="p-1 hover:text-red-400 text-gray-500"><X size={14}/></button>
+                                    </div>
+                               </div>
+                           ))}
+                           <div className="flex gap-2 mt-2 pt-2 border-t border-nebula-800 border-dashed">
+                               {['Embedding', 'RAG', 'Generation'].map(t => (
+                                   <button 
+                                        key={t}
+                                        onClick={() => addStep(t as BenchmarkStepType, step.id)}
+                                        className="text-[10px] px-2 py-1 bg-nebula-900 hover:bg-nebula-800 border border-nebula-700 rounded text-gray-400"
+                                   >
+                                       + {t}
+                                   </button>
+                               ))}
+                           </div>
+                       </div>
+                  </div>
+              )}
+
+              {step.type === 'Ingestion' && (
                   <div className="grid grid-cols-2 gap-4">
                       <div>
                           <label className="text-xs text-gray-500 uppercase font-bold">Document Source Path</label>
@@ -195,17 +331,10 @@ export const Benchmarks: React.FC<BenchmarksProps> = ({ results, models }) => {
                           <input type="number" value={step.config.overlap || 50} onChange={(e) => updateStepConfig(step.id, { overlap: parseInt(e.target.value) })} className="w-full bg-nebula-950 border border-nebula-800 rounded p-2 text-sm mt-1" />
                       </div>
                   </div>
-              );
-          case 'Embedding':
-              return (
+              )}
+              
+              {step.type === 'Embedding' && (
                   <div className="space-y-4">
-                      <div>
-                          <label className="text-xs text-gray-500 uppercase font-bold">Embedding Model</label>
-                           <select value={step.config.modelId || ''} onChange={(e) => updateStepConfig(step.id, { modelId: e.target.value })} className="w-full bg-nebula-950 border border-nebula-800 rounded p-2 text-sm mt-1">
-                              <option value="">Default (System)</option>
-                              {models.filter(m => m.tags.includes('Embedding')).map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
-                          </select>
-                      </div>
                       <div>
                           <label className="text-xs text-gray-500 uppercase font-bold">Vector Store Target</label>
                            <select value={step.config.vectorStore || 'ChromaDB'} onChange={(e) => updateStepConfig(step.id, { vectorStore: e.target.value })} className="w-full bg-nebula-950 border border-nebula-800 rounded p-2 text-sm mt-1">
@@ -216,9 +345,9 @@ export const Benchmarks: React.FC<BenchmarksProps> = ({ results, models }) => {
                           </select>
                       </div>
                   </div>
-              );
-          case 'RAG':
-              return (
+              )}
+
+              {step.type === 'RAG' && (
                   <div className="grid grid-cols-2 gap-4">
                        <div>
                           <label className="text-xs text-gray-500 uppercase font-bold">Top K Retrieval</label>
@@ -233,9 +362,9 @@ export const Benchmarks: React.FC<BenchmarksProps> = ({ results, models }) => {
                           </select>
                       </div>
                   </div>
-              );
-            case 'ToolUse':
-                return (
+              )}
+
+            {step.type === 'ToolUse' && (
                     <div className="space-y-4">
                          <div>
                             <label className="text-xs text-gray-500 uppercase font-bold">Tool Schema Definition (JSON/URL)</label>
@@ -250,10 +379,9 @@ export const Benchmarks: React.FC<BenchmarksProps> = ({ results, models }) => {
                             </select>
                         </div>
                     </div>
-                );
-          default:
-              return <div className="text-sm text-gray-500 italic">No specific configuration for this step type.</div>;
-      }
+                )}
+          </div>
+      );
   };
 
   const renderDataView = () => (
@@ -332,23 +460,17 @@ export const Benchmarks: React.FC<BenchmarksProps> = ({ results, models }) => {
             >
                 Trends
             </button>
-             <button 
-                onClick={() => setActiveView('analysis')}
-                className={`px-3 py-1.5 rounded text-sm transition-all flex items-center gap-2 ${activeView === 'analysis' ? 'bg-nebula-700 text-white' : 'text-gray-400 hover:text-white'}`}
-            >
-                <Sparkles size={14} className={isAnalyzing ? 'animate-pulse text-purple-400' : ''}/> Analysis
-            </button>
             <button 
                 onClick={() => setActiveView('data')}
                 className={`px-3 py-1.5 rounded text-sm transition-all flex items-center gap-2 ${activeView === 'data' ? 'bg-nebula-700 text-white' : 'text-gray-400 hover:text-white'}`}
             >
-                <Database size={14} /> Data Sources
+                 Data Sources
             </button>
             <button 
                 onClick={() => setActiveView('config')}
                 className={`px-3 py-1.5 rounded text-sm transition-all flex items-center gap-2 ${activeView === 'config' ? 'bg-purple-600 text-white' : 'text-gray-400 hover:text-white'}`}
             >
-                <Settings2 size={14} /> Pipeline Editor
+                 Tests
             </button>
         </div>
       </div>
@@ -483,38 +605,6 @@ export const Benchmarks: React.FC<BenchmarksProps> = ({ results, models }) => {
 
       {activeView === 'data' && renderDataView()}
 
-      {activeView === 'analysis' && (
-        <div className="flex-1 animate-fade-in flex flex-col">
-             <div className="flex justify-between items-center mb-6">
-                 <div>
-                     <h3 className="text-lg font-bold text-white flex items-center gap-2"><Sparkles className="text-purple-400"/> AI Performance Insights</h3>
-                     <p className="text-gray-400 text-sm mt-1">Generate deep analysis of benchmark trends using Gemini 1.5 Pro.</p>
-                 </div>
-                <button 
-                    onClick={handleAnalysis}
-                    disabled={isAnalyzing}
-                    className="bg-purple-600 hover:bg-purple-500 text-white px-6 py-2 rounded-lg text-sm font-bold flex items-center gap-2 shadow-lg transition-all"
-                >
-                    {isAnalyzing ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
-                    {isAnalyzing ? 'Generating Report...' : 'Generate Analysis'}
-                </button>
-             </div>
-             
-             <div className="flex-1 bg-nebula-900 border border-purple-500/20 rounded-xl p-8 overflow-y-auto">
-                 {analysis ? (
-                    <div className="prose prose-invert max-w-none">
-                        <div dangerouslySetInnerHTML={{ __html: analysis.replace(/\n/g, '<br/>') }} />
-                    </div>
-                 ) : (
-                     <div className="h-full flex flex-col items-center justify-center text-gray-600 opacity-50">
-                         <Sparkles size={64} className="mb-4" />
-                         <p>Click generate to analyze {results.length} benchmark results</p>
-                     </div>
-                 )}
-             </div>
-        </div>
-      )}
-
       {activeView === 'trends' && (
          <div className="flex-1 overflow-y-auto animate-fade-in">
              <div className="grid grid-cols-1 gap-6">
@@ -554,6 +644,10 @@ export const Benchmarks: React.FC<BenchmarksProps> = ({ results, models }) => {
                   <div className="p-4 bg-nebula-900 border border-nebula-700 rounded-xl">
                       <h3 className="text-sm font-bold text-gray-300 mb-4 uppercase tracking-wider">Pipeline Components</h3>
                       <div className="space-y-2">
+                           <button onClick={() => addStep('Phase')} className="w-full flex items-center gap-3 p-3 bg-nebula-950 border border-nebula-800 rounded hover:border-gray-500/50 hover:bg-gray-900/10 transition-all text-sm group text-left">
+                              <Layers size={16} className="text-gray-400" />
+                              <span className="text-gray-400 group-hover:text-gray-200">Phase (Container)</span>
+                          </button>
                           <button onClick={() => addStep('Ingestion')} className="w-full flex items-center gap-3 p-3 bg-nebula-950 border border-nebula-800 rounded hover:border-yellow-500/50 hover:bg-yellow-900/10 transition-all text-sm group text-left">
                               <FileText size={16} className="text-yellow-500" />
                               <span className="text-gray-400 group-hover:text-yellow-200">Data Ingestion</span>
@@ -586,15 +680,23 @@ export const Benchmarks: React.FC<BenchmarksProps> = ({ results, models }) => {
                        <div className="space-y-4">
                            <div>
                                <label className="text-xs text-gray-500 block mb-1">Context Size</label>
-                               <input type="number" value={currentConfig.parameters.contextSize} className="w-full bg-nebula-950 border border-nebula-800 rounded p-2 text-sm text-white" />
+                               <input type="number" value={currentConfig.parameters.contextSize} onChange={(e) => updateParameter('contextSize', parseInt(e.target.value))} className="w-full bg-nebula-950 border border-nebula-800 rounded p-2 text-sm text-white" />
                            </div>
                            <div>
                                <label className="text-xs text-gray-500 block mb-1">Temperature</label>
-                               <input type="number" step="0.1" value={currentConfig.parameters.temperature} className="w-full bg-nebula-950 border border-nebula-800 rounded p-2 text-sm text-white" />
+                               <input type="number" step="0.1" value={currentConfig.parameters.temperature} onChange={(e) => updateParameter('temperature', parseFloat(e.target.value))} className="w-full bg-nebula-950 border border-nebula-800 rounded p-2 text-sm text-white" />
                            </div>
                            <div className="flex items-center gap-2">
-                               <input type="checkbox" checked={currentConfig.parameters.flashAttention} className="accent-purple-500" />
+                               <input type="checkbox" checked={currentConfig.parameters.flashAttention} onChange={(e) => updateParameter('flashAttention', e.target.checked)} className="accent-purple-500" />
                                <label className="text-xs text-gray-400">Flash Attention</label>
+                           </div>
+                           <div className="flex items-center gap-2">
+                               <input type="checkbox" checked={currentConfig.parameters.warmup} onChange={(e) => updateParameter('warmup', e.target.checked)} className="accent-purple-500" />
+                               <label className="text-xs text-gray-400 flex items-center gap-1"><Flame size={12} className="text-orange-500"/> Warmup Models</label>
+                           </div>
+                           <div>
+                               <label className="text-xs text-gray-500 block mb-1">GPU Layers</label>
+                               <input type="number" value={currentConfig.parameters.gpuLayers} onChange={(e) => updateParameter('gpuLayers', parseInt(e.target.value))} className="w-full bg-nebula-950 border border-nebula-800 rounded p-2 text-sm text-white" />
                            </div>
                        </div>
                   </div>
@@ -613,9 +715,48 @@ export const Benchmarks: React.FC<BenchmarksProps> = ({ results, models }) => {
                            />
                        </div>
                        <div className="flex gap-2">
-                           <button className="px-4 py-2 bg-nebula-800 hover:bg-nebula-700 text-white text-xs font-bold rounded border border-nebula-600">Load Template</button>
-                           <button className="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold rounded flex items-center gap-2">
-                               <Play size={14} fill="currentColor"/> Run Benchmark
+                           <div className="relative">
+                                <button 
+                                    onClick={() => setShowLoadMenu(!showLoadMenu)}
+                                    className="px-4 py-2 bg-nebula-800 hover:bg-nebula-700 text-white text-xs font-bold rounded border border-nebula-600 flex items-center gap-2"
+                                >
+                                    <FolderOpen size={14} /> Load
+                                </button>
+                                {showLoadMenu && (
+                                    <div className="absolute top-full right-0 mt-2 w-64 bg-nebula-900 border border-nebula-700 rounded-lg shadow-xl z-50 overflow-hidden">
+                                        <div className="max-h-64 overflow-y-auto">
+                                            {savedConfigs.map(cfg => (
+                                                <div 
+                                                    key={cfg.id}
+                                                    onClick={() => handleLoadConfig(cfg)}
+                                                    className="p-3 hover:bg-nebula-800 cursor-pointer border-b border-nebula-800 last:border-0"
+                                                >
+                                                    <div className="font-bold text-sm text-white">{cfg.name}</div>
+                                                    <div className="text-[10px] text-gray-500">{cfg.steps.length} steps • {cfg.backend}</div>
+                                                </div>
+                                            ))}
+                                            {savedConfigs.length === 0 && <div className="p-3 text-xs text-gray-500 text-center">No saved pipelines</div>}
+                                        </div>
+                                    </div>
+                                )}
+                           </div>
+
+                           <button 
+                                onClick={handleNewConfig}
+                                className="px-4 py-2 bg-nebula-800 hover:bg-nebula-700 text-white text-xs font-bold rounded border border-nebula-600 flex items-center gap-2"
+                            >
+                                <Plus size={14} /> New
+                            </button>
+
+                           <button 
+                                onClick={handleSaveConfig}
+                                className="px-4 py-2 bg-nebula-800 hover:bg-nebula-700 text-white text-xs font-bold rounded border border-nebula-600 flex items-center gap-2"
+                           >
+                               <Save size={14} /> Save
+                           </button>
+
+                           <button className="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold rounded flex items-center gap-2 shadow-[0_0_15px_rgba(139,92,246,0.4)] ml-2">
+                               <Play size={14} fill="currentColor"/> Run
                            </button>
                        </div>
                   </div>
@@ -636,13 +777,13 @@ export const Benchmarks: React.FC<BenchmarksProps> = ({ results, models }) => {
                             )}
                             
                             <div 
-                                draggable
+                                draggable={step.type !== 'Phase'} // Phases not draggable in top level yet to simplify
                                 onDragStart={(e) => handleDragStart(e, index)}
                                 onDragOver={(e) => handleDragOver(e, index)}
                                 onDrop={handleDrop}
                                 className={`relative z-10 bg-nebula-950 border ${expandedStepId === step.id ? 'border-purple-500 ring-1 ring-purple-500/50' : 'border-nebula-700'} rounded-lg transition-all shadow-lg group`}
                             >
-                                <div className="flex items-center p-3 gap-3 cursor-grab active:cursor-grabbing hover:bg-nebula-900/50 transition-colors rounded-t-lg">
+                                <div className={`flex items-center p-3 gap-3 cursor-grab active:cursor-grabbing hover:bg-nebula-900/50 transition-colors rounded-t-lg ${step.type === 'Phase' ? 'bg-nebula-900/40' : ''}`}>
                                     <GripVertical size={16} className="text-gray-600" />
                                     <div className="p-2 bg-nebula-900 rounded border border-nebula-800 shadow-sm">
                                         {getStepIcon(step.type)}
@@ -650,7 +791,12 @@ export const Benchmarks: React.FC<BenchmarksProps> = ({ results, models }) => {
                                     <div className="flex-1">
                                         <div className="flex items-center gap-2">
                                             <span className="text-sm font-bold text-gray-200">{step.name}</span>
-                                            <span className="text-[10px] bg-nebula-800 px-2 rounded text-gray-500 border border-nebula-700">{step.type}</span>
+                                            <span className={`text-[10px] px-2 rounded border ${step.type === 'Phase' ? 'bg-purple-900/30 border-purple-500 text-purple-300' : 'bg-nebula-800 border-nebula-700 text-gray-500'}`}>{step.type}</span>
+                                            {(step.serverId || step.modelId) && (
+                                                <span className="text-[10px] bg-blue-900/20 text-blue-300 px-1.5 rounded border border-blue-500/20 flex items-center gap-1">
+                                                    <Server size={8} /> Override
+                                                </span>
+                                            )}
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-2">
