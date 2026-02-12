@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Model, ModelVersion, ServerProfile, BenchmarkResult } from '../types';
-import { GitBranch, Box, FileCode, Tag, ExternalLink, Cpu, Terminal, Scale, X, BarChart2, Filter, Check, Server, FileText, Activity, Plus, RefreshCw, Trash2, Layers, Zap, Merge, Scissors, User, FlaskConical, Beaker, Database, ArrowLeftRight, TrendingUp, Play, Loader2 } from 'lucide-react';
+import { GitBranch, Box, FileCode, Tag, ExternalLink, Cpu, Terminal, Scale, X, BarChart2, Filter, Check, Server, FileText, Activity, Plus, RefreshCw, Trash2, Layers, Zap, Merge, Scissors, User, FlaskConical, Beaker, Database, ArrowLeftRight, TrendingUp, Play, Loader2, BrainCircuit } from 'lucide-react';
 
 interface ModelsProps {
   models: Model[];
@@ -193,7 +193,9 @@ export const Models: React.FC<ModelsProps> = ({ models, servers, benchmarks, onA
     <div className="h-full flex flex-col relative animate-fade-in p-space-lg">
       <div className="flex flex-col gap-space-md mb-space-md shrink-0">
         <div className="flex items-center gap-space-md">
-            <h2 className="text-type-heading-lg font-bold text-white">🤖 Model Registry</h2>
+            <h2 className="text-type-heading-lg font-bold text-white flex items-center gap-space-sm">
+                <BrainCircuit className="text-purple-500" /> Model Registry
+            </h2>
             <span className="text-type-tiny bg-white/5 text-gray-400 px-2 py-1 rounded border border-white/5">
                 Showing {filteredModels.length} of {localModels.length}
             </span>
