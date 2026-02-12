@@ -59,14 +59,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ serverConfig }) => {
   return (
     <div className="h-full overflow-y-auto space-y-6 animate-fade-in p-8 custom-scrollbar">
       {/* Alerts Header */}
-      <div className="bg-nebula-900 border border-nebula-700 rounded-2xl p-6 shadow-xl relative overflow-hidden">
+      <div className="bg-nebula-900 border border-nebula-700 rounded p-6 shadow-xl relative overflow-hidden">
         <div className="absolute top-0 right-0 p-8 opacity-[0.03] pointer-events-none">
             <Zap size={140} />
         </div>
         
         <div className="flex justify-between items-center mb-6 relative z-10">
             <h3 className="text-lg font-black flex items-center gap-3 uppercase tracking-tight">
-                <span className="p-2 bg-purple-500/10 rounded-xl text-purple-400 border border-purple-500/20"><Activity size={20} /></span>
+                <span className="p-2 bg-purple-500/10 rounded text-purple-400 border border-purple-500/20"><Activity size={20} /></span>
                 System Telemetry
             </h3>
             <div className="flex items-center gap-4">
@@ -81,8 +81,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ serverConfig }) => {
         </div>
 
         <div className="space-y-3 relative z-10">
-          <div className="flex items-center gap-4 p-4 bg-nebula-950/60 rounded-2xl border border-nebula-800/60 hover:border-nebula-700 transition-all group cursor-default">
-            <div className="p-2.5 bg-green-500/10 rounded-xl shrink-0">
+          <div className="flex items-center gap-4 p-4 bg-nebula-950/60 rounded border border-nebula-800/60 hover:border-nebula-700 transition-all group cursor-default">
+            <div className="p-2.5 bg-green-500/10 rounded shrink-0">
                 <CheckCircle size={20} className="text-green-400" />
             </div>
             <div className="flex-1 min-w-0">
@@ -95,8 +95,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ serverConfig }) => {
             </div>
           </div>
           
-          <div className="flex items-center gap-4 p-4 bg-nebula-950/60 rounded-2xl border border-nebula-800/60 hover:border-nebula-700 transition-all group cursor-default">
-            <div className="p-2.5 bg-yellow-500/10 rounded-xl shrink-0">
+          <div className="flex items-center gap-4 p-4 bg-nebula-950/60 rounded border border-nebula-800/60 hover:border-nebula-700 transition-all group cursor-default">
+            <div className="p-2.5 bg-yellow-500/10 rounded shrink-0">
                 <AlertTriangle size={20} className="text-yellow-400" />
             </div>
             <div className="flex-1 min-w-0">
@@ -129,7 +129,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ serverConfig }) => {
             {/* Slide 0: VRAM & Load */}
             {slideIndex === 0 && (
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-fade-in h-[480px]">
-                    <div className="bg-nebula-900 border border-nebula-700 rounded-3xl p-8 lg:col-span-1 flex flex-col items-center justify-center relative overflow-hidden shadow-2xl">
+                    <div className="bg-nebula-900 border border-nebula-700 rounded p-8 lg:col-span-1 flex flex-col items-center justify-center relative overflow-hidden shadow-2xl">
                     <div className="absolute top-0 right-0 p-6 opacity-[0.02]">
                         <Target size={180} />
                     </div>
@@ -152,25 +152,25 @@ export const Dashboard: React.FC<DashboardProps> = ({ serverConfig }) => {
                             ))}
                             </Pie>
                             <Tooltip 
-                            contentStyle={{ backgroundColor: '#09090b', border: '1px solid #272730', borderRadius: '16px', fontWeight: 'bold' }}
+                            contentStyle={{ backgroundColor: '#09090b', border: '1px solid #272730', borderRadius: '4px', fontWeight: 'bold' }}
                             itemStyle={{ color: '#e4e4e7' }}
                             />
                         </PieChart>
                         </ResponsiveContainer>
                     </div>
                     <div className="flex flex-col gap-3 w-full px-4 mt-4">
-                        <div className="flex justify-between items-center bg-nebula-950 p-3 rounded-xl border border-nebula-800">
+                        <div className="flex justify-between items-center bg-nebula-950 p-3 rounded border border-nebula-800">
                              <div className="flex items-center gap-3"><div className="w-2.5 h-2.5 rounded-full bg-purple-500 shadow-[0_0_12px_#8b5cf6]"></div> <span className="text-[10px] font-black uppercase text-gray-400">Reserved</span></div>
                              <span className="font-mono text-sm font-black">24 GB</span>
                         </div>
-                        <div className="flex justify-between items-center bg-nebula-950 p-3 rounded-xl border border-nebula-800">
+                        <div className="flex justify-between items-center bg-nebula-950 p-3 rounded border border-nebula-800">
                              <div className="flex items-center gap-3"><div className="w-2.5 h-2.5 rounded-full bg-nebula-700"></div> <span className="text-[10px] font-black uppercase text-gray-400">Available</span></div>
                              <span className="font-mono text-sm font-black">56 GB</span>
                         </div>
                     </div>
                     </div>
 
-                    <div className="bg-nebula-900 border border-nebula-700 rounded-3xl p-8 lg:col-span-2 shadow-2xl flex flex-col">
+                    <div className="bg-nebula-900 border border-nebula-700 rounded p-8 lg:col-span-2 shadow-2xl flex flex-col">
                         <div className="flex justify-between items-start mb-8">
                             <div>
                                 <h3 className="text-lg font-black uppercase tracking-tight">Accelerator Load</h3>
@@ -194,7 +194,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ serverConfig }) => {
                                 <XAxis dataKey="time" stroke="#4b5563" tickLine={false} axisLine={false} fontSize={10} tick={{fontWeight: 'bold'}} />
                                 <YAxis stroke="#4b5563" tickLine={false} axisLine={false} fontSize={10} />
                                 <Tooltip 
-                                    contentStyle={{ backgroundColor: '#09090b', border: '1px solid #272730', borderRadius: '12px' }}
+                                    contentStyle={{ backgroundColor: '#09090b', border: '1px solid #272730', borderRadius: '4px' }}
                                 />
                                 <Area type="monotone" dataKey="load" stroke="#8b5cf6" strokeWidth={4} fillOpacity={1} fill="url(#colorLoad)" />
                             </AreaChart>
@@ -206,7 +206,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ serverConfig }) => {
 
             {/* Slide 1: Active Tasks */}
             {slideIndex === 1 && (
-                <div className="bg-nebula-900 border border-nebula-700 rounded-3xl p-8 h-[480px] animate-fade-in flex flex-col shadow-2xl overflow-hidden">
+                <div className="bg-nebula-900 border border-nebula-700 rounded p-8 h-[480px] animate-fade-in flex flex-col shadow-2xl overflow-hidden">
                     <div className="flex justify-between items-end mb-10">
                         <div>
                             <h3 className="text-xl font-black uppercase tracking-tight flex items-center gap-3">
@@ -214,14 +214,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ serverConfig }) => {
                             </h3>
                             <p className="text-[10px] text-gray-500 uppercase font-black tracking-widest mt-1">Active worker thread distribution</p>
                         </div>
-                        <div className="bg-nebula-950 border border-nebula-800 px-4 py-2 rounded-xl flex items-center gap-3">
+                        <div className="bg-nebula-950 border border-nebula-800 px-4 py-2 rounded flex items-center gap-3">
                             <span className="text-[10px] font-black uppercase text-gray-500">Live Workers: 3</span>
                             <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></div>
                         </div>
                     </div>
                     <div className="flex-1 space-y-4 overflow-y-auto px-2 custom-scrollbar">
                         {activeTasks.map(task => (
-                            <div key={task.id} className="bg-nebula-950 p-6 rounded-2xl border border-nebula-800/60 hover:border-blue-500/40 transition-all group">
+                            <div key={task.id} className="bg-nebula-950 p-6 rounded border border-nebula-800/60 hover:border-blue-500/40 transition-all group">
                                 <div className="flex justify-between text-sm mb-4 items-end">
                                     <div className="flex flex-col">
                                         <span className="text-[10px] text-gray-500 uppercase tracking-widest font-black mb-1">Process Status: {task.status}</span>
@@ -244,7 +244,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ serverConfig }) => {
 
             {/* Slide 2: High Scores - REFINED */}
             {slideIndex === 2 && (
-                <div className="bg-nebula-900 border border-nebula-700 rounded-3xl p-8 h-[480px] animate-fade-in flex flex-col shadow-2xl relative overflow-hidden">
+                <div className="bg-nebula-900 border border-nebula-700 rounded p-8 h-[480px] animate-fade-in flex flex-col shadow-2xl relative overflow-hidden">
                     <div className="absolute top-0 right-0 p-10 opacity-[0.02] pointer-events-none rotate-12">
                         <Trophy size={300} />
                     </div>
@@ -256,14 +256,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ serverConfig }) => {
                             </h3>
                             <p className="text-[10px] text-gray-500 uppercase tracking-[0.3em] font-black mt-1">Global observation records // Hall of Fame</p>
                         </div>
-                        <div className="text-[10px] text-gray-400 font-black uppercase tracking-[0.2em] border border-nebula-700 px-5 py-2.5 rounded-2xl bg-nebula-950 shadow-inner">
+                        <div className="text-[10px] text-gray-400 font-black uppercase tracking-[0.2em] border border-nebula-700 px-5 py-2.5 rounded bg-nebula-950 shadow-inner">
                             System Version: 2.2.0-LAB
                         </div>
                     </div>
 
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 flex-1 relative z-10">
                         {highScores.map((score, i) => (
-                            <div key={i} className="bg-nebula-950 border border-nebula-800 p-8 rounded-[2rem] flex flex-col justify-between items-center text-center hover:border-yellow-500/50 transition-all group relative overflow-hidden shadow-lg">
+                            <div key={i} className="bg-nebula-950 border border-nebula-800 p-8 rounded flex flex-col justify-between items-center text-center hover:border-yellow-500/50 transition-all group relative overflow-hidden shadow-lg">
                                 <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-yellow-500/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
                                 
                                 {score.rank === 1 && <Medal size={20} className="absolute top-4 right-4 text-yellow-500 animate-bounce" />}
@@ -274,7 +274,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ serverConfig }) => {
                                 </div>
 
                                 <div className="w-full mt-10 space-y-4">
-                                    <div className="text-[10px] text-white font-black px-4 py-2 bg-nebula-900 rounded-xl border border-nebula-800 truncate uppercase tracking-tight">
+                                    <div className="text-[10px] text-white font-black px-4 py-2 bg-nebula-900 rounded border border-nebula-800 truncate uppercase tracking-tight">
                                         {score.model}
                                     </div>
                                     <div className="flex justify-between items-center px-2">
@@ -295,7 +295,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ serverConfig }) => {
             {/* Slide 3: Health & Throughput */}
             {slideIndex === 3 && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 h-[480px] animate-fade-in">
-                    <div className="bg-nebula-900 border border-nebula-700 rounded-3xl p-8 flex flex-col shadow-2xl overflow-hidden relative">
+                    <div className="bg-nebula-900 border border-nebula-700 rounded p-8 flex flex-col shadow-2xl overflow-hidden relative">
                         <div className="absolute top-0 right-0 p-8 opacity-[0.02] pointer-events-none">
                             <Target size={160} />
                         </div>
@@ -320,7 +320,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ serverConfig }) => {
                         </div>
                     </div>
 
-                    <div className="bg-nebula-900 border border-nebula-700 rounded-3xl p-8 flex flex-col shadow-2xl overflow-hidden">
+                    <div className="bg-nebula-900 border border-nebula-700 rounded p-8 flex flex-col shadow-2xl overflow-hidden">
                         <h3 className="text-lg font-black uppercase tracking-tight mb-2">Throughput Distribution</h3>
                         <p className="text-[10px] text-gray-500 mb-8 font-black uppercase tracking-widest">Comparative token volume per node</p>
                         <div className="flex-1 min-h-0">
@@ -329,8 +329,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ serverConfig }) => {
                                     <CartesianGrid strokeDasharray="3 3" stroke="#1c1c24" horizontal={false} />
                                     <XAxis type="number" hide />
                                     <YAxis dataKey="name" type="category" width={90} stroke="#9ca3af" tick={{fontSize: 12, fontWeight: 900, letterSpacing: '0.05em'}} axisLine={false} tickLine={false} />
-                                    <Tooltip cursor={{fill: 'rgba(255,255,255,0.02)'}} contentStyle={{ backgroundColor: '#09090b', border: '1px solid #272730', borderRadius: '12px' }} />
-                                    <Bar dataKey="tokens" fill="#8884d8" radius={[0, 10, 10, 0]} barSize={28}>
+                                    <Tooltip cursor={{fill: 'rgba(255,255,255,0.02)'}} contentStyle={{ backgroundColor: '#09090b', border: '1px solid #272730', borderRadius: '4px' }} />
+                                    <Bar dataKey="tokens" fill="#8884d8" radius={[0, 4, 4, 0]} barSize={28}>
                                         {throughputData.map((entry, index) => (
                                             <Cell key={`cell-${index}`} fill={entry.color} />
                                         ))}
@@ -347,7 +347,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ serverConfig }) => {
                     <button 
                         key={i} 
                         onClick={() => setSlideIndex(i)}
-                        className={`h-1.5 rounded-full transition-all duration-500 ${slideIndex === i ? 'bg-purple-500 w-12 shadow-[0_0_15px_#8b5cf6]' : 'bg-nebula-700 w-4 hover:bg-nebula-600'}`}
+                        className={`h-1.5 transition-all duration-500 ${slideIndex === i ? 'bg-purple-500 w-12 shadow-[0_0_15px_#8b5cf6]' : 'bg-nebula-700 w-4 hover:bg-nebula-600'}`}
                     ></button>
                 ))}
             </div>

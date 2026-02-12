@@ -28,7 +28,7 @@ const PythonIcon = ({ size = 20, className = "" }: { size?: number, className?: 
 const ClipboardDataIcon = ({ size = 20, className = "" }: { size?: number, className?: string }) => (
   <svg width={size} height={size} viewBox="0 0 16 16" fill="currentColor" className={className}>
     <path d="M4 11a1 1 0 1 1 2 0v1a1 1 0 1 1-2 0v-1zm6-4a1 1 0 1 1 2 0v5a1 1 0 1 1-2 0V7zM7 9a1 1 0 0 1 2 0v3a1 1 0 1 1-2 0V9z"/>
-    <path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z"/>
+    <path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 1 1 1-1h1v-1z"/>
     <path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h3zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3z"/>
   </svg>
 );
@@ -537,7 +537,7 @@ const App: React.FC = () => {
   return (
     <div className="flex flex-col h-screen bg-nebula-950 text-nebula-100 font-sans overflow-hidden text-type-body">
       {/* Streamlined Top Header with Glassmorphism */}
-      <header className="h-header bg-nebula-950/70 backdrop-blur-md border-b border-white/5 flex items-center justify-between px-space-lg z-30 shrink-0 relative shadow-lg">
+      <header className="h-header bg-black/40 backdrop-blur-2xl border-b border-white/5 flex items-center justify-between px-space-lg z-30 shrink-0 relative shadow-lg">
           <div className="absolute inset-0 bg-gradient-to-r from-purple-500/5 to-transparent pointer-events-none"></div>
           <div className="flex items-center gap-space-lg relative z-10">
                {/* Logo */}
@@ -573,8 +573,8 @@ const App: React.FC = () => {
       </header>
 
       <div className="flex flex-1 overflow-hidden">
-        {/* Sidebar */}
-        <aside className="w-sidebar bg-nebula-950 border-r border-nebula-800 flex flex-col z-20">
+        {/* Sidebar - Updated to Black Glass styling */}
+        <aside className="w-sidebar bg-black/60 backdrop-blur-3xl border-r border-white/5 flex flex-col z-20">
           <nav className="flex-1 p-space-md space-y-space-xs">
             {navItems.map(item => (
               <button
@@ -582,20 +582,20 @@ const App: React.FC = () => {
                 onClick={() => setActiveTab(item.id as ViewState)}
                 className={`w-full flex items-center gap-space-md px-4 py-3 rounded text-type-body font-medium transition-all duration-200 relative group ${
                   activeTab === item.id 
-                    ? 'bg-nebula-900 text-purple-400 border border-nebula-700 active-glow' 
-                    : 'text-gray-400 hover:text-white hover:bg-nebula-900/50'
+                    ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20 active-glow shadow-lg' 
+                    : 'text-gray-400 hover:text-white hover:bg-white/5'
                 }`}
               >
                 {item.icon}
                 {item.label}
-                {activeTab === item.id && <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-1/2 bg-purple-500 rounded-l shadow-[0_0_8px_#7c3aed]"></div>}
+                {activeTab === item.id && <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-1/2 bg-purple-500 rounded-l shadow-[0_0_12px_#7c3aed]"></div>}
               </button>
             ))}
           </nav>
         </aside>
 
-        {/* Main Content - FIXED overflow-hidden to allow children to handle scroll */}
-        <main className="flex-1 flex flex-col min-w-0 bg-nebula-950 overflow-hidden relative">
+        {/* Main Content */}
+        <main className="flex-1 flex flex-col min-w-0 bg-[#07070a] overflow-hidden relative">
           
           {/* View Content */}
           <div className="flex-1 overflow-hidden flex flex-col">
@@ -615,8 +615,8 @@ const App: React.FC = () => {
         </main>
       </div>
 
-       {/* Full Width Footer with Glassmorphism */}
-      <footer className="h-8 bg-nebula-950/70 backdrop-blur-md border-t border-white/5 flex items-center justify-between px-4 text-type-caption text-gray-500 select-none z-40 relative shadow-[0_-5px_15px_rgba(0,0,0,0.2)] w-full font-mono uppercase tracking-tighter">
+       {/* Full Width Footer - Updated to Black Glass styling */}
+      <footer className="h-8 bg-black/70 backdrop-blur-3xl border-t border-white/5 flex items-center justify-between px-4 text-type-caption text-gray-500 select-none z-40 relative shadow-2xl w-full font-mono uppercase tracking-tighter">
             <div className="flex gap-space-md items-center">
                 <span className="flex items-center gap-space-xs">
                     <span className="w-2 h-2 rounded-full bg-green-500 animate-heartbeat"></span> 
@@ -628,17 +628,17 @@ const App: React.FC = () => {
                       <span className="text-gray-600">ROCm Active</span>
                   </span>
                 )}
-                <span className="flex items-center gap-space-xs opacity-50">GPU: 12%</span>
-                <span className="flex items-center gap-space-xs opacity-50">VRAM: 8/12 GB</span>
+                <span className="flex items-center gap-space-xs opacity-50 text-[9px]">GPU: 12%</span>
+                <span className="flex items-center gap-space-xs opacity-50 text-[9px]">VRAM: 8/12 GB</span>
             </div>
             
              {/* Global Loading Indicator */}
             <div className="flex items-center gap-space-sm text-purple-400">
                 <Loader2 size={12} className="animate-spin" />
-                <span className="animate-pulse">Task Sync Active</span>
+                <span className="animate-pulse text-[9px]">Task Sync Active</span>
             </div>
 
-            <div className="opacity-40">
+            <div className="opacity-40 text-[9px]">
                 v2.2.0-Lab // REPLICATOR-AI
             </div>
       </footer>
