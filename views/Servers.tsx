@@ -1,7 +1,17 @@
 
 import React, { useState } from 'react';
 import { ServerProfile, Model } from '../types';
-import { Server, Terminal, Monitor, Command, Play, Square, Plus, X, Check, Package, Layers, Cpu, Zap, Settings } from 'lucide-react';
+import { Terminal, Monitor, Command, Play, Square, Plus, X, Check, Package, Layers, Zap, Settings } from 'lucide-react';
+
+const PythonIcon = ({ size = 20, className = "" }: { size?: number, className?: string }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M12 9h-7a2 2 0 0 0 -2 2v4a2 2 0 0 0 2 2h3" />
+    <path d="M12 15h7a2 2 0 0 0 2 -2v-4a2 2 0 0 0 -2 -2h-3" />
+    <path d="M8 9v-4a2 2 0 0 1 2 -2h4a2 2 0 0 1 2 2v5a2 2 0 0 1 -2 2h-4a2 2 0 0 0 -2 2v5a2 2 0 0 0 2 2h4a2 2 0 0 0 2 -2v-4" />
+    <line x1="11" y1="6" x2="11" y2="6.01" />
+    <line x1="13" y1="18" x2="13" y2="18.01" />
+  </svg>
+);
 
 interface ServersProps {
     servers: ServerProfile[];
@@ -91,7 +101,7 @@ export const Servers: React.FC<ServersProps> = ({ servers, models, onUpdateServe
              <div className="flex justify-between items-center">
                 <div>
                      <h2 className="text-2xl font-bold flex items-center gap-2">
-                        <Server className="text-purple-500" /> Server Configurations
+                        <PythonIcon className="text-purple-500" /> Server Configurations
                      </h2>
                      <p className="text-sm text-gray-400 mt-1">Manage Python venvs, Llama.cpp instances, and inference endpoints.</p>
                 </div>

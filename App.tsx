@@ -154,6 +154,30 @@ Ensure your browser supports WebGPU and you have enabled unsafe-webgpu flags if 
     ]
   },
   { 
+    id: 'flux-1.1-pro', 
+    name: 'Flux 1.1 Pro (Image)', 
+    provider: 'Black Forest Labs', 
+    family: 'Other', 
+    description: 'High fidelity text-to-image generation model.', 
+    tags: ['Image', 'Generative', 'SOTA'], 
+    params: '12B', 
+    tensorType: 'FP16', 
+    lastUsed: '2026-01-21', 
+    links: [], 
+    versions: [ 
+        { 
+            id: 'v1.1', 
+            name: 'Pro', 
+            format: 'Safetensors', 
+            quantization: 'FP16', 
+            size: '24GB', 
+            created: '2026-01-05', 
+            baseModel: 'None', 
+            status: ModelStatus.Ready 
+        } 
+    ] 
+  },
+  { 
     id: 'equall-saul-7b', 
     name: 'Saul 7B Instruct v1', 
     provider: 'Equall',
@@ -495,18 +519,18 @@ const App: React.FC = () => {
     { id: 'dashboard', label: 'Dashboard', icon: <Terminal size={20} /> },
     { id: 'benchmarks', label: 'Benchmarks', icon: <Activity size={20} /> },
     { id: 'datasets', label: 'Datasets', icon: <ClipboardDataIcon size={20} /> },
-    { id: 'training', label: 'Training', icon: <DraftingCompassIcon size={20} /> }, // Changed to DraftingCompassIcon
+    { id: 'training', label: 'Training', icon: <DraftingCompassIcon size={20} /> }, 
     { id: 'laboratory', label: 'Laboratory', icon: <FlaskConical size={20} /> },
     { id: 'servers', label: 'Servers', icon: <PythonIcon size={20} /> },
     { id: 'models', label: 'Model Registry', icon: <BrainCircuit size={20} /> },
     { id: 'agents', label: 'Agentic Prompts', icon: <Bot size={20} /> },
-    { id: 'chat', label: 'Playground', icon: <MessageSquare size={20} /> },
+    { id: 'chat', label: 'Chat', icon: <MessageSquare size={20} /> },
   ];
 
   const getPageTitle = (tab: ViewState) => {
       if (tab === 'agents') return 'Agentic Prompts';
       if (tab === 'models') return 'Model Registry';
-      if (tab === 'chat') return 'Playground';
+      if (tab === 'chat') return 'Chat';
       return tab;
   };
 

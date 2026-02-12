@@ -95,12 +95,12 @@ export const Laboratory: React.FC<LaboratoryProps> = ({ models }) => {
   };
 
   return (
-    <div className="flex h-full gap-8 text-nebula-100 font-sans">
+    <div className="flex h-full gap-8 text-nebula-100 font-sans overflow-hidden">
         {/* Main Chamber */}
-        <div className="flex-1 flex flex-col gap-6 min-w-0">
+        <div className="flex-1 flex flex-col gap-6 min-w-0 h-full">
             
             {/* Standard Header Style matching Benchmarks/Datasets */}
-            <div className="flex justify-between items-center">
+            <div className="flex justify-between items-center shrink-0">
                 <div>
                      <h2 className="text-2xl font-bold flex items-center gap-2">
                         <FlaskConical className="text-purple-500" /> Laboratory
@@ -131,13 +131,13 @@ export const Laboratory: React.FC<LaboratoryProps> = ({ models }) => {
             </div>
 
             {/* Workspace */}
-            <div className="flex-1 bg-nebula-900 border border-nebula-700 rounded-xl p-6 relative overflow-hidden backdrop-blur-sm flex flex-col">
+            <div className="flex-1 bg-nebula-900 border border-nebula-700 rounded-xl p-6 relative overflow-hidden backdrop-blur-sm flex flex-col min-h-0">
                 <div className="absolute top-0 right-0 p-8 opacity-5 pointer-events-none">
                     <Zap size={200} />
                 </div>
 
                 {mode === 'merge' && (
-                    <div className="space-y-8 relative z-10 animate-fade-in overflow-y-auto flex-1 pr-2">
+                    <div className="space-y-8 relative z-10 animate-fade-in overflow-y-auto flex-1 pr-2 custom-scrollbar">
                         <div className="grid grid-cols-2 gap-8">
                             <div className="space-y-4">
                                 <label className="text-purple-400 text-sm font-bold uppercase block mb-2">Synthesis Method</label>
@@ -266,7 +266,7 @@ export const Laboratory: React.FC<LaboratoryProps> = ({ models }) => {
                 )}
 
                 {mode === 'extract' && (
-                     <div className="space-y-8 relative z-10 animate-fade-in overflow-y-auto flex-1 pr-2">
+                     <div className="space-y-8 relative z-10 animate-fade-in overflow-y-auto flex-1 pr-2 custom-scrollbar">
                         <div className="grid grid-cols-2 gap-8">
                              <div className="p-6 bg-nebula-950/50 border border-nebula-800 rounded-xl relative">
                                 <h3 className="text-xl font-bold text-purple-400 mb-4 flex items-center gap-2"><Scissors size={20}/> LoRA Extraction</h3>
@@ -358,7 +358,7 @@ export const Laboratory: React.FC<LaboratoryProps> = ({ models }) => {
                 {mode === 'medusa' && (
                     <div className="space-y-6 relative z-10 animate-fade-in flex flex-col h-full overflow-hidden">
                         <div className="flex items-start gap-6 flex-1 min-h-0">
-                            <div className="w-1/2 space-y-4 overflow-y-auto h-full pr-2">
+                            <div className="w-1/2 space-y-4 overflow-y-auto h-full pr-2 custom-scrollbar">
                                 <h3 className="text-xl font-bold text-purple-400 mb-2 flex items-center gap-2"><Dna size={20}/> Medusa Head Configuration</h3>
                                 <p className="text-sm text-gray-400">Train multiple lightweight heads on top of a frozen backbone to predict future tokens in parallel (Speculative Decoding).</p>
                                 
@@ -502,13 +502,13 @@ export const Laboratory: React.FC<LaboratoryProps> = ({ models }) => {
         </div>
 
         {/* Bio-Storage (Inventory) */}
-        <div className="w-72 flex flex-col gap-4 bg-nebula-900 border-l border-nebula-700 p-4 shadow-xl z-20 shrink-0">
-             <div className="flex items-center gap-2 text-purple-400 border-b border-nebula-800 pb-2">
+        <div className="w-72 flex flex-col gap-4 bg-nebula-900 border-l border-nebula-700 p-4 shadow-xl z-20 shrink-0 h-full overflow-hidden">
+             <div className="flex items-center gap-2 text-purple-400 border-b border-nebula-800 pb-2 shrink-0">
                  <Box size={20} />
                  <h3 className="font-bold tracking-wider">BIO-STORAGE</h3>
              </div>
              
-             <div className="flex-1 overflow-y-auto space-y-3">
+             <div className="flex-1 overflow-y-auto space-y-3 custom-scrollbar pr-1">
                  {inventory.map(item => (
                      <div key={item.id} className="p-3 bg-nebula-950/50 border border-nebula-800 rounded hover:border-purple-500/50 hover:bg-purple-900/10 transition-all cursor-pointer group">
                          <div className="flex justify-between items-start mb-1">
@@ -524,7 +524,7 @@ export const Laboratory: React.FC<LaboratoryProps> = ({ models }) => {
                  ))}
              </div>
 
-             <div className="pt-4 border-t border-nebula-800">
+             <div className="pt-4 border-t border-nebula-800 shrink-0">
                  <div className="text-[10px] text-gray-500 text-center uppercase">Storage Capacity: 12%</div>
                  <div className="w-full bg-nebula-800 h-1 mt-1 rounded-full overflow-hidden">
                      <div className="bg-purple-600 h-full w-[12%] shadow-[0_0_5px_#8b5cf6]"></div>
