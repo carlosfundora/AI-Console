@@ -1,7 +1,7 @@
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Model, LabArtifact } from '../types';
-import { FlaskConical, Dna, Merge, Scissors, Zap, Box, Save, Plus, Trash2, CheckCircle, Loader2, BarChart2, TrendingDown, Activity, Settings, X, FileText, Info, Cpu, Layers, GitBranch } from 'lucide-react';
+import { FlaskConical, Dna, Merge, Scissors, Zap, Box, Save, Plus, Trash2, CheckCircle, Loader2, BarChart2, TrendingDown, Activity, Settings, X, FileText, Info, Cpu, Layers, GitBranch, RefreshCw, Calculator, ShieldAlert, Target } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 
 interface LaboratoryProps {
@@ -60,8 +60,8 @@ export const Laboratory: React.FC<LaboratoryProps> = ({ models }) => {
   const [inventory, setInventory] = useState<LabArtifact[]>(MOCK_INVENTORY);
   const [selectedArtifact, setSelectedArtifact] = useState<LabArtifact | null>(null);
   const [inputModels, setInputModels] = useState<{id: number, modelId: string, weight: number}[]>([
-      { id: 1, modelId: '', weight: 1.0 },
-      { id: 2, modelId: '', weight: 1.0 }
+      { id: 1, modelId: '', weight: 0.5 },
+      { id: 2, modelId: '', weight: 0.5 }
   ]);
   
   // MergeKit Config
@@ -77,7 +77,7 @@ export const Laboratory: React.FC<LaboratoryProps> = ({ models }) => {
   // Medusa State
   const [medusaConfig, setMedusaConfig] = useState({
       lr: 0.001,
-      decay: 0.0,
+      decay: 0.01,
       scheduler: 'Cosine',
       heads: 4,
       backbone: ''
@@ -93,8 +93,10 @@ export const Laboratory: React.FC<LaboratoryProps> = ({ models }) => {
   });
   const [extractionStatus, setExtractionStatus] = useState<'idle' | 'processing' | 'success'>('idle');
 
+  // --- MergeKit Logic ---
+
   const addInputModel = () => {
-      setInputModels([...inputModels, { id: Date.now(), modelId: '', weight: 1.0 }]);
+      setInputModels([...inputModels, { id: Date.now(), modelId: '', weight: 0.0 }]);
   };
 
   const removeInputModel = (id: number) => {
@@ -106,6 +108,19 @@ export const Laboratory: React.FC<LaboratoryProps> = ({ models }) => {
   const updateInputModel = (id: number, field: 'modelId' | 'weight', value: string | number) => {
       setInputModels(inputModels.map(m => m.id === id ? { ...m, [field]: value } : m));
   };
+
+  const normalizeWeights = () => {
+      const total = inputModels.reduce((sum, m) => sum + (Number(m.weight) || 0), 0);
+      if (total === 0) return;
+      setInputModels(inputModels.map(m => ({
+          ...m,
+          weight: parseFloat(((Number(m.weight) || 0) / total).toFixed(4))
+      })));
+  };
+
+  const totalMergeWeight = useMemo(() => {
+      return inputModels.reduce((sum, m) => sum + (Number(m.weight) || 0), 0);
+  }, [inputModels]);
 
   const handleExtraction = () => {
       if ((mode === 'extract' && !extractionConfig.ftModel) || (extractionConfig.ftModel && !extractionConfig.baseModel)) return;
@@ -141,10 +156,7 @@ export const Laboratory: React.FC<LaboratoryProps> = ({ models }) => {
 
   return (
     <div className="flex h-full gap-space-lg text-nebula-100 font-sans overflow-hidden p-space-lg relative">
-        {/* Main Chamber */}
         <div className="flex-1 flex flex-col gap-space-lg min-w-0 h-full overflow-hidden">
-            
-            {/* Standard Header Style matching Benchmarks/Datasets */}
             <div className="flex justify-between items-center shrink-0">
                 <div>
                      <h2 className="text-type-heading-lg font-bold flex items-center gap-space-sm">
@@ -175,7 +187,6 @@ export const Laboratory: React.FC<LaboratoryProps> = ({ models }) => {
                 </div>
             </div>
 
-            {/* Workspace */}
             <div className="flex-1 bg-nebula-900 border border-nebula-700 rounded-xl p-space-lg relative overflow-hidden backdrop-blur-sm flex flex-col min-h-0">
                 <div className="absolute top-0 right-0 p-space-2xl opacity-5 pointer-events-none">
                     <Zap size={200} />
@@ -195,14 +206,13 @@ export const Laboratory: React.FC<LaboratoryProps> = ({ models }) => {
                                         >
                                             <div className="flex justify-between">
                                                 <span className="font-bold text-type-body">{getMergeMethodInfo(m).label}</span>
-                                                {getMergeMethodInfo(m).base === 'Required' && <span className="text-[10px] bg-purple-900/50 text-purple-300 px-1 rounded border border-purple-500/30">BASE REQ</span>}
+                                                {getMergeMethodInfo(m).base === 'Required' && <span className="text-[10px] bg-purple-900/50 text-purple-300 px-1 rounded border border-purple-500/30 font-bold">BASE REQ</span>}
                                             </div>
                                             <p className="text-type-tiny mt-1 opacity-70">{getMergeMethodInfo(m).desc}</p>
                                         </button>
                                     ))}
                                 </div>
 
-                                {/* Advanced Merge Config */}
                                 <div className="mt-space-lg p-space-md bg-nebula-950/50 border border-nebula-800 rounded-xl">
                                     <h4 className="text-type-tiny text-gray-500 font-bold uppercase mb-4 flex items-center gap-space-sm">
                                         <Settings size={12} /> Algorithm Parameters
@@ -213,7 +223,7 @@ export const Laboratory: React.FC<LaboratoryProps> = ({ models }) => {
                                             <div>
                                                 <div className="flex justify-between text-type-caption text-gray-400 mb-1">
                                                     <span>Density (Pruning)</span>
-                                                    <span>{mergeConfig.density}</span>
+                                                    <span className="font-mono text-purple-400">{mergeConfig.density}</span>
                                                 </div>
                                                 <input 
                                                     type="range" min="0" max="1" step="0.05"
@@ -228,7 +238,7 @@ export const Laboratory: React.FC<LaboratoryProps> = ({ models }) => {
                                             <div>
                                                 <div className="flex justify-between text-type-caption text-gray-400 mb-1">
                                                     <span>Interpolation Factor (t)</span>
-                                                    <span>{mergeConfig.t}</span>
+                                                    <span className="font-mono text-purple-400">{mergeConfig.t}</span>
                                                 </div>
                                                 <input 
                                                     type="range" min="0" max="1" step="0.05"
@@ -247,7 +257,7 @@ export const Laboratory: React.FC<LaboratoryProps> = ({ models }) => {
                                                 onChange={(e) => setMergeConfig({...mergeConfig, normalize: e.target.checked})}
                                                 className="accent-purple-500"
                                             />
-                                            <label htmlFor="normalize" className="text-type-body text-gray-300">Normalize Weights</label>
+                                            <label htmlFor="normalize" className="text-type-body text-gray-300">Auto-normalize output weights</label>
                                         </div>
 
                                         <div className="flex items-center gap-space-sm">
@@ -277,8 +287,7 @@ export const Laboratory: React.FC<LaboratoryProps> = ({ models }) => {
                                 </div>
                             </div>
 
-                            <div className="space-y-space-lg">
-                                
+                            <div className="space-y-space-lg flex flex-col">
                                 <div className="space-y-space-sm">
                                     <div className="flex justify-between items-center">
                                         <label className="text-purple-400 text-type-body font-bold uppercase">Target Output Path</label>
@@ -294,31 +303,44 @@ export const Laboratory: React.FC<LaboratoryProps> = ({ models }) => {
                                     <input type="text" className="w-full bg-nebula-950 border border-nebula-700 rounded p-3 text-gray-200 font-mono focus:border-purple-500 outline-none text-type-body" placeholder="./models/merged/chimera-v1" />
                                 </div>
 
-                                <div className="p-space-md bg-nebula-950/50 border border-nebula-800 rounded-lg">
-                                    <div className="flex justify-between items-center mb-3">
-                                        <h4 className="text-purple-400 font-bold flex items-center gap-space-sm text-type-body"><Merge size={16}/> Input Models</h4>
-                                        <span className="text-type-tiny text-gray-500 uppercase tracking-wider">{inputModels.length} Layers</span>
+                                <div className="p-space-md bg-nebula-950/50 border border-nebula-800 rounded-lg flex-1 flex flex-col">
+                                    <div className="flex justify-between items-center mb-4">
+                                        <div className="flex items-center gap-2">
+                                            <h4 className="text-purple-400 font-bold flex items-center gap-space-sm text-type-body"><Merge size={16}/> Input Models</h4>
+                                            <span className="text-type-tiny bg-nebula-900 text-gray-500 px-2 py-0.5 rounded border border-nebula-800">{inputModels.length} Layers</span>
+                                        </div>
+                                        <button 
+                                            onClick={normalizeWeights}
+                                            className="text-type-tiny bg-nebula-900 hover:bg-nebula-800 border border-nebula-700 text-purple-300 px-2 py-1 rounded flex items-center gap-2 transition-all"
+                                            title="Ensure all weights sum to 1.0"
+                                        >
+                                            <Calculator size={12} /> Normalize Weights
+                                        </button>
                                     </div>
-                                    <div className="space-y-space-sm">
+                                    
+                                    <div className="space-y-space-sm overflow-y-auto pr-1 custom-scrollbar max-h-[300px]">
                                         {inputModels.map((im, index) => (
                                             <div key={im.id} className="flex gap-space-sm animate-fade-in items-center group">
                                                 <div className="text-type-tiny text-gray-600 font-mono w-4">{index + 1}</div>
                                                 <select 
                                                     value={im.modelId}
                                                     onChange={(e) => updateInputModel(im.id, 'modelId', e.target.value)}
-                                                    className="flex-1 bg-nebula-900 border border-nebula-700 rounded p-2 text-gray-300 text-type-body focus:border-purple-500 outline-none transition-colors"
+                                                    className="flex-1 bg-nebula-900 border border-nebula-700 rounded p-2.5 text-gray-300 text-type-body focus:border-purple-500 outline-none transition-colors"
                                                 >
-                                                    <option value="">Select Model...</option>
+                                                    <option value="">Select from Registry...</option>
                                                     {models.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
                                                 </select>
-                                                <input 
-                                                    type="number" 
-                                                    value={im.weight}
-                                                    onChange={(e) => updateInputModel(im.id, 'weight', parseFloat(e.target.value))}
-                                                    placeholder="Weight" 
-                                                    className="w-20 bg-nebula-900 border border-nebula-700 rounded p-2 text-gray-300 text-type-body focus:border-purple-500 outline-none transition-colors" 
-                                                    step="0.1" 
-                                                />
+                                                <div className="relative w-24">
+                                                    <input 
+                                                        type="number" 
+                                                        value={im.weight}
+                                                        onChange={(e) => updateInputModel(im.id, 'weight', e.target.value === '' ? '' : parseFloat(e.target.value))}
+                                                        placeholder="0.0" 
+                                                        className="w-full bg-nebula-900 border border-nebula-700 rounded p-2.5 text-gray-300 text-type-body font-mono focus:border-purple-500 outline-none transition-colors pr-8" 
+                                                        step="0.01" 
+                                                    />
+                                                    <div className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-gray-600 pointer-events-none">W</div>
+                                                </div>
                                                 <button 
                                                     onClick={() => removeInputModel(im.id)}
                                                     className="p-2 text-gray-600 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100"
@@ -330,18 +352,34 @@ export const Laboratory: React.FC<LaboratoryProps> = ({ models }) => {
                                             </div>
                                         ))}
                                     </div>
+                                    
                                     <button 
                                         onClick={addInputModel}
-                                        className="w-full mt-3 py-2 border border-dashed border-nebula-700 text-gray-500 text-type-tiny hover:text-purple-400 hover:border-purple-500 rounded transition-all flex items-center justify-center gap-space-sm"
+                                        className="w-full mt-4 py-3 border border-dashed border-nebula-700 text-gray-500 text-type-tiny hover:text-purple-400 hover:border-purple-500 rounded-lg transition-all flex items-center justify-center gap-space-sm bg-nebula-900/30"
                                     >
                                         <Plus size={14} /> Add Layer Source
                                     </button>
+
+                                    <div className="mt-auto pt-6">
+                                        <div className="flex justify-between items-center px-2 py-3 bg-nebula-950 rounded border border-nebula-800">
+                                            <div className="flex items-center gap-2">
+                                                <ShieldAlert size={14} className={Math.abs(totalMergeWeight - 1) < 0.001 ? "text-green-500" : "text-yellow-500"} />
+                                                <span className="text-type-tiny uppercase font-bold text-gray-500">Weight Verification</span>
+                                            </div>
+                                            <span className={`font-mono text-type-body font-bold ${Math.abs(totalMergeWeight - 1) < 0.001 ? "text-green-400" : "text-yellow-400 animate-pulse"}`}>
+                                                Sum: {totalMergeWeight.toFixed(4)}
+                                            </span>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
                         <div className="flex justify-end pt-space-lg border-t border-nebula-800">
-                            <button className="px-8 py-3 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded shadow-[0_0_20px_rgba(139,92,246,0.3)] hover:shadow-[0_0_30px_rgba(139,92,246,0.5)] transition-all flex items-center gap-space-sm">
+                            <button 
+                                disabled={totalMergeWeight === 0}
+                                className="px-8 py-3 bg-purple-600 hover:bg-purple-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold rounded shadow-[0_0_20px_rgba(139,92,246,0.3)] hover:shadow-[0_0_30px_rgba(139,92,246,0.5)] transition-all flex items-center gap-space-sm"
+                            >
                                 <Zap className="animate-pulse" />
                                 INITIATE FUSION
                             </button>
@@ -442,139 +480,178 @@ export const Laboratory: React.FC<LaboratoryProps> = ({ models }) => {
                 {mode === 'medusa' && (
                     <div className="space-y-space-lg relative z-10 animate-fade-in flex flex-col h-full overflow-hidden">
                         <div className="flex items-start gap-space-lg flex-1 min-h-0">
-                            <div className="w-1/2 space-y-space-md overflow-y-auto h-full pr-2 custom-scrollbar">
-                                <h3 className="text-type-heading-md font-bold text-purple-400 mb-space-xs flex items-center gap-space-sm"><Dna size={20}/> Medusa Head Configuration</h3>
-                                <p className="text-type-body text-gray-400">Train multiple lightweight heads on top of a frozen backbone to predict future tokens in parallel (Speculative Decoding).</p>
+                            <div className="w-1/2 space-y-space-lg overflow-y-auto h-full pr-4 custom-scrollbar">
+                                <div className="space-y-2">
+                                    <h3 className="text-type-heading-md font-black text-white flex items-center gap-space-sm tracking-tight"><Dna size={24} className="text-purple-500"/> Medusa Head Architecture</h3>
+                                    <p className="text-type-body text-gray-400 leading-relaxed">Speculative decoding via lightweight heads trained on top of frozen backbones. This allows parallel token prediction without base model interference.</p>
+                                </div>
                                 
-                                <div className="grid grid-cols-2 gap-space-md mt-6">
-                                     <div className="col-span-2">
-                                        <label className="text-type-tiny uppercase text-gray-500 font-bold">Backbone Model (Frozen)</label>
+                                <div className="bg-nebula-950/80 border border-nebula-800 rounded-2xl p-6 space-y-6">
+                                     <div className="space-y-2">
+                                        <label className="text-[10px] uppercase text-gray-500 font-black tracking-widest flex items-center gap-2">
+                                            <Target size={12} className="text-purple-400" /> Backbone Specimen
+                                        </label>
                                         <select 
                                             value={medusaConfig.backbone}
                                             onChange={(e) => setMedusaConfig({...medusaConfig, backbone: e.target.value})}
-                                            className="w-full bg-nebula-900 border border-nebula-700 rounded p-3 text-gray-300 mt-1 outline-none focus:border-purple-500 text-type-body"
+                                            className="w-full bg-nebula-900 border border-nebula-700 rounded-xl p-3.5 text-gray-200 outline-none focus:border-purple-500 text-type-body transition-all font-bold"
                                         >
-                                            <option value="">Select Backbone...</option>
+                                            <option value="">Identify Base Backbone...</option>
                                             {models.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
                                         </select>
                                     </div>
-                                    <div>
-                                        <label className="text-type-tiny uppercase text-gray-500 font-bold">Number of Heads</label>
-                                        <input 
-                                            type="number" 
-                                            value={medusaConfig.heads}
-                                            onChange={(e) => setMedusaConfig({...medusaConfig, heads: parseInt(e.target.value)})}
-                                            className="w-full bg-nebula-900 border border-nebula-700 rounded p-3 text-gray-300 mt-1 outline-none focus:border-purple-500 text-type-body" 
-                                        />
-                                    </div>
-                                </div>
 
-                                {/* Optimization Strategy Panel */}
-                                <div className="p-space-md bg-purple-900/10 border border-purple-500/20 rounded-xl mt-4">
-                                    <h4 className="text-purple-400 font-bold text-type-body mb-4 border-b border-purple-500/20 pb-2">Optimization Strategy</h4>
-                                    <div className="grid grid-cols-2 gap-space-md">
-                                        <div className="space-y-1">
-                                            <label className="text-type-tiny text-gray-500 block font-bold">Learning Rate</label>
-                                            <input 
-                                                type="number" step={0.0001} 
-                                                value={medusaConfig.lr}
-                                                onChange={(e) => setMedusaConfig({...medusaConfig, lr: parseFloat(e.target.value)})}
-                                                className="w-full bg-nebula-900 border border-nebula-700 rounded p-2 text-type-body font-mono text-gray-300 outline-none focus:border-purple-500" 
-                                            />
+                                    <div className="grid grid-cols-2 gap-6">
+                                         <div className="space-y-2">
+                                            <label className="text-[10px] uppercase text-gray-500 font-black tracking-widest">Heads Count</label>
+                                            <div className="flex items-center gap-4 bg-nebula-900 border border-nebula-700 rounded-xl p-1 px-3">
+                                                <input 
+                                                    type="number" 
+                                                    value={medusaConfig.heads}
+                                                    onChange={(e) => setMedusaConfig({...medusaConfig, heads: parseInt(e.target.value)})}
+                                                    className="w-full bg-transparent p-2.5 text-white outline-none text-type-body font-mono" 
+                                                />
+                                                <div className="flex flex-col text-[8px] text-gray-500 font-black">
+                                                    <span>MIN 2</span>
+                                                    <span>MAX 12</span>
+                                                </div>
+                                            </div>
                                         </div>
-                                         <div className="space-y-1">
-                                            <label className="text-type-tiny text-gray-500 block font-bold">Medusa Decay</label>
-                                            <input 
-                                                type="number" step={0.1} 
-                                                value={medusaConfig.decay}
-                                                onChange={(e) => setMedusaConfig({...medusaConfig, decay: parseFloat(e.target.value)})}
-                                                className="w-full bg-nebula-900 border border-nebula-700 rounded p-2 text-type-body font-mono text-gray-300 outline-none focus:border-purple-500" 
-                                            />
-                                        </div>
-                                         <div className="space-y-1 col-span-2">
-                                            <label className="text-type-tiny text-gray-500 block font-bold">Scheduler</label>
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] uppercase text-gray-500 font-black tracking-widest">Scheduler</label>
                                             <select 
                                                 value={medusaConfig.scheduler}
                                                 onChange={(e) => setMedusaConfig({...medusaConfig, scheduler: e.target.value})}
-                                                className="w-full bg-nebula-900 border border-nebula-700 rounded p-2 text-type-body font-mono text-gray-300 outline-none focus:border-purple-500"
+                                                className="w-full bg-nebula-900 border border-nebula-700 rounded-xl p-3 text-type-body font-bold text-purple-300 outline-none focus:border-purple-500"
                                             >
                                                 <option>Cosine</option>
                                                 <option>Linear</option>
                                                 <option>Constant</option>
+                                                <option>OneCycle</option>
                                             </select>
                                         </div>
                                     </div>
-                                </div>
 
-                                <button className="w-full px-8 py-4 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded shadow-[0_0_20px_rgba(139,92,246,0.3)] hover:shadow-[0_0_30px_rgba(139,92,246,0.5)] transition-all flex items-center justify-center gap-space-sm mt-6 text-type-body">
-                                    <Dna className="animate-spin" />
-                                    INITIATE HEAD TRAINING
-                                </button>
-                            </div>
-                            
-                            {/* Live Telemetry Panel */}
-                            <div className="w-1/2 flex flex-col h-full gap-space-md">
-                                <div className="flex justify-between items-center px-2">
-                                    <h4 className="text-purple-400 font-bold text-type-body uppercase flex items-center gap-space-sm">
-                                        <Activity size={16}/> Live Telemetry
-                                    </h4>
-                                    <span className="text-[10px] bg-green-900/30 text-green-400 border border-green-500/30 px-3 py-1 rounded-full animate-pulse flex items-center gap-2">
-                                        <span className="w-1.5 h-1.5 bg-green-500 rounded-full"></span>
-                                        Running
-                                    </span>
-                                </div>
-                                
-                                <div className="flex-1 bg-nebula-950 border border-nebula-800 rounded-xl p-space-md flex flex-col min-h-0">
-                                    {/* Stats Grid */}
-                                    <div className="grid grid-cols-3 gap-space-md mb-space-md">
-                                        <div className="bg-nebula-900 p-3 rounded border border-nebula-800 text-center">
-                                            <div className="text-type-tiny text-gray-500 uppercase font-bold">Current Loss</div>
-                                            <div className="text-type-heading-md font-mono text-white font-bold">1.624</div>
-                                            <div className="text-type-tiny text-green-400 flex items-center justify-center gap-1"><TrendingDown size={10}/> 0.4%</div>
-                                        </div>
-                                        <div className="bg-nebula-900 p-3 rounded border border-nebula-800 text-center">
-                                            <div className="text-type-tiny text-gray-500 uppercase font-bold">Top-1 Acc</div>
-                                            <div className="text-type-heading-md font-mono text-white font-bold">88.2%</div>
-                                        </div>
-                                        <div className="bg-nebula-900 p-3 rounded border border-nebula-800 text-center">
-                                            <div className="text-type-tiny text-gray-500 uppercase font-bold">Est. Time</div>
-                                            <div className="text-type-heading-md font-mono text-purple-300 font-bold">2h 14m</div>
+                                    {/* Optimization Controls */}
+                                    <div className="p-6 bg-purple-900/5 border border-purple-500/20 rounded-2xl">
+                                        <h4 className="text-purple-400 font-black text-[10px] uppercase tracking-widest mb-6 flex items-center gap-2">
+                                            <Calculator size={14} /> Optimization Hyper-Hyperparameters
+                                        </h4>
+                                        <div className="space-y-8">
+                                            <div className="space-y-3">
+                                                <div className="flex justify-between items-end">
+                                                    <label className="text-xs text-gray-400 font-bold uppercase tracking-wider">Learning Rate</label>
+                                                    <span className="font-mono text-type-body font-bold text-white bg-nebula-900 px-2 py-0.5 rounded">{medusaConfig.lr.toExponential()}</span>
+                                                </div>
+                                                <input 
+                                                    type="range" min="-6" max="-2" step="0.1" 
+                                                    value={Math.log10(medusaConfig.lr)}
+                                                    onChange={(e) => setMedusaConfig({...medusaConfig, lr: Math.pow(10, parseFloat(e.target.value))})}
+                                                    className="w-full accent-purple-500 h-1.5 bg-nebula-800 rounded-lg cursor-pointer" 
+                                                />
+                                            </div>
+                                            
+                                             <div className="space-y-3">
+                                                <div className="flex justify-between items-end">
+                                                    <label className="text-xs text-gray-400 font-bold uppercase tracking-wider">Weight Decay</label>
+                                                    <span className="font-mono text-type-body font-bold text-white bg-nebula-900 px-2 py-0.5 rounded">{medusaConfig.decay.toFixed(3)}</span>
+                                                </div>
+                                                <input 
+                                                    type="range" min="0" max="0.5" step="0.005" 
+                                                    value={medusaConfig.decay}
+                                                    onChange={(e) => setMedusaConfig({...medusaConfig, decay: parseFloat(e.target.value)})}
+                                                    className="w-full accent-purple-500 h-1.5 bg-nebula-800 rounded-lg cursor-pointer" 
+                                                />
+                                            </div>
                                         </div>
                                     </div>
 
-                                    {/* Chart */}
-                                    <div className="flex-1 min-h-0 bg-nebula-900/50 rounded border border-nebula-800/50 p-2 relative">
-                                        <div className="absolute top-2 left-2 text-type-tiny text-gray-500 font-bold uppercase z-10">Training Loss (Cross Entropy)</div>
+                                    <button className="w-full px-8 py-5 bg-purple-600 hover:bg-purple-500 text-white font-black rounded-2xl shadow-[0_0_30px_rgba(139,92,246,0.3)] transition-all flex items-center justify-center gap-3 text-type-body group border-t border-white/10">
+                                        <Dna className="group-hover:rotate-180 transition-transform duration-700 text-purple-200" size={20} />
+                                        COMMENCE SYNTHESIS
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            {/* Prominent Telemetry Panel */}
+                            <div className="w-1/2 flex flex-col h-full gap-space-lg">
+                                <div className="flex justify-between items-center px-4">
+                                    <h4 className="text-purple-400 font-black text-xs uppercase tracking-[0.2em] flex items-center gap-3">
+                                        <Activity size={18}/> Active Specimen Telemetry
+                                    </h4>
+                                    <div className="flex items-center gap-3">
+                                         <span className="text-[10px] font-mono text-gray-500">ID: MDS-ALPHA-01</span>
+                                         <span className="text-[10px] bg-green-950 text-green-400 border border-green-500/30 px-4 py-1.5 rounded-full flex items-center gap-2.5 font-black uppercase">
+                                            <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse shadow-[0_0_8px_#22c55e]"></span>
+                                            Operational
+                                        </span>
+                                    </div>
+                                </div>
+                                
+                                <div className="flex-1 bg-nebula-950/80 border border-nebula-800 rounded-3xl p-space-lg flex flex-col min-h-0 shadow-inner">
+                                    <div className="grid grid-cols-3 gap-space-lg mb-8">
+                                        <div className="bg-nebula-900/50 p-6 rounded-2xl border border-nebula-800 text-center relative group overflow-hidden">
+                                            <div className="absolute inset-x-0 bottom-0 h-0.5 bg-purple-500/30"></div>
+                                            <div className="text-[10px] text-gray-500 uppercase font-black mb-2 tracking-widest">Loss Entropy</div>
+                                            <div className="text-3xl font-black text-white font-mono">1.624</div>
+                                            <div className="text-type-tiny text-green-400 font-bold flex items-center justify-center gap-1 mt-1"><TrendingDown size={12}/> 0.4%</div>
+                                        </div>
+                                        <div className="bg-nebula-900/50 p-6 rounded-2xl border border-nebula-800 text-center relative group overflow-hidden">
+                                            <div className="absolute inset-x-0 bottom-0 h-0.5 bg-blue-500/30"></div>
+                                            <div className="text-[10px] text-gray-500 uppercase font-black mb-2 tracking-widest">Accuracy</div>
+                                            <div className="text-3xl font-black text-white font-mono">88.2%</div>
+                                            <div className="text-type-tiny text-blue-400 font-bold mt-1 uppercase">TOP-1</div>
+                                        </div>
+                                        <div className="bg-nebula-900/50 p-6 rounded-2xl border border-nebula-800 text-center relative group overflow-hidden">
+                                            <div className="absolute inset-x-0 bottom-0 h-0.5 bg-yellow-500/30"></div>
+                                            <div className="text-[10px] text-gray-500 uppercase font-black mb-2 tracking-widest">ETC</div>
+                                            <div className="text-3xl font-black text-yellow-500 font-mono">2h 14m</div>
+                                            <div className="text-type-tiny text-gray-500 font-bold mt-1 uppercase">REMAINING</div>
+                                        </div>
+                                    </div>
+
+                                    {/* Prominent Chart */}
+                                    <div className="flex-1 min-h-0 bg-nebula-900/20 rounded-2xl border border-nebula-800/30 p-6 relative group">
+                                        <div className="absolute top-4 left-6 text-[10px] text-gray-500 font-black uppercase z-10 tracking-[0.2em] flex items-center gap-2">
+                                            <Activity size={12} /> Training Loss Curve
+                                        </div>
                                         <ResponsiveContainer width="100%" height="100%">
                                             <LineChart data={MOCK_LOSS_DATA}>
-                                                <CartesianGrid strokeDasharray="3 3" stroke="#272730" />
-                                                <XAxis dataKey="step" stroke="#6b7280" fontSize={10} tickLine={false} axisLine={false} />
-                                                <YAxis stroke="#6b7280" fontSize={10} tickLine={false} axisLine={false} domain={['dataMin - 0.1', 'dataMax + 0.1']} />
+                                                <CartesianGrid strokeDasharray="3 3" stroke="#272730" vertical={false} />
+                                                <XAxis dataKey="step" stroke="#4b5563" fontSize={10} tickLine={false} axisLine={false} />
+                                                <YAxis stroke="#4b5563" fontSize={10} tickLine={false} axisLine={false} domain={['dataMin - 0.2', 'dataMax + 0.2']} />
                                                 <Tooltip 
-                                                    contentStyle={{ backgroundColor: '#121217', borderColor: '#272730', fontSize: '12px' }}
-                                                    itemStyle={{ color: '#a78bfa' }}
+                                                    contentStyle={{ backgroundColor: '#0a0a0f', border: '1px solid #1c1c24', borderRadius: '12px', fontSize: '11px', fontWeight: 'bold' }}
+                                                    cursor={{ stroke: '#4b5563', strokeWidth: 1 }}
                                                 />
                                                 <Line 
                                                     type="monotone" 
                                                     dataKey="loss" 
                                                     stroke="#8b5cf6" 
-                                                    strokeWidth={2} 
+                                                    strokeWidth={4} 
                                                     dot={false}
-                                                    activeDot={{ r: 4, fill: '#fff' }}
+                                                    activeDot={{ r: 6, fill: '#fff', stroke: '#8b5cf6', strokeWidth: 2 }}
                                                 />
                                             </LineChart>
                                         </ResponsiveContainer>
                                     </div>
 
-                                    {/* Active Specimen Info */}
-                                    <div className="mt-4 pt-4 border-t border-nebula-800 flex justify-between items-center text-type-caption text-gray-500">
-                                        <div>
-                                            <span className="text-gray-300 font-bold">Medusa-Llama3-4Head</span>
-                                            <span className="mx-2">•</span>
-                                            <span>Epoch 2/5 (Step 120/500)</span>
+                                    {/* Active Specimen Info - Now more prominent */}
+                                    <div className="mt-8 p-6 bg-nebula-900/40 rounded-2xl border border-nebula-800 flex items-center justify-between">
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-12 h-12 bg-purple-900/20 border border-purple-500/30 rounded-xl flex items-center justify-center text-purple-400">
+                                                <Target size={24} />
+                                            </div>
+                                            <div>
+                                                <div className="text-type-body font-black text-white tracking-tight">Medusa-Llama3-4Head-v1</div>
+                                                <div className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-0.5">Epoch 2/5 • Block #1,024</div>
+                                            </div>
                                         </div>
-                                        <div className="w-32 h-2 bg-nebula-800 rounded-full overflow-hidden">
-                                            <div className="h-full bg-purple-500 w-[24%] animate-[pulse_2s_infinite]"></div>
+                                        <div className="flex flex-col items-end gap-2">
+                                            <div className="text-[10px] text-gray-400 font-black uppercase tracking-widest">Overall Synthesis: 24%</div>
+                                            <div className="w-48 h-3 bg-nebula-950 rounded-full overflow-hidden border border-nebula-800 p-0.5">
+                                                <div className="h-full bg-gradient-to-r from-purple-600 to-blue-500 rounded-full w-[24%] animate-[shimmer_2s_infinite]"></div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -589,7 +666,7 @@ export const Laboratory: React.FC<LaboratoryProps> = ({ models }) => {
         <div className="w-72 flex flex-col gap-space-md bg-nebula-900 border-l border-nebula-700 p-space-md shadow-xl z-20 shrink-0 h-full overflow-hidden">
              <div className="flex items-center gap-space-sm text-purple-400 border-b border-nebula-800 pb-2 shrink-0">
                  <Box size={20} />
-                 <h3 className="font-bold tracking-wider text-type-body">BIO-STORAGE</h3>
+                 <h3 className="font-bold tracking-wider text-type-body uppercase">Artifact Vault</h3>
              </div>
              
              <div className="flex-1 overflow-y-auto space-y-space-sm custom-scrollbar pr-1">
@@ -597,10 +674,10 @@ export const Laboratory: React.FC<LaboratoryProps> = ({ models }) => {
                      <div 
                         key={item.id} 
                         onClick={() => setSelectedArtifact(item)}
-                        className={`p-space-sm bg-nebula-950/50 border rounded transition-all cursor-pointer group relative ${selectedArtifact?.id === item.id ? 'border-purple-500 bg-purple-900/10' : 'border-nebula-800 hover:border-purple-500/50 hover:bg-purple-900/10'}`}
+                        className={`p-space-sm bg-nebula-950/50 border rounded-xl transition-all cursor-pointer group relative ${selectedArtifact?.id === item.id ? 'border-purple-500 bg-purple-900/10' : 'border-nebula-800 hover:border-purple-500/50 hover:bg-purple-900/10'}`}
                      >
-                         <div className="flex justify-between items-start mb-1">
-                             <span className="text-[10px] uppercase text-purple-400 font-bold border border-nebula-800 px-1 rounded bg-nebula-900">{item.type}</span>
+                         <div className="flex justify-between items-start mb-2">
+                             <span className="text-[9px] uppercase text-purple-400 font-black border border-nebula-800 px-2 py-0.5 rounded-md bg-nebula-900 tracking-widest">{item.type}</span>
                              <Save size={12} className="text-gray-600 group-hover:text-purple-400" />
                          </div>
                          <div className="font-bold text-type-body text-gray-200 truncate mb-1 pr-6">{item.name}</div>
@@ -620,9 +697,9 @@ export const Laboratory: React.FC<LaboratoryProps> = ({ models }) => {
              </div>
 
              <div className="pt-4 border-t border-nebula-800 shrink-0">
-                 <div className="text-[10px] text-gray-500 text-center uppercase">Storage Capacity: 12%</div>
-                 <div className="w-full bg-nebula-800 h-1 mt-1 rounded-full overflow-hidden">
-                     <div className="bg-purple-600 h-full w-[12%] shadow-[0_0_5px_#8b5cf6]"></div>
+                 <div className="text-[10px] text-gray-500 text-center uppercase font-black tracking-widest mb-2">Vault Saturation: 12%</div>
+                 <div className="w-full bg-nebula-800 h-1.5 rounded-full overflow-hidden p-0.5">
+                     <div className="bg-purple-600 h-full w-[12%] shadow-[0_0_10px_#8b5cf6] rounded-full"></div>
                  </div>
              </div>
         </div>
@@ -631,58 +708,58 @@ export const Laboratory: React.FC<LaboratoryProps> = ({ models }) => {
         {selectedArtifact && (
             <div className="absolute inset-0 bg-nebula-950/95 backdrop-blur-sm z-50 flex items-center justify-center p-space-lg animate-fade-in" onClick={() => setSelectedArtifact(null)}>
                 <div 
-                    className="bg-nebula-900 border border-nebula-700 rounded-xl w-full max-w-lg shadow-2xl relative overflow-hidden flex flex-col"
+                    className="bg-nebula-900 border border-nebula-700 rounded-3xl w-full max-w-lg shadow-2xl relative overflow-hidden flex flex-col"
                     onClick={(e) => e.stopPropagation()}
                 >
                     <div className="p-space-lg border-b border-nebula-800 bg-nebula-950/50 flex justify-between items-start">
                         <div>
                             <div className="flex items-center gap-space-sm mb-1">
-                                <span className="text-[10px] uppercase text-purple-400 font-bold border border-nebula-800 px-2 py-0.5 rounded bg-nebula-900">{selectedArtifact.type}</span>
+                                <span className="text-[9px] uppercase text-purple-400 font-black border border-nebula-800 px-2 py-1 rounded-md bg-nebula-900 tracking-[0.2em]">{selectedArtifact.type}</span>
                                 <span className="text-[10px] text-gray-500 font-mono">{selectedArtifact.created}</span>
                             </div>
-                            <h3 className="text-type-heading-md font-bold text-white">{selectedArtifact.name}</h3>
+                            <h3 className="text-type-heading-md font-black text-white tracking-tight">{selectedArtifact.name}</h3>
                         </div>
-                        <button onClick={() => setSelectedArtifact(null)} className="text-gray-400 hover:text-white p-1 rounded hover:bg-nebula-800 transition-colors">
+                        <button onClick={() => setSelectedArtifact(null)} className="text-gray-400 hover:text-white p-2 rounded-full hover:bg-nebula-800 transition-colors">
                             <X size={20} />
                         </button>
                     </div>
                     
-                    <div className="p-space-lg space-y-space-lg overflow-y-auto max-h-[60vh]">
+                    <div className="p-space-lg space-y-space-lg overflow-y-auto max-h-[60vh] custom-scrollbar">
                         <div className="grid grid-cols-2 gap-space-md">
-                            <div className="bg-nebula-950 p-3 rounded border border-nebula-800">
-                                <div className="text-type-tiny text-gray-500 uppercase font-bold">Source Model</div>
-                                <div className="text-white font-mono text-type-body">{selectedArtifact.sourceModel}</div>
+                            <div className="bg-nebula-950 p-4 rounded-2xl border border-nebula-800">
+                                <div className="text-[10px] text-gray-500 uppercase font-black mb-1 tracking-widest">Source Genotype</div>
+                                <div className="text-white font-mono text-type-body font-bold">{selectedArtifact.sourceModel}</div>
                             </div>
-                            <div className="bg-nebula-950 p-3 rounded border border-nebula-800">
-                                <div className="text-type-tiny text-gray-500 uppercase font-bold">Size</div>
-                                <div className="text-white font-mono text-type-body">{selectedArtifact.size}</div>
+                            <div className="bg-nebula-950 p-4 rounded-2xl border border-nebula-800">
+                                <div className="text-[10px] text-gray-500 uppercase font-black mb-1 tracking-widest">Footprint</div>
+                                <div className="text-white font-mono text-type-body font-bold">{selectedArtifact.size}</div>
                             </div>
                         </div>
 
                         <div>
-                            <h4 className="text-type-caption font-bold text-gray-400 uppercase mb-2 flex items-center gap-2"><FileText size={14}/> Description</h4>
-                            <p className="text-gray-300 text-type-body leading-relaxed bg-nebula-950/30 p-3 rounded border border-nebula-800/50">
+                            <h4 className="text-[10px] font-black text-gray-400 uppercase mb-3 flex items-center gap-2 tracking-[0.2em]"><FileText size={14} className="text-purple-400"/> Description</h4>
+                            <p className="text-gray-300 text-type-body leading-relaxed bg-nebula-950/30 p-4 rounded-2xl border border-nebula-800/50">
                                 {selectedArtifact.description || "No description available for this artifact."}
                             </p>
                         </div>
 
                         <div>
-                            <h4 className="text-type-caption font-bold text-gray-400 uppercase mb-2 flex items-center gap-2"><Info size={14}/> Usage Instructions</h4>
-                            <p className="text-gray-300 text-type-body leading-relaxed bg-nebula-950/30 p-3 rounded border border-nebula-800/50">
+                            <h4 className="text-[10px] font-black text-gray-400 uppercase mb-3 flex items-center gap-2 tracking-[0.2em]"><Info size={14} className="text-blue-400"/> Usage Protocols</h4>
+                            <p className="text-gray-300 text-type-body leading-relaxed bg-nebula-950/30 p-4 rounded-2xl border border-nebula-800/50">
                                 {selectedArtifact.usage || "No specific usage instructions provided."}
                             </p>
                         </div>
                     </div>
 
-                    <div className="p-space-md border-t border-nebula-800 bg-nebula-950/30 flex justify-end gap-space-md">
+                    <div className="p-space-lg border-t border-nebula-800 bg-nebula-950/30 flex justify-end gap-space-md">
                         <button 
                             onClick={(e) => handleDeleteArtifact(selectedArtifact.id, e)}
-                            className="px-4 py-2 text-red-400 hover:bg-red-900/20 rounded text-sm font-bold transition-colors border border-transparent hover:border-red-900/50"
+                            className="px-6 py-2.5 text-red-400 hover:bg-red-900/20 rounded-xl text-sm font-black transition-colors border border-transparent hover:border-red-900/50 uppercase tracking-widest"
                         >
-                            Delete Artifact
+                            Purge
                         </button>
-                        <button onClick={() => setSelectedArtifact(null)} className="px-4 py-2 bg-nebula-800 hover:bg-nebula-700 text-white rounded text-sm font-bold transition-colors border border-nebula-700">
-                            Close
+                        <button onClick={() => setSelectedArtifact(null)} className="px-8 py-2.5 bg-nebula-800 hover:bg-nebula-700 text-white rounded-xl text-sm font-black transition-colors border border-nebula-700 uppercase tracking-widest">
+                            Secure
                         </button>
                     </div>
                 </div>

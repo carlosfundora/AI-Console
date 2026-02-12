@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, AreaChart, Area, XAxis, YAxis, CartesianGrid, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, BarChart, Bar, Legend } from 'recharts';
 import { ServerConfig } from '../types';
-import { ChevronLeft, ChevronRight, List, Trophy, Activity, ArrowRight, Bell, ExternalLink, CheckCircle, AlertTriangle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, List, Trophy, Activity, ArrowRight, Bell, ExternalLink, CheckCircle, AlertTriangle, Medal, Star, TrendingUp } from 'lucide-react';
 
 interface DashboardProps {
   serverConfig: ServerConfig;
@@ -45,10 +45,10 @@ const activeTasks = [
 ];
 
 const highScores = [
-    { metric: 'Max Throughput', value: '142 t/s', model: 'Mistral-7b-v0.3', date: '2d ago' },
-    { metric: 'Lowest Latency', value: '14 ms', model: 'Arctic-Embed', date: '5h ago' },
-    { metric: 'Highest Accuracy', value: '94.2%', model: 'Saul-7b (Legal)', date: '1w ago' },
-    { metric: 'Max VRAM Usage', value: '23.8 GB', model: 'Llama-3-70b-Q4', date: 'Yesterday' },
+    { metric: 'Max Throughput', value: '142 t/s', model: 'Mistral-7b-v0.3', date: '2d ago', trend: '+12%', rank: 1 },
+    { metric: 'Lowest Latency', value: '14 ms', model: 'Arctic-Embed', date: '5h ago', trend: '-2ms', rank: 2 },
+    { metric: 'Highest Accuracy', value: '94.2%', model: 'Saul-7b (Legal)', date: '1w ago', trend: '+0.4%', rank: 1 },
+    { metric: 'Max VRAM Usage', value: '23.8 GB', model: 'Llama-3-70b-Q4', date: 'Yesterday', trend: 'STABLE', rank: 3 },
 ];
 
 export const Dashboard: React.FC<DashboardProps> = ({ serverConfig }) => {
@@ -59,9 +59,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ serverConfig }) => {
 
   return (
     <div className="h-full overflow-y-auto space-y-6 animate-fade-in p-8 custom-scrollbar">
-      {/* Alerts Container - Cleaned up by removing stats and refining UI */}
+      {/* Alerts Container */}
       <div className="bg-nebula-900 border border-nebula-700 rounded-xl p-6 shadow-xl relative overflow-hidden">
-        {/* Subtle Background Element */}
         <div className="absolute top-0 right-0 p-8 opacity-[0.03] pointer-events-none">
             <Bell size={140} />
         </div>
@@ -115,7 +114,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ serverConfig }) => {
 
       {/* Visualization Carousel */}
       <div className="relative group">
-           {/* Navigation Arrows */}
             <button 
                 onClick={prevSlide}
                 className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-3 z-20 p-2 bg-nebula-800 border border-nebula-700 rounded-full text-gray-400 hover:text-white hover:bg-nebula-700 shadow-lg transition-all opacity-0 group-hover:opacity-100"
@@ -132,7 +130,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ serverConfig }) => {
             {/* Slide 0: VRAM & Load */}
             {slideIndex === 0 && (
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-fade-in h-[450px]">
-                    {/* VRAM Usage */}
                     <div className="bg-nebula-900 border border-nebula-700 rounded-xl p-6 lg:col-span-1 flex flex-col items-center justify-center relative overflow-hidden shadow-lg">
                     <div className="absolute top-0 right-0 p-4 opacity-5">
                         <span className="text-6xl">💾</span>
@@ -168,7 +165,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ serverConfig }) => {
                     </div>
                     </div>
 
-                    {/* GPU Load History */}
                     <div className="bg-nebula-900 border border-nebula-700 rounded-xl p-6 lg:col-span-2 shadow-lg">
                     <h3 className="text-lg font-semibold mb-4">⚡ GPU Load History</h3>
                     <div className="h-full max-h-[350px] w-full">
@@ -223,18 +219,42 @@ export const Dashboard: React.FC<DashboardProps> = ({ serverConfig }) => {
 
             {/* Slide 2: High Scores */}
             {slideIndex === 2 && (
-                <div className="bg-nebula-900 border border-nebula-700 rounded-xl p-6 h-[450px] animate-fade-in flex flex-col shadow-lg">
-                        <h3 className="text-lg font-semibold mb-6 flex items-center gap-2">
-                        <Trophy className="text-yellow-500" /> Laboratory Records
-                    </h3>
-                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 flex-1">
+                <div className="bg-nebula-900 border border-nebula-700 rounded-xl p-6 h-[450px] animate-fade-in flex flex-col shadow-lg relative overflow-hidden">
+                    <div className="absolute top-0 right-0 p-8 opacity-[0.02] pointer-events-none">
+                        <Trophy size={200} />
+                    </div>
+                    
+                    <div className="flex justify-between items-center mb-8 relative z-10">
+                        <h3 className="text-xl font-black flex items-center gap-3 tracking-tight">
+                            <Trophy className="text-yellow-500" /> Model High Scores
+                        </h3>
+                        <div className="text-[10px] text-gray-500 font-bold uppercase tracking-widest border border-nebula-700 px-3 py-1 rounded bg-nebula-950">
+                            Hall of Fame
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 flex-1 relative z-10">
                         {highScores.map((score, i) => (
-                            <div key={i} className="bg-nebula-950/50 border border-nebula-800 p-6 rounded-2xl flex flex-col justify-center items-center text-center hover:border-yellow-500/30 hover:bg-yellow-900/5 transition-all group">
-                                <div className="text-[10px] text-gray-500 uppercase font-black mb-4 tracking-widest">{score.metric}</div>
-                                <div className="text-4xl font-black text-white mb-3 group-hover:scale-110 transition-transform">{score.value}</div>
-                                <div className="text-xs text-purple-400 font-bold px-3 py-1.5 bg-purple-900/20 rounded-lg border border-purple-500/20">{score.model}</div>
-                                <div className="text-[10px] text-gray-600 mt-5 flex items-center gap-1.5 font-medium">
-                                    <Activity size={10} /> Recorded {score.date}
+                            <div key={i} className="bg-nebula-950 border border-nebula-800 p-6 rounded-2xl flex flex-col justify-between items-center text-center hover:border-yellow-500/50 transition-all group relative overflow-hidden">
+                                {score.rank === 1 && <Star size={16} className="absolute top-3 right-3 text-yellow-500 animate-pulse" />}
+                                
+                                <div className="space-y-4">
+                                    <div className="text-[10px] text-gray-500 uppercase font-black tracking-[0.2em]">{score.metric}</div>
+                                    <div className="text-4xl font-black text-white group-hover:scale-110 transition-transform duration-500">{score.value}</div>
+                                </div>
+
+                                <div className="w-full mt-6 space-y-3">
+                                    <div className="text-xs text-purple-400 font-bold px-3 py-1.5 bg-purple-900/20 rounded-lg border border-purple-500/20 truncate">
+                                        {score.model}
+                                    </div>
+                                    <div className="flex justify-between items-center px-1">
+                                        <div className="text-[10px] text-gray-600 font-medium flex items-center gap-1.5">
+                                            <Activity size={10} /> {score.date}
+                                        </div>
+                                        <div className={`text-[10px] font-bold ${score.trend.startsWith('+') ? 'text-green-500' : 'text-gray-500'}`}>
+                                            {score.trend}
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         ))}
@@ -245,7 +265,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ serverConfig }) => {
             {/* Slide 3: Health & Throughput */}
             {slideIndex === 3 && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 h-[450px] animate-fade-in">
-                    {/* System Health Radar */}
                     <div className="bg-nebula-900 border border-nebula-700 rounded-xl p-6 flex flex-col shadow-lg">
                         <h3 className="text-lg font-semibold mb-2">🛡️ System Health Matrix</h3>
                         <p className="text-xs text-gray-500 mb-4 font-bold uppercase tracking-wider">Real-time telemetry distribution</p>
@@ -269,7 +288,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ serverConfig }) => {
                         </div>
                     </div>
 
-                    {/* Model Throughput Bar */}
                     <div className="bg-nebula-900 border border-nebula-700 rounded-xl p-6 flex flex-col shadow-lg">
                         <h3 className="text-lg font-semibold mb-2">📊 Daily Token Throughput</h3>
                         <p className="text-xs text-gray-500 mb-4 font-bold uppercase tracking-wider">Output volume per model family</p>
@@ -292,7 +310,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ serverConfig }) => {
                 </div>
             )}
 
-            {/* Pagination Indicators */}
             <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-3">
                 {[0, 1, 2, 3].map(i => (
                     <button 

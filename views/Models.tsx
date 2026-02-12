@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Model, ModelVersion, ServerProfile, BenchmarkResult } from '../types';
-import { GitBranch, Box, FileCode, Tag, ExternalLink, Cpu, Terminal, Scale, X, BarChart2, Filter, Check, Server, FileText, Activity, Plus, RefreshCw, Trash2, Layers, Zap, Merge, Scissors, User, FlaskConical, Beaker, Database } from 'lucide-react';
+import { GitBranch, Box, FileCode, Tag, ExternalLink, Cpu, Terminal, Scale, X, BarChart2, Filter, Check, Server, FileText, Activity, Plus, RefreshCw, Trash2, Layers, Zap, Merge, Scissors, User, FlaskConical, Beaker, Database, ArrowLeftRight, TrendingUp } from 'lucide-react';
 
 interface ModelsProps {
   models: Model[];
@@ -20,6 +20,10 @@ export const Models: React.FC<ModelsProps> = ({ models, servers, benchmarks }) =
   const [searchQuery, setSearchQuery] = useState('');
   const [detailTab, setDetailTab] = useState<'overview' | 'versions' | 'docs' | 'benchmarks' | 'engineering'>('overview');
   const [newTag, setNewTag] = useState('');
+
+  // Drag and Drop Comparison State
+  const [draggingModelId, setDraggingModelId] = useState<string | null>(null);
+  const [comparisonPair, setComparisonPair] = useState<[Model, Model] | null>(null);
 
   // View Category State
   const [viewCategory, setViewCategory] = useState<ModelCategory>('All');
@@ -135,6 +139,28 @@ export const Models: React.FC<ModelsProps> = ({ models, servers, benchmarks }) =
       }
   };
 
+  // --- Drag and Drop Logic ---
+  const onDragStart = (e: React.DragEvent, modelId: string) => {
+    setDraggingModelId(modelId);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const onDrop = (e: React.DragEvent, targetModelId: string) => {
+    e.preventDefault();
+    if (draggingModelId && draggingModelId !== targetModelId) {
+      const modelA = localModels.find(m => m.id === draggingModelId);
+      const modelB = localModels.find(m => m.id === targetModelId);
+      if (modelA && modelB) {
+        setComparisonPair([modelA, modelB]);
+      }
+    }
+    setDraggingModelId(null);
+  };
+
+  const onDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+  };
+
   return (
     <div className="h-full flex flex-col relative animate-fade-in p-space-lg">
       <div className="flex flex-col gap-space-md mb-space-md shrink-0">
@@ -143,7 +169,9 @@ export const Models: React.FC<ModelsProps> = ({ models, servers, benchmarks }) =
             <span className="text-type-tiny bg-nebula-900 text-gray-400 px-2 py-1 rounded border border-nebula-800">
                 Showing {filteredModels.length} of {localModels.length}
             </span>
-            {/* Import HF Button - Subtler */}
+            <div className="ml-4 text-type-tiny text-gray-500 italic hidden lg:block">
+              Drag a model onto another to compare metrics side-by-side
+            </div>
             <button className="text-type-tiny bg-nebula-900 hover:bg-nebula-800 text-purple-400 border border-nebula-700 hover:border-purple-500/50 px-3 py-1 rounded flex items-center gap-1 transition-all shadow-sm ml-auto">
                 <Plus size={12} /> Import HF
             </button>
@@ -259,8 +287,12 @@ export const Models: React.FC<ModelsProps> = ({ models, servers, benchmarks }) =
                 {filteredModels.map(model => (
                     <div 
                         key={model.id} 
+                        draggable
+                        onDragStart={(e) => onDragStart(e, model.id)}
+                        onDragOver={onDragOver}
+                        onDrop={(e) => onDrop(e, model.id)}
                         onClick={() => { setSelectedModel(model); setSelectedVersionIds(new Set()); setShowComparison(false); setDetailTab('overview'); }}
-                        className={`bg-nebula-900 border border-nebula-700 rounded-xl p-space-md hover:border-purple-500/50 transition-all cursor-pointer group relative overflow-hidden flex flex-col`}
+                        className={`bg-nebula-900 border ${draggingModelId === model.id ? 'border-purple-500 opacity-50 scale-95' : 'border-nebula-700'} rounded-xl p-space-md hover:border-purple-500/50 transition-all cursor-grab active:cursor-grabbing group relative overflow-hidden flex flex-col shadow-lg`}
                     >
                         {/* New Header Layout: Provider Badge + Name on one line */}
                         <div className="flex items-center gap-space-sm mb-2">
@@ -708,7 +740,7 @@ export const Models: React.FC<ModelsProps> = ({ models, servers, benchmarks }) =
                         )}
                     </div>
 
-                    {/* Comparison Overlay */}
+                    {/* Version Comparison Overlay */}
                     {showComparison && (
                         <div className="absolute inset-0 bg-nebula-950/95 backdrop-blur-sm z-20 flex flex-col animate-fade-in">
                             <div className="p-4 border-b border-nebula-700 flex justify-between items-center">
@@ -789,6 +821,112 @@ export const Models: React.FC<ModelsProps> = ({ models, servers, benchmarks }) =
                     )}
                 </div>
             </div>
+        )}
+
+        {/* Side-by-Side Model Comparison Overlay */}
+        {comparisonPair && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-nebula-950/90 backdrop-blur-md p-space-lg animate-fade-in" onClick={() => setComparisonPair(null)}>
+            <div 
+              className="w-full max-w-7xl h-[85vh] bg-nebula-900 border border-nebula-700 rounded-3xl flex flex-col overflow-hidden shadow-2xl relative"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="p-space-lg border-b border-nebula-800 bg-nebula-950/50 flex justify-between items-center shrink-0">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-purple-600/20 text-purple-400 rounded-2xl">
+                    <ArrowLeftRight size={24} />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-black text-white tracking-tight uppercase">Cross-Model Evaluation</h2>
+                    <p className="text-xs text-gray-500 font-bold uppercase tracking-widest mt-1">Side-by-side engineering comparison</p>
+                  </div>
+                </div>
+                <button onClick={() => setComparisonPair(null)} className="p-2 text-gray-500 hover:text-white hover:bg-nebula-800 rounded-full transition-all">
+                  <X size={24} />
+                </button>
+              </div>
+
+              {/* Comparison Grid */}
+              <div className="flex-1 overflow-y-auto p-space-lg custom-scrollbar">
+                <div className="grid grid-cols-2 gap-space-lg h-full">
+                  {comparisonPair.map((model, idx) => (
+                    <div key={model.id} className={`flex flex-col gap-6 p-8 rounded-3xl border ${idx === 0 ? 'bg-purple-900/5 border-purple-500/20' : 'bg-blue-900/5 border-blue-500/20'} relative`}>
+                      <div className="absolute top-6 right-8 text-[10px] font-black opacity-20 uppercase tracking-[0.3em]">
+                        Specimen {idx + 1}
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <div className="text-[10px] text-purple-400 font-black uppercase tracking-widest">{model.provider}</div>
+                        <h3 className="text-3xl font-black text-white tracking-tighter">{model.name}</h3>
+                      </div>
+
+                      {/* Vital Stats Card */}
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="bg-nebula-950/60 p-4 rounded-2xl border border-nebula-800">
+                          <div className="text-[10px] text-gray-500 font-black uppercase mb-1">Architecture</div>
+                          <div className="text-lg font-black text-white">{model.family}</div>
+                        </div>
+                        <div className="bg-nebula-950/60 p-4 rounded-2xl border border-nebula-800">
+                          <div className="text-[10px] text-gray-500 font-black uppercase mb-1">Parameters</div>
+                          <div className="text-lg font-black text-white font-mono">{model.params}</div>
+                        </div>
+                        <div className="bg-nebula-950/60 p-4 rounded-2xl border border-nebula-800">
+                          <div className="text-[10px] text-gray-500 font-black uppercase mb-1">VRAM Payload</div>
+                          <div className="text-lg font-black text-white font-mono">{model.vramGB || model.versions[0]?.metrics?.vramGB || '~'} GB</div>
+                        </div>
+                        <div className="bg-nebula-950/60 p-4 rounded-2xl border border-nebula-800">
+                          <div className="text-[10px] text-gray-500 font-black uppercase mb-1">Tensor Format</div>
+                          <div className="text-lg font-black text-white font-mono">{model.tensorType}</div>
+                        </div>
+                      </div>
+
+                      {/* Engineering Metrics List */}
+                      <div className="space-y-4">
+                        <h4 className="text-[10px] text-gray-500 font-black uppercase tracking-widest flex items-center gap-2">
+                          <TrendingUp size={12} /> Performance Benchmarks
+                        </h4>
+                        <div className="space-y-3">
+                          <div className="flex justify-between items-center p-4 bg-nebula-950/30 rounded-2xl border border-nebula-800 group hover:border-purple-500/40 transition-colors">
+                            <span className="text-sm font-bold text-gray-400">Peak Tokens/Sec</span>
+                            <span className="text-xl font-black text-blue-400 font-mono">{model.tokensPerSecond || model.versions[0]?.metrics?.tokensPerSecond?.toFixed(1) || '0.0'}</span>
+                          </div>
+                          <div className="flex justify-between items-center p-4 bg-nebula-950/30 rounded-2xl border border-nebula-800 group hover:border-purple-500/40 transition-colors">
+                            <span className="text-sm font-bold text-gray-400">Response Latency</span>
+                            <span className="text-xl font-black text-purple-400 font-mono">{model.latencyMs || model.versions[0]?.metrics?.latencyMs || '0'}ms</span>
+                          </div>
+                          <div className="flex justify-between items-center p-4 bg-nebula-950/30 rounded-2xl border border-nebula-800 group hover:border-purple-500/40 transition-colors">
+                            <span className="text-sm font-bold text-gray-400">Base Accuracy</span>
+                            <span className="text-xl font-black text-green-400 font-mono">{model.accuracy || model.versions[0]?.metrics?.accuracy || 'N/A'}%</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Capabilities */}
+                      <div className="mt-auto">
+                         <div className="text-[10px] text-gray-500 font-black uppercase tracking-widest mb-3">Loaded Plugins</div>
+                         <div className="flex flex-wrap gap-2">
+                           {model.tags.map(tag => (
+                             <span key={tag} className="px-3 py-1.5 rounded-full bg-nebula-950 border border-nebula-800 text-[10px] font-black uppercase tracking-tighter text-gray-400">
+                               {tag}
+                             </span>
+                           ))}
+                         </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Action Bar */}
+              <div className="p-space-lg border-t border-nebula-800 bg-nebula-950/50 flex justify-between items-center shrink-0">
+                <div className="text-xs text-gray-500 font-mono">Comparing <span className="text-purple-400">{comparisonPair[0].id}</span> vs <span className="text-blue-400">{comparisonPair[1].id}</span></div>
+                <div className="flex gap-4">
+                  <button onClick={() => setComparisonPair(null)} className="px-6 py-2.5 text-sm font-black uppercase tracking-widest text-gray-400 hover:text-white transition-colors">Cancel</button>
+                  <button className="px-10 py-2.5 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-sm font-black uppercase tracking-widest shadow-lg shadow-purple-500/20 transition-all active:scale-95">Generate Report</button>
+                </div>
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </div>
