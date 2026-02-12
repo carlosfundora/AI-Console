@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { LayoutDashboard, Database, BrainCircuit, Activity, Settings as SettingsIcon, Server, Terminal, FlaskConical, Loader2, MessageSquare, Briefcase, GraduationCap, Bot } from 'lucide-react';
+import { LayoutDashboard, Database, BrainCircuit, Activity, Settings as SettingsIcon, Server, Terminal, FlaskConical, Loader2, MessageSquare, Briefcase, GraduationCap, Bot, BookOpen, Eye } from 'lucide-react';
 import { Dashboard } from './views/Dashboard';
 import { Benchmarks } from './views/Benchmarks';
 import { Datasets } from './views/Datasets';
@@ -11,6 +11,7 @@ import { Servers } from './views/Servers';
 import { Settings } from './views/Settings';
 import { Chat } from './views/Chat';
 import { Agents } from './views/Agents';
+import { Notebooks } from './views/Notebooks';
 import { ViewState, Model, BenchmarkResult, Dataset, ServerConfig, ModelStatus, ServerProfile, AgentConfig } from './types';
 
 // --- Custom Icons matching the requested style ---
@@ -428,8 +429,9 @@ const MOCK_BENCHMARKS: BenchmarkResult[] = [
 ];
 
 const MOCK_DATASETS: Dataset[] = [
-  { id: 'd1', name: 'Legal-Bench-FLSA', type: 'SFT', size: '1.2MB', rows: 50, description: '50 Node FLSA/ADA/Title VII Document set' },
-  { id: 'd2', name: 'OpenHermes-2.5', type: 'SFT', size: '1.6GB', rows: 1000000, description: 'General instruction tuning' },
+  { id: 'd1', name: 'Legal-Bench-FLSA', type: 'SFT', format: 'Alpaca', size: '1.2MB', rows: 50, description: '50 Node FLSA/ADA/Title VII Document set' },
+  { id: 'd2', name: 'OpenHermes-2.5', type: 'SFT', format: 'ShareGPT', size: '1.6GB', rows: 1000000, description: 'General instruction tuning' },
+  { id: 'd3', name: 'UltraFeedback-Binarized', type: 'DPO', format: 'ChatML', size: '450MB', rows: 60000, description: 'Preference pairs for alignment' },
 ];
 
 const SERVER_CONFIG: ServerConfig = {
@@ -520,10 +522,11 @@ const App: React.FC = () => {
   };
   
   const navItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: <Terminal size={18} /> },
+    { id: 'dashboard', label: 'Dashboard', icon: <Eye size={18} /> },
     { id: 'benchmarks', label: 'Benchmarks', icon: <Activity size={18} /> },
     { id: 'datasets', label: 'Datasets', icon: <ClipboardDataIcon size={18} /> },
-    { id: 'training', label: 'Training', icon: <DraftingCompassIcon size={18} /> }, 
+    { id: 'training', label: 'Training', icon: <Terminal size={18} /> }, 
+    { id: 'notebooks', label: 'Notebooks', icon: <BookOpen size={18} /> },
     { id: 'laboratory', label: 'Laboratory', icon: <FlaskConical size={18} /> },
     { id: 'servers', label: 'Servers', icon: <PythonIcon size={18} /> },
     { id: 'models', label: 'Model Registry', icon: <BrainCircuit size={18} /> },
@@ -615,6 +618,7 @@ const App: React.FC = () => {
               {activeTab === 'benchmarks' && <Benchmarks results={benchmarks} models={MOCK_MODELS} servers={servers} />}
               {activeTab === 'datasets' && <Datasets datasets={MOCK_DATASETS} />}
               {activeTab === 'training' && <Training models={MOCK_MODELS} datasets={MOCK_DATASETS} />}
+              {activeTab === 'notebooks' && <Notebooks />}
               {activeTab === 'laboratory' && <Laboratory models={MOCK_MODELS} />}
               {activeTab === 'servers' && <Servers servers={servers} models={MOCK_MODELS} onUpdateServer={handleUpdateServer} onDeleteServer={handleDeleteServer} onAddServer={handleAddServer} />}
               {activeTab === 'models' && <Models models={MOCK_MODELS} servers={servers} benchmarks={benchmarks} onAddBenchmark={handleAddBenchmark} />}

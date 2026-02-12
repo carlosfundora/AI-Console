@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Model, Dataset } from '../types';
-import { Terminal, Play, Clock, Zap, Database, Cpu, Layers, Activity, Lock, AlertTriangle, CheckCircle, RotateCw, Wrench, Mic, GraduationCap, Users, Plus, X, ArrowRight, GitMerge } from 'lucide-react';
+import { Terminal, Play, Clock, Zap, Database, Cpu, Layers, Activity, Lock, AlertTriangle, CheckCircle, RotateCw, Wrench, Mic, GraduationCap, Users, Plus, X, ArrowRight, GitMerge, Scale, SlidersHorizontal, ThumbsUp, Rocket } from 'lucide-react';
 
 interface TrainingProps {
   models: Model[];
@@ -9,13 +9,23 @@ interface TrainingProps {
 }
 
 export const Training: React.FC<TrainingProps> = ({ models, datasets }) => {
-  const [mode, setMode] = useState<'lora' | 'sft' | 'distill' | 'agent' | 'audio'>('lora');
+  const [mode, setMode] = useState<'lora' | 'sft' | 'distill' | 'agent' | 'audio' | 'dpo'>('lora');
   const [teacherModelId, setTeacherModelId] = useState<string>('');
   const [studentModels, setStudentModels] = useState<string[]>([models[0]?.id || '']);
+  const [useUnsloth, setUseUnsloth] = useState(true);
   const [datasetsConfig, setDatasetsConfig] = useState({
       primary: '',
       contrastive: '',
       additive: ''
+  });
+  
+  // DPO Specific State
+  const [dpoConfig, setDpoConfig] = useState({
+      beta: 0.1,
+      lossType: 'sigmoid',
+      maxLength: 1024,
+      maxPromptLength: 512,
+      referenceModelId: ''
   });
 
   const addStudent = () => {
@@ -35,6 +45,7 @@ export const Training: React.FC<TrainingProps> = ({ models, datasets }) => {
   };
 
   const isDataMixingSupported = ['lora', 'sft', 'distill'].includes(mode);
+  const supportsUnsloth = ['lora', 'sft', 'dpo'].includes(mode);
 
   return (
     <div className="flex h-full gap-space-lg text-nebula-100 font-sans animate-fade-in p-space-lg overflow-hidden">
@@ -60,6 +71,12 @@ export const Training: React.FC<TrainingProps> = ({ models, datasets }) => {
                      className={`px-4 py-2 rounded text-type-body font-bold transition-all flex items-center gap-space-sm ${mode === 'sft' ? 'bg-purple-600 text-white shadow-lg' : 'text-gray-400 hover:text-white'}`}
                 >
                     <Database size={16} /> SFT
+                </button>
+                <button 
+                     onClick={() => setMode('dpo')}
+                     className={`px-4 py-2 rounded text-type-body font-bold transition-all flex items-center gap-space-sm ${mode === 'dpo' ? 'bg-purple-600 text-white shadow-lg' : 'text-gray-400 hover:text-white'}`}
+                >
+                    <Scale size={16} /> TRL / DPO
                 </button>
                 <button 
                      onClick={() => setMode('distill')}
@@ -91,80 +108,137 @@ export const Training: React.FC<TrainingProps> = ({ models, datasets }) => {
             <div className="space-y-space-xl relative z-10">
                 {/* Topology Config */}
                 <div className="bg-nebula-950/50 border border-nebula-800 rounded-xl p-space-lg">
-                    <h3 className="text-purple-400 text-type-body font-bold mb-space-md flex items-center gap-space-sm uppercase tracking-wider">
-                        <GitMerge size={16}/> Training Topology
-                    </h3>
-                    
-                    <div className="flex flex-col md:flex-row gap-space-xl items-start">
-                        {/* Teacher Column */}
-                        <div className="flex-1 w-full">
-                            <label className="text-type-tiny text-gray-500 font-bold uppercase mb-space-xs flex items-center gap-space-sm">
-                                <GraduationCap size={14} /> Teacher (Oracle)
-                                {mode === 'distill' && <span className="text-red-400">* Required</span>}
-                            </label>
-                            <select 
-                                value={teacherModelId}
-                                onChange={(e) => setTeacherModelId(e.target.value)}
-                                className="w-full bg-nebula-900 border border-nebula-700 rounded-lg p-space-md text-white focus:border-purple-500 outline-none transition-colors text-type-body"
-                            >
-                                <option value="">None (Self-Supervised)</option>
-                                <optgroup label="Local Models">
-                                    {models.map(m => (
-                                        <option key={m.id} value={m.id}>{m.name} ({m.params})</option>
-                                    ))}
-                                </optgroup>
-                                <optgroup label="API Oracles">
-                                    <option value="gpt-4o">GPT-4o (OpenAI)</option>
-                                    <option value="claude-3-opus">Claude 3 Opus (Anthropic)</option>
-                                    <option value="gemini-1.5-pro">Gemini 1.5 Pro (Google)</option>
-                                </optgroup>
-                            </select>
-                            <p className="text-type-tiny text-gray-500 mt-space-xs leading-relaxed">
-                                The teacher provides soft labels, reasoning traces, or synthetic data to guide the student models.
-                            </p>
-                        </div>
+                    {mode === 'dpo' ? (
+                        <>
+                            <h3 className="text-purple-400 text-type-body font-bold mb-space-md flex items-center gap-space-sm uppercase tracking-wider">
+                                <Scale size={16}/> Direct Preference Optimization (TRL)
+                            </h3>
+                            <div className="flex flex-col md:flex-row gap-space-xl items-start">
+                                {/* Policy Model */}
+                                <div className="flex-1 w-full">
+                                    <label className="text-type-tiny text-gray-500 font-bold uppercase mb-space-xs flex items-center gap-space-sm">
+                                        <GraduationCap size={14} /> Policy Model (Train)
+                                    </label>
+                                    <select 
+                                        value={studentModels[0]}
+                                        onChange={(e) => setStudentModels([e.target.value])}
+                                        className="w-full bg-nebula-900 border border-nebula-700 rounded-lg p-space-md text-white focus:border-purple-500 outline-none transition-colors text-type-body"
+                                    >
+                                        <option value="">Select Policy Model...</option>
+                                        {models.map(m => (
+                                            <option key={m.id} value={m.id}>{m.name} ({m.params})</option>
+                                        ))}
+                                    </select>
+                                    <p className="text-type-tiny text-gray-500 mt-space-xs leading-relaxed">
+                                        The model to be aligned using preference pairs (chosen/rejected).
+                                    </p>
+                                </div>
 
-                        {/* Flow Arrow */}
-                        <div className="hidden md:flex flex-col items-center justify-center pt-8 text-gray-600">
-                            <ArrowRight size={24} />
-                        </div>
+                                {/* Flow Arrow */}
+                                <div className="hidden md:flex flex-col items-center justify-center pt-8 text-gray-600">
+                                    <ArrowRight size={24} />
+                                </div>
 
-                        {/* Students Column */}
-                        <div className="flex-1 w-full">
-                            <div className="flex justify-between items-center mb-space-xs">
-                                <label className="text-type-tiny text-gray-500 font-bold uppercase flex items-center gap-space-sm">
-                                    <Users size={14} /> Student Models
-                                </label>
-                                <button onClick={addStudent} className="text-type-tiny bg-purple-900/30 text-purple-300 px-2 py-1 rounded hover:bg-purple-600 hover:text-white transition-colors flex items-center gap-1">
-                                    <Plus size={10} /> Add
-                                </button>
-                            </div>
-                            
-                            <div className="space-y-space-sm">
-                                {studentModels.map((studentId, idx) => (
-                                    <div key={idx} className="flex gap-space-sm">
-                                        <select 
-                                            value={studentId}
-                                            onChange={(e) => updateStudent(idx, e.target.value)}
-                                            className="flex-1 bg-nebula-900 border border-nebula-700 rounded-lg p-space-md text-white focus:border-purple-500 outline-none transition-colors text-type-body"
-                                        >
-                                            <option value="">Select Student...</option>
+                                {/* Reference Model */}
+                                <div className="flex-1 w-full">
+                                    <label className="text-type-tiny text-gray-500 font-bold uppercase mb-space-xs flex items-center gap-space-sm">
+                                        <Lock size={14} /> Reference Model (Frozen)
+                                    </label>
+                                    <select 
+                                        value={dpoConfig.referenceModelId}
+                                        onChange={(e) => setDpoConfig({...dpoConfig, referenceModelId: e.target.value})}
+                                        className="w-full bg-nebula-900 border border-nebula-700 rounded-lg p-space-md text-white focus:border-purple-500 outline-none transition-colors text-type-body"
+                                    >
+                                        <option value="">Same as Policy (Auto-Copy)</option>
+                                        <optgroup label="Custom Ref">
                                             {models.map(m => (
-                                                <option key={m.id} value={m.id}>{m.name} ({m.params} - {m.tensorType})</option>
+                                                <option key={m.id} value={m.id}>{m.name} ({m.params})</option>
                                             ))}
-                                        </select>
-                                        <button 
-                                            onClick={() => removeStudent(idx)}
-                                            disabled={studentModels.length <= 1}
-                                            className="p-space-md bg-nebula-900 border border-nebula-700 rounded-lg text-gray-500 hover:text-red-400 hover:border-red-500/50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                        >
-                                            <X size={16} />
+                                        </optgroup>
+                                    </select>
+                                    <p className="text-type-tiny text-gray-500 mt-space-xs leading-relaxed">
+                                        Used to compute the implicit reward. Keeps the policy from drifting too far.
+                                    </p>
+                                </div>
+                            </div>
+                        </>
+                    ) : (
+                        <>
+                            <h3 className="text-purple-400 text-type-body font-bold mb-space-md flex items-center gap-space-sm uppercase tracking-wider">
+                                <GitMerge size={16}/> Training Topology
+                            </h3>
+                            <div className="flex flex-col md:flex-row gap-space-xl items-start">
+                                {/* Teacher Column */}
+                                <div className="flex-1 w-full">
+                                    <label className="text-type-tiny text-gray-500 font-bold uppercase mb-space-xs flex items-center gap-space-sm">
+                                        <GraduationCap size={14} /> Teacher (Oracle)
+                                        {mode === 'distill' && <span className="text-red-400">* Required</span>}
+                                    </label>
+                                    <select 
+                                        value={teacherModelId}
+                                        onChange={(e) => setTeacherModelId(e.target.value)}
+                                        className="w-full bg-nebula-900 border border-nebula-700 rounded-lg p-space-md text-white focus:border-purple-500 outline-none transition-colors text-type-body"
+                                    >
+                                        <option value="">None (Self-Supervised)</option>
+                                        <optgroup label="Local Models">
+                                            {models.map(m => (
+                                                <option key={m.id} value={m.id}>{m.name} ({m.params})</option>
+                                            ))}
+                                        </optgroup>
+                                        <optgroup label="API Oracles">
+                                            <option value="gpt-4o">GPT-4o (OpenAI)</option>
+                                            <option value="claude-3-opus">Claude 3 Opus (Anthropic)</option>
+                                            <option value="gemini-1.5-pro">Gemini 1.5 Pro (Google)</option>
+                                        </optgroup>
+                                    </select>
+                                    <p className="text-type-tiny text-gray-500 mt-space-xs leading-relaxed">
+                                        The teacher provides soft labels, reasoning traces, or synthetic data to guide the student models.
+                                    </p>
+                                </div>
+
+                                {/* Flow Arrow */}
+                                <div className="hidden md:flex flex-col items-center justify-center pt-8 text-gray-600">
+                                    <ArrowRight size={24} />
+                                </div>
+
+                                {/* Students Column */}
+                                <div className="flex-1 w-full">
+                                    <div className="flex justify-between items-center mb-space-xs">
+                                        <label className="text-type-tiny text-gray-500 font-bold uppercase flex items-center gap-space-sm">
+                                            <Users size={14} /> Student Models
+                                        </label>
+                                        <button onClick={addStudent} className="text-type-tiny bg-purple-900/30 text-purple-300 px-2 py-1 rounded hover:bg-purple-600 hover:text-white transition-colors flex items-center gap-1">
+                                            <Plus size={10} /> Add
                                         </button>
                                     </div>
-                                ))}
+                                    
+                                    <div className="space-y-space-sm">
+                                        {studentModels.map((studentId, idx) => (
+                                            <div key={idx} className="flex gap-space-sm">
+                                                <select 
+                                                    value={studentId}
+                                                    onChange={(e) => updateStudent(idx, e.target.value)}
+                                                    className="flex-1 bg-nebula-900 border border-nebula-700 rounded-lg p-space-md text-white focus:border-purple-500 outline-none transition-colors text-type-body"
+                                                >
+                                                    <option value="">Select Student...</option>
+                                                    {models.map(m => (
+                                                        <option key={m.id} value={m.id}>{m.name} ({m.params} - {m.tensorType})</option>
+                                                    ))}
+                                                </select>
+                                                <button 
+                                                    onClick={() => removeStudent(idx)}
+                                                    disabled={studentModels.length <= 1}
+                                                    className="p-space-md bg-nebula-900 border border-nebula-700 rounded-lg text-gray-500 hover:text-red-400 hover:border-red-500/50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                                >
+                                                    <X size={16} />
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                    </div>
+                        </>
+                    )}
                 </div>
 
                 {/* Dataset & Params Grid */}
@@ -180,13 +254,31 @@ export const Training: React.FC<TrainingProps> = ({ models, datasets }) => {
                                 className="w-full bg-nebula-950 border border-nebula-700 rounded p-space-md text-white focus:border-purple-500 outline-none transition-colors text-type-body"
                             >
                                 <option value="">Select Dataset...</option>
-                                {datasets.map(d => <option key={d.id} value={d.id}>{d.name} ({d.rows.toLocaleString()} rows)</option>)}
+                                {datasets.filter(d => mode !== 'dpo' || d.type === 'DPO').map(d => (
+                                    <option key={d.id} value={d.id}>{d.name} ({d.rows.toLocaleString()} rows)</option>
+                                ))}
                             </select>
+                            {mode === 'dpo' && <p className="text-type-tiny text-gray-500">Only showing datasets tagged as 'DPO' (pairwise format).</p>}
                         </div>
 
                         {/* Hyperparameters */}
                         <div className="pt-space-md space-y-space-md">
-                            <label className="text-purple-400 text-type-tiny font-bold uppercase block tracking-wider">Hyperparameters</label>
+                            <div className="flex justify-between items-center">
+                                <label className="text-purple-400 text-type-tiny font-bold uppercase block tracking-wider">Hyperparameters</label>
+                                {supportsUnsloth && (
+                                    <div className="flex items-center gap-2">
+                                        <label className={`text-type-tiny font-bold uppercase flex items-center gap-1 cursor-pointer ${useUnsloth ? 'text-orange-400' : 'text-gray-500'}`}>
+                                            <Rocket size={12} /> Unsloth
+                                            <input 
+                                                type="checkbox" 
+                                                checked={useUnsloth} 
+                                                onChange={(e) => setUseUnsloth(e.target.checked)}
+                                                className="ml-2 accent-orange-500"
+                                            />
+                                        </label>
+                                    </div>
+                                )}
+                            </div>
                             
                             {mode === 'lora' && (
                                  <div className="grid grid-cols-2 gap-space-md">
@@ -218,6 +310,46 @@ export const Training: React.FC<TrainingProps> = ({ models, datasets }) => {
                                     <div>
                                         <label className="text-type-tiny text-gray-500 font-bold uppercase">Learning Rate</label>
                                         <input type="number" defaultValue={2e-5} step={1e-6} className="w-full bg-nebula-950 border border-nebula-700 rounded p-space-md text-white mt-1 text-type-body" />
+                                    </div>
+                                </div>
+                            )}
+
+                            {mode === 'dpo' && (
+                                <div className="grid grid-cols-2 gap-space-md">
+                                    <div>
+                                        <label className="text-type-tiny text-gray-500 font-bold uppercase">Beta (Temperature)</label>
+                                        <input 
+                                            type="number" 
+                                            step={0.1}
+                                            min={0}
+                                            max={1}
+                                            value={dpoConfig.beta}
+                                            onChange={(e) => setDpoConfig({...dpoConfig, beta: parseFloat(e.target.value)})}
+                                            className="w-full bg-nebula-950 border border-nebula-700 rounded p-space-md text-white mt-1 text-type-body" 
+                                        />
+                                        <span className="text-type-tiny text-gray-600 block mt-1">Controls deviation (0.1 - 0.5)</span>
+                                    </div>
+                                    <div>
+                                        <label className="text-type-tiny text-gray-500 font-bold uppercase">Learning Rate</label>
+                                        <input type="number" defaultValue={1e-6} step={1e-7} className="w-full bg-nebula-950 border border-nebula-700 rounded p-space-md text-white mt-1 text-type-body" />
+                                    </div>
+                                    <div>
+                                        <label className="text-type-tiny text-gray-500 font-bold uppercase">Max Prompt Length</label>
+                                        <input 
+                                            type="number" 
+                                            value={dpoConfig.maxPromptLength}
+                                            onChange={(e) => setDpoConfig({...dpoConfig, maxPromptLength: parseInt(e.target.value)})}
+                                            className="w-full bg-nebula-950 border border-nebula-700 rounded p-space-md text-white mt-1 text-type-body" 
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="text-type-tiny text-gray-500 font-bold uppercase">Max Seq Length</label>
+                                        <input 
+                                            type="number" 
+                                            value={dpoConfig.maxLength}
+                                            onChange={(e) => setDpoConfig({...dpoConfig, maxLength: parseInt(e.target.value)})}
+                                            className="w-full bg-nebula-950 border border-nebula-700 rounded p-space-md text-white mt-1 text-type-body" 
+                                        />
                                     </div>
                                 </div>
                             )}
@@ -288,6 +420,41 @@ export const Training: React.FC<TrainingProps> = ({ models, datasets }) => {
                                 </div>
                             </div>
                         )}
+
+                        {mode === 'dpo' && (
+                            <div className="p-space-lg bg-nebula-950/50 border border-nebula-800 rounded-xl h-full">
+                                <h4 className="text-purple-400 text-type-body font-bold mb-space-md flex items-center gap-space-sm"><SlidersHorizontal size={14}/> DPO Trainer Settings (TRL)</h4>
+                                <div className="space-y-space-lg">
+                                    <div>
+                                        <label className="text-type-tiny text-gray-500 font-bold uppercase mb-space-xs block">Loss Type</label>
+                                        <div className="grid grid-cols-3 gap-2">
+                                            {['sigmoid', 'hinge', 'ipo'].map(l => (
+                                                <button 
+                                                    key={l}
+                                                    onClick={() => setDpoConfig({...dpoConfig, lossType: l})}
+                                                    className={`py-2 rounded border text-type-tiny font-bold uppercase transition-all ${dpoConfig.lossType === l ? 'bg-purple-600 border-purple-500 text-white' : 'bg-nebula-900 border-nebula-700 text-gray-400 hover:text-white'}`}
+                                                >
+                                                    {l}
+                                                </button>
+                                            ))}
+                                        </div>
+                                        <p className="text-type-tiny text-gray-500 mt-2">
+                                            {dpoConfig.lossType === 'sigmoid' && "Standard DPO loss. Good default."}
+                                            {dpoConfig.lossType === 'hinge' && "L1 hinge loss. More robust to outliers."}
+                                            {dpoConfig.lossType === 'ipo' && "Identity Preference Optimization (IPO)."}
+                                        </p>
+                                    </div>
+                                    
+                                    <div className="flex items-center gap-4 bg-nebula-900/50 p-3 rounded border border-nebula-800">
+                                        <ThumbsUp size={20} className="text-green-500" />
+                                        <div className="flex-1">
+                                            <div className="text-type-body text-white font-bold">Reward Signal</div>
+                                            <div className="text-type-tiny text-gray-500">Implicit reward maximization via preference pairs</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                      </div>
                 </div>
 
@@ -323,6 +490,11 @@ export const Training: React.FC<TrainingProps> = ({ models, datasets }) => {
                         <div className="w-full bg-nebula-950 h-2 rounded-full overflow-hidden">
                             <div className="bg-gradient-to-r from-purple-500 to-yellow-500 h-full w-[75%]"></div>
                         </div>
+                        {useUnsloth && supportsUnsloth && (
+                            <p className="text-[10px] text-orange-400 mt-1 flex items-center gap-1">
+                                <Rocket size={10} /> Unsloth VRAM savings active (-30%)
+                            </p>
+                        )}
                     </div>
                     
                     <div className="grid grid-cols-2 gap-space-md pt-2">

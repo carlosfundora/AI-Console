@@ -1,4 +1,5 @@
 
+
 export enum ModelStatus {
   Ready = 'Ready',
   Training = 'Training',
@@ -168,9 +169,20 @@ export interface Dataset {
   id: string;
   name: string;
   type: 'SFT' | 'DPO' | 'Pretrain';
+  format?: 'Alpaca' | 'ShareGPT' | 'ChatML' | 'Text_Completion' | 'JSON';
   size: string; 
   rows: number;
   description: string;
+}
+
+export interface DatasetTemplate {
+    id: string;
+    name: string;
+    description: string;
+    format: 'Alpaca' | 'ShareGPT' | 'ChatML' | 'Text_Completion' | 'JSON' | 'Custom';
+    exampleStructure: string; // JSON String
+    systemPrompt: string; // Context for the generator
+    isPreset?: boolean;
 }
 
 export interface ServerConfig {
@@ -229,4 +241,4 @@ export interface AppSettings {
     }
 }
 
-export type ViewState = 'dashboard' | 'benchmarks' | 'datasets' | 'training' | 'laboratory' | 'models' | 'servers' | 'chat' | 'settings' | 'agents';
+export type ViewState = 'dashboard' | 'benchmarks' | 'datasets' | 'training' | 'laboratory' | 'models' | 'servers' | 'chat' | 'settings' | 'agents' | 'notebooks';

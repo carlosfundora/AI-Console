@@ -155,8 +155,8 @@ export const Laboratory: React.FC<LaboratoryProps> = ({ models }) => {
   };
 
   return (
-    <div className="flex h-full gap-space-lg text-nebula-100 font-sans overflow-hidden p-space-lg relative">
-        <div className="flex-1 flex flex-col gap-space-lg min-w-0 h-full overflow-hidden">
+    <div className="flex h-full gap-space-lg text-nebula-100 font-sans overflow-y-auto p-space-lg relative custom-scrollbar">
+        <div className="flex-1 flex flex-col gap-space-lg min-w-0">
             <div className="flex justify-between items-center shrink-0">
                 <div>
                      <h2 className="text-type-heading-lg font-bold flex items-center gap-space-sm">
@@ -187,13 +187,13 @@ export const Laboratory: React.FC<LaboratoryProps> = ({ models }) => {
                 </div>
             </div>
 
-            <div className="flex-1 bg-nebula-900 border border-nebula-700 rounded-xl p-space-lg relative overflow-hidden backdrop-blur-sm flex flex-col min-h-0">
+            <div className="bg-nebula-900 border border-nebula-700 rounded-xl p-space-lg relative backdrop-blur-sm flex flex-col">
                 <div className="absolute top-0 right-0 p-space-2xl opacity-5 pointer-events-none">
                     <Zap size={200} />
                 </div>
 
                 {mode === 'merge' && (
-                    <div className="space-y-space-xl relative z-10 animate-fade-in overflow-y-auto flex-1 pr-2 custom-scrollbar">
+                    <div className="space-y-space-xl relative z-10 animate-fade-in pr-2">
                         <div className="grid grid-cols-2 gap-space-xl">
                             <div className="space-y-space-md">
                                 <label className="text-purple-400 text-type-body font-bold uppercase block mb-2">Synthesis Method</label>
@@ -388,7 +388,7 @@ export const Laboratory: React.FC<LaboratoryProps> = ({ models }) => {
                 )}
 
                 {mode === 'extract' && (
-                     <div className="space-y-space-xl relative z-10 animate-fade-in overflow-y-auto flex-1 pr-2 custom-scrollbar">
+                     <div className="space-y-space-xl relative z-10 animate-fade-in pr-2">
                         <div className="grid grid-cols-2 gap-space-xl">
                              <div className="p-space-lg bg-nebula-950/50 border border-nebula-800 rounded-xl relative">
                                 <h3 className="text-type-heading-md font-bold text-purple-400 mb-space-md flex items-center gap-space-sm"><Scissors size={20}/> LoRA Extraction</h3>
@@ -478,9 +478,9 @@ export const Laboratory: React.FC<LaboratoryProps> = ({ models }) => {
                 )}
 
                 {mode === 'medusa' && (
-                    <div className="space-y-space-lg relative z-10 animate-fade-in flex flex-col h-full overflow-hidden">
-                        <div className="flex items-start gap-space-lg flex-1 min-h-0">
-                            <div className="w-1/2 space-y-space-lg overflow-y-auto h-full pr-4 custom-scrollbar">
+                    <div className="space-y-space-lg relative z-10 animate-fade-in flex flex-col">
+                        <div className="flex items-start gap-space-lg">
+                            <div className="w-1/2 space-y-space-lg pr-4">
                                 <div className="space-y-2">
                                     <h3 className="text-type-heading-md font-black text-white flex items-center gap-space-sm tracking-tight"><Dna size={24} className="text-purple-500"/> Medusa Head Architecture</h3>
                                     <p className="text-type-body text-gray-400 leading-relaxed">Speculative decoding via lightweight heads trained on top of frozen backbones. This allows parallel token prediction without base model interference.</p>
@@ -574,7 +574,7 @@ export const Laboratory: React.FC<LaboratoryProps> = ({ models }) => {
                             </div>
                             
                             {/* Prominent Telemetry Panel */}
-                            <div className="w-1/2 flex flex-col h-full gap-space-lg">
+                            <div className="w-1/2 flex flex-col gap-space-lg">
                                 <div className="flex justify-between items-center px-4">
                                     <h4 className="text-purple-400 font-black text-xs uppercase tracking-[0.2em] flex items-center gap-3">
                                         <Activity size={18}/> Active Specimen Telemetry
@@ -611,7 +611,7 @@ export const Laboratory: React.FC<LaboratoryProps> = ({ models }) => {
                                     </div>
 
                                     {/* Prominent Chart */}
-                                    <div className="flex-1 min-h-0 bg-nebula-900/20 rounded-2xl border border-nebula-800/30 p-6 relative group">
+                                    <div className="flex-1 min-h-[300px] bg-nebula-900/20 rounded-2xl border border-nebula-800/30 p-6 relative group">
                                         <div className="absolute top-4 left-6 text-[10px] text-gray-500 font-black uppercase z-10 tracking-[0.2em] flex items-center gap-2">
                                             <Activity size={12} /> Training Loss Curve
                                         </div>
@@ -663,13 +663,13 @@ export const Laboratory: React.FC<LaboratoryProps> = ({ models }) => {
         </div>
 
         {/* Bio-Storage (Inventory) */}
-        <div className="w-72 flex flex-col gap-space-md bg-nebula-900 border-l border-nebula-700 p-space-md shadow-xl z-20 shrink-0 h-full overflow-hidden">
+        <div className="w-72 flex flex-col gap-space-md bg-nebula-900 border-l border-nebula-700 p-space-md shadow-xl z-20 shrink-0 sticky top-0 self-start rounded-xl border-y border-r max-h-[calc(100vh-6rem)] overflow-y-auto custom-scrollbar">
              <div className="flex items-center gap-space-sm text-purple-400 border-b border-nebula-800 pb-2 shrink-0">
                  <Box size={20} />
                  <h3 className="font-bold tracking-wider text-type-body uppercase">Artifact Vault</h3>
              </div>
              
-             <div className="flex-1 overflow-y-auto space-y-space-sm custom-scrollbar pr-1">
+             <div className="flex-1 space-y-space-sm pr-1">
                  {inventory.map(item => (
                      <div 
                         key={item.id} 

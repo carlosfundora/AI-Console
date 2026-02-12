@@ -39,27 +39,27 @@ export const analyzeBenchmarks = async (results: BenchmarkResult[], models: Mode
   }
 };
 
-export const generateSyntheticDataSample = async (topic: string, count: number = 3) => {
+export const generateSyntheticDataSample = async (topic: string, count: number = 3, structureExample?: string, systemContext?: string) => {
   const ai = getAiClient();
   if (!ai) throw new Error("API Key missing");
+
+  // If a specific structure is provided, we use a looser schema or text generation with JSON forcing
+  // to support complex nested structures (like ShareGPT's conversation list) that might require more dynamic schema definitions
+  // than simple flat objects.
+  
+  const prompt = `Generate ${count} synthetic training dataset examples for the topic: "${topic}".
+  ${structureExample ? `\nThe output MUST follow this exact JSON structure per item:\n${structureExample}` : ''}
+  ${systemContext ? `\nContext/Rules: ${systemContext}` : ''}
+  `;
 
   try {
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
-      contents: `Generate ${count} synthetic instruction-tuning dataset examples for the topic: "${topic}".`,
+      contents: prompt,
       config: {
         responseMimeType: "application/json",
-        responseSchema: {
-          type: Type.ARRAY,
-          items: {
-            type: Type.OBJECT,
-            properties: {
-              instruction: { type: Type.STRING },
-              input: { type: Type.STRING },
-              output: { type: Type.STRING }
-            }
-          }
-        }
+        // We use JSON mode but let the model infer the schema from the example if provided, 
+        // as strictly typing recursive schemas like ShareGPT via the SDK Type enum can be restrictive here.
       }
     });
     return response.text;
