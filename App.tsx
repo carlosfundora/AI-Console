@@ -377,7 +377,7 @@ const MOCK_AGENTS: AgentConfig[] = [
         toolsSchema: '[\n  {\n    "type": "function",\n    "function": {\n      "name": "python_repl",\n      "description": "Executes python code",\n      "parameters": { "type": "object", "properties": { "code": { "type": "string" } } }\n    }\n  }\n]',
         envVars: [{ key: 'PANDAS_VERSION', value: '2.1.0' }],
         externalPaths: ['/scripts/analysis_utils.py'],
-        lastModified: '2026-01-18'
+        lastModified: '2026-01-18 10:45 AM'
     },
     {
         id: 'agent-2',
@@ -387,7 +387,7 @@ const MOCK_AGENTS: AgentConfig[] = [
         toolsSchema: '[\n  {\n    "type": "function",\n    "function": {\n      "name": "search_tool",\n      "description": "Searches the web",\n      "parameters": { "type": "object", "properties": { "query": { "type": "string" } } }\n    }\n  }\n]',
         envVars: [],
         externalPaths: [],
-        lastModified: '2026-01-15'
+        lastModified: '2026-01-15 09:12 PM'
     }
 ];
 
@@ -541,7 +541,7 @@ const App: React.FC = () => {
           <div className="absolute inset-0 bg-gradient-to-r from-purple-500/5 to-transparent pointer-events-none"></div>
           <div className="flex items-center gap-space-lg relative z-10">
                {/* Logo */}
-              <div className="text-type-heading-md font-black tracking-widest text-nebula-100 border-2 border-nebula-100 px-2 py-0.5 rounded">
+              <div className="text-type-heading-md font-black tracking-widest text-nebula-100 border-2 border-nebula-100 px-2 py-0.5 rounded shadow-[0_0_10px_rgba(255,255,255,0.1)]">
                   R-AI
               </div>
               
@@ -550,8 +550,8 @@ const App: React.FC = () => {
 
               {/* Breadcrumb / Title */}
               <div className="flex items-center gap-space-md">
-                  <h1 className="text-type-heading-sm font-semibold text-white capitalize">{getPageTitle(activeTab)}</h1>
-                  {activeTab === 'training' && <span className="text-type-tiny bg-purple-900/50 text-purple-300 px-2 py-1 rounded border border-purple-500/20">Active Job: Llama-SFT-v1</span>}
+                  <h1 className="text-type-heading-sm font-semibold text-white capitalize tracking-wide">{getPageTitle(activeTab)}</h1>
+                  {activeTab === 'training' && <span className="text-type-tiny bg-purple-900/50 text-purple-300 px-2 py-1 rounded border border-purple-500/20 animate-pulse">Active Job: Llama-SFT-v1</span>}
               </div>
           </div>
           
@@ -564,7 +564,7 @@ const App: React.FC = () => {
               {/* Settings Button */}
               <button 
                   onClick={() => setActiveTab('settings')}
-                  className={`w-10 h-10 rounded-full border flex items-center justify-center transition-all ${activeTab === 'settings' ? 'bg-purple-600 border-purple-500 text-white shadow-lg' : 'bg-white/5 border-white/10 text-gray-400 hover:text-white hover:border-white/20 hover:bg-white/10'}`}
+                  className={`w-10 h-10 rounded-full border flex items-center justify-center transition-all ${activeTab === 'settings' ? 'bg-purple-600 border-purple-500 text-white shadow-lg active-glow' : 'bg-white/5 border-white/10 text-gray-400 hover:text-white hover:border-white/20 hover:bg-white/10'}`}
                   title="Settings"
               >
                   <SettingsIcon size={20} />
@@ -580,14 +580,15 @@ const App: React.FC = () => {
               <button
                 key={item.id}
                 onClick={() => setActiveTab(item.id as ViewState)}
-                className={`w-full flex items-center gap-space-md px-4 py-3 rounded text-type-body font-medium transition-all duration-200 ${
+                className={`w-full flex items-center gap-space-md px-4 py-3 rounded text-type-body font-medium transition-all duration-200 relative group ${
                   activeTab === item.id 
-                    ? 'bg-nebula-900 text-purple-400 border border-nebula-700 shadow-md' 
+                    ? 'bg-nebula-900 text-purple-400 border border-nebula-700 active-glow' 
                     : 'text-gray-400 hover:text-white hover:bg-nebula-900/50'
                 }`}
               >
                 {item.icon}
                 {item.label}
+                {activeTab === item.id && <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-1/2 bg-purple-500 rounded-l shadow-[0_0_8px_#7c3aed]"></div>}
               </button>
             ))}
           </nav>
@@ -615,27 +616,30 @@ const App: React.FC = () => {
       </div>
 
        {/* Full Width Footer with Glassmorphism */}
-      <footer className="h-8 bg-nebula-950/70 backdrop-blur-md border-t border-white/5 flex items-center justify-between px-4 text-type-caption text-gray-500 select-none z-40 relative shadow-[0_-5px_15px_rgba(0,0,0,0.2)] w-full">
+      <footer className="h-8 bg-nebula-950/70 backdrop-blur-md border-t border-white/5 flex items-center justify-between px-4 text-type-caption text-gray-500 select-none z-40 relative shadow-[0_-5px_15px_rgba(0,0,0,0.2)] w-full font-mono uppercase tracking-tighter">
             <div className="flex gap-space-md items-center">
-                <span className="flex items-center gap-space-xs"><span className="w-2 h-2 rounded-full bg-green-500"></span> System Online</span>
+                <span className="flex items-center gap-space-xs">
+                    <span className="w-2 h-2 rounded-full bg-green-500 animate-heartbeat"></span> 
+                    <span className="opacity-70">System Online</span>
+                </span>
                 {SERVER_CONFIG.rocmEnabled && (
                   <span className="flex items-center gap-space-xs">
-                      <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
-                      <span className="text-gray-500">AMD ROCm Active</span>
+                      <span className="w-2 h-2 rounded-full bg-red-500/50"></span>
+                      <span className="text-gray-600">ROCm Active</span>
                   </span>
                 )}
-                <span className="flex items-center gap-space-xs">GPU Util: 12%</span>
-                <span className="flex items-center gap-space-xs">VRAM: 8/12 GB</span>
+                <span className="flex items-center gap-space-xs opacity-50">GPU: 12%</span>
+                <span className="flex items-center gap-space-xs opacity-50">VRAM: 8/12 GB</span>
             </div>
             
              {/* Global Loading Indicator */}
-            <div className="flex items-center gap-space-sm text-purple-400 animate-pulse">
+            <div className="flex items-center gap-space-sm text-purple-400">
                 <Loader2 size={12} className="animate-spin" />
-                <span>Processing Background Tasks...</span>
+                <span className="animate-pulse">Task Sync Active</span>
             </div>
 
-            <div>
-                Replicator AI v2.2.0-Lab
+            <div className="opacity-40">
+                v2.2.0-Lab // REPLICATOR-AI
             </div>
       </footer>
     </div>

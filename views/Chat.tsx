@@ -2,6 +2,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Model, ServerProfile, AgentConfig } from '../types';
 import { Send, Bot, User, Cpu, Zap, Eraser, MessageSquare, Power, Loader2, CircleCheck, CircleAlert, Server, Mic, MicOff, Volume2, Box, BrainCircuit, Activity, Layers, Thermometer, Briefcase, Paperclip, File, Image as ImageIcon, X, PlayCircle } from 'lucide-react';
+import { generateSpeech } from '../services/geminiService';
 
 interface ChatProps {
     models: Model[];
@@ -30,6 +31,36 @@ interface FileAttachment {
     url?: string;
 }
 
+// Audio Decoding Utilities
+function decodeBase64(base64: string) {
+  const binaryString = atob(base64);
+  const len = binaryString.length;
+  const bytes = new Uint8Array(len);
+  for (let i = 0; i < len; i++) {
+    bytes[i] = binaryString.charCodeAt(i);
+  }
+  return bytes;
+}
+
+async function decodeAudioData(
+  data: Uint8Array,
+  ctx: AudioContext,
+  sampleRate: number,
+  numChannels: number,
+): Promise<AudioBuffer> {
+  const dataInt16 = new Int16Array(data.buffer);
+  const frameCount = dataInt16.length / numChannels;
+  const buffer = ctx.createBuffer(numChannels, frameCount, sampleRate);
+
+  for (let channel = 0; channel < numChannels; channel++) {
+    const channelData = buffer.getChannelData(channel);
+    for (let i = 0; i < frameCount; i++) {
+      channelData[i] = dataInt16[i * numChannels + channel] / 32768.0;
+    }
+  }
+  return buffer;
+}
+
 export const Chat: React.FC<ChatProps> = ({ models, servers, agents = [], onUpdateServer }) => {
     const [selectedServerId, setSelectedServerId] = useState<string>(servers[0]?.id || '');
     const [selectedModelId, setSelectedModelId] = useState<string>(models[0]?.id || '');
@@ -38,6 +69,7 @@ export const Chat: React.FC<ChatProps> = ({ models, servers, agents = [], onUpda
     const [input, setInput] = useState('');
     const [isTyping, setIsTyping] = useState(false);
     const [attachments, setAttachments] = useState<FileAttachment[]>([]);
+    const [ttsLoadingId, setTtsLoadingId] = useState<string | null>(null);
     
     // Audio State
     const [isAudioMode, setIsAudioMode] = useState(false);
@@ -45,12 +77,14 @@ export const Chat: React.FC<ChatProps> = ({ models, servers, agents = [], onUpda
     
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const audioContextRef = useRef<AudioContext | null>(null);
+
     const selectedServer = servers.find(s => s.id === selectedServerId) || servers[0];
     const selectedModel = models.find(m => m.id === selectedModelId);
     const selectedAgent = agents.find(a => a.id === selectedAgentId);
 
-    // Capability Check
-    const supportsAudio = selectedModel?.tags.some(t => ['Audio', 'Multimodal'].includes(t));
+    // Capability Check - Gemini models or specifically tagged models
+    const supportsAudio = selectedModel?.tags.some(t => ['Audio', 'Multimodal'].includes(t)) || selectedModelId.includes('gemini');
     const supportsImage = selectedModel?.tags.some(t => ['Image', 'Generative'].includes(t));
 
     // Persistence Effect
@@ -59,7 +93,6 @@ export const Chat: React.FC<ChatProps> = ({ models, servers, agents = [], onUpda
         if (saved) {
             try {
                 const parsed = JSON.parse(saved);
-                // Convert timestamp strings back to Date objects
                 const hydrated = parsed.map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) }));
                 setMessages(hydrated);
             } catch (e) {
@@ -99,10 +132,7 @@ export const Chat: React.FC<ChatProps> = ({ models, servers, agents = [], onUpda
 
     const handleLaunch = () => {
         if (!selectedServer) return;
-        // Optimistic update for launching simulation
         onUpdateServer({ ...selectedServer, status: 'Starting' });
-        
-        // Simulating WebGPU Load time if applicable
         const loadTime = selectedServer.type === 'WebGPU' ? 4000 : 2500;
         
         setTimeout(() => {
@@ -118,7 +148,6 @@ export const Chat: React.FC<ChatProps> = ({ models, servers, agents = [], onUpda
 
     const streamText = (fullText: string) => {
         const msgId = (Date.now() + 1).toString();
-        // Create empty placeholder message
         setMessages(prev => [...prev, {
             id: msgId,
             role: 'assistant',
@@ -127,7 +156,6 @@ export const Chat: React.FC<ChatProps> = ({ models, servers, agents = [], onUpda
         }]);
         
         setIsTyping(true);
-        
         let currentIndex = 0;
         const interval = setInterval(() => {
             if (currentIndex >= fullText.length) {
@@ -135,13 +163,12 @@ export const Chat: React.FC<ChatProps> = ({ models, servers, agents = [], onUpda
                 setIsTyping(false);
                 return;
             }
-            
             const nextChar = fullText[currentIndex];
             setMessages(prev => prev.map(m => 
                 m.id === msgId ? { ...m, content: m.content + nextChar } : m
             ));
             currentIndex++;
-        }, 20); // 20ms per char for typewriter effect
+        }, 20);
     };
 
     const handleSend = () => {
@@ -168,14 +195,9 @@ export const Chat: React.FC<ChatProps> = ({ models, servers, agents = [], onUpda
         setInput('');
         setAttachments([]);
         
-        // Simulate Inference
         let responseText = `[${selectedServer.acceleration} Inference via ${selectedServer.name}] This is a simulated response generated by ${selectedModel?.name}.`;
-        let generatedMedia = undefined;
-
-        // Mock Generation Logic
         if (supportsImage && (userMsg.content.toLowerCase().includes('generate') || userMsg.content.toLowerCase().includes('image'))) {
             responseText = "Generating image based on your prompt...";
-            // Delay generation slightly
             setTimeout(() => {
                 setMessages(prev => [...prev, {
                     id: (Date.now() + 2).toString(),
@@ -199,7 +221,7 @@ export const Chat: React.FC<ChatProps> = ({ models, servers, agents = [], onUpda
                     timestamp: new Date(),
                     generatedMedia: {
                         type: 'audio',
-                        url: '#', // Placeholder, would be a blob URL in real app
+                        url: '#',
                         alt: 'Generated Speech'
                     }
                 }]);
@@ -223,14 +245,12 @@ export const Chat: React.FC<ChatProps> = ({ models, servers, agents = [], onUpda
 
         if (isRecording) {
             setIsRecording(false);
-            // Simulate processing audio
             setMessages(prev => [...prev, {
                 id: Date.now().toString(),
                 role: 'user',
                 content: '🎤 [Audio Clip 0:04]',
                 timestamp: new Date()
             }]);
-            
              setTimeout(() => {
                  streamText("I heard you say something about the architecture. Here is the response generated by the Audio Model...");
             }, 1000);
@@ -239,18 +259,35 @@ export const Chat: React.FC<ChatProps> = ({ models, servers, agents = [], onUpda
         }
     };
 
-    const playTTS = (text: string) => {
-        if (!supportsAudio) {
-            alert("Model does not support TTS.");
-            return;
+    const playTTS = async (id: string, text: string) => {
+        if (ttsLoadingId === id) return;
+        setTtsLoadingId(id);
+
+        try {
+            const base64Audio = await generateSpeech(text);
+            if (!base64Audio) throw new Error("No audio data returned");
+
+            if (!audioContextRef.current) {
+              audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
+            }
+            const ctx = audioContextRef.current;
+            const bytes = decodeBase64(base64Audio);
+            const audioBuffer = await decodeAudioData(bytes, ctx, 24000, 1);
+            
+            const source = ctx.createBufferSource();
+            source.buffer = audioBuffer;
+            source.connect(ctx.destination);
+            source.start();
+        } catch (e) {
+            console.error("TTS Playback Error", e);
+            alert("Failed to play audio. Make sure your API Key is valid and supports TTS.");
+        } finally {
+            setTtsLoadingId(null);
         }
-        // Mock TTS playback
-        console.log("Playing TTS for:", text);
     };
 
     const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files.length > 0) {
-            // Explicitly cast to array of Files to avoid TS inference issues with Array.from(FileList)
             const files = Array.from(e.target.files);
             const newAttachments: FileAttachment[] = files.map((f: File) => ({
                 id: Math.random().toString(36).substr(2, 9),
@@ -346,7 +383,6 @@ export const Chat: React.FC<ChatProps> = ({ models, servers, agents = [], onUpda
 
                 <div className="flex items-center justify-between border-t border-nebula-800 pt-3">
                      <div className="flex items-center gap-space-md">
-                         {/* Server Status / Action Area */}
                          {selectedServer?.status === 'Offline' && (
                             <button 
                                 onClick={handleLaunch}
@@ -362,7 +398,6 @@ export const Chat: React.FC<ChatProps> = ({ models, servers, agents = [], onUpda
                             </div>
                         )}
 
-                         {/* Modifiers */}
                          <div className="flex items-center gap-3 pl-4 border-l border-nebula-800 text-type-tiny text-gray-500">
                              <span className="flex items-center gap-1" title="Context Window"><Layers size={12}/> 8192</span>
                              <span className="flex items-center gap-1" title="Temperature"><Thermometer size={12}/> 0.7</span>
@@ -372,7 +407,6 @@ export const Chat: React.FC<ChatProps> = ({ models, servers, agents = [], onUpda
                          </div>
                     </div>
                     
-                    {/* Telemetry */}
                     <div className="flex items-center gap-space-md text-type-tiny font-mono">
                          <div className="flex items-center gap-2 px-2 py-1 bg-nebula-950 rounded border border-nebula-800 text-gray-300">
                              <Activity size={12} className="text-blue-400" />
@@ -405,7 +439,6 @@ export const Chat: React.FC<ChatProps> = ({ models, servers, agents = [], onUpda
                                 ? 'bg-blue-900/30 border border-blue-500/30 text-blue-100' 
                                 : 'bg-nebula-950 border border-nebula-700 text-gray-200'
                             }`}>
-                                {/* Attachments Display */}
                                 {msg.attachments && msg.attachments.length > 0 && (
                                     <div className="flex flex-wrap gap-2 mb-3">
                                         {msg.attachments.map(att => (
@@ -419,7 +452,6 @@ export const Chat: React.FC<ChatProps> = ({ models, servers, agents = [], onUpda
                                 
                                 <div className="whitespace-pre-wrap">{msg.content}</div>
 
-                                {/* Generated Media Display */}
                                 {msg.generatedMedia && (
                                     <div className="mt-3 p-2 bg-black/20 rounded border border-white/5">
                                         {msg.generatedMedia.type === 'image' && (
@@ -442,8 +474,12 @@ export const Chat: React.FC<ChatProps> = ({ models, servers, agents = [], onUpda
                                 <div className="flex justify-end items-center gap-2 mt-2 pt-2 border-t border-white/5 opacity-60">
                                     <span className="text-[10px]">{msg.timestamp.toLocaleTimeString()}</span>
                                     {msg.role === 'assistant' && supportsAudio && (
-                                        <button onClick={() => playTTS(msg.content)} className="hover:text-purple-400 transition-colors" title="Play Text-to-Speech">
-                                            <Volume2 size={12} />
+                                        <button 
+                                            onClick={() => playTTS(msg.id, msg.content)} 
+                                            className={`${ttsLoadingId === msg.id ? 'text-purple-400 animate-pulse' : 'hover:text-purple-400'} transition-colors`} 
+                                            title="Play Text-to-Speech"
+                                        >
+                                            {ttsLoadingId === msg.id ? <Loader2 size={12} className="animate-spin" /> : <Volume2 size={12} />}
                                         </button>
                                     )}
                                 </div>
@@ -468,7 +504,6 @@ export const Chat: React.FC<ChatProps> = ({ models, servers, agents = [], onUpda
 
             {/* Input Area */}
             <div className="bg-nebula-900 border border-nebula-700 rounded-xl p-2">
-                {/* Attachments Preview */}
                 {attachments.length > 0 && (
                     <div className="flex gap-2 p-2 mb-2 overflow-x-auto bg-nebula-950/50 rounded">
                         {attachments.map(att => (
