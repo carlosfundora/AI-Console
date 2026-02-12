@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Dataset, DatasetTemplate } from '../types';
 import { generateSyntheticDataSample } from '../services/geminiService';
-import { Filter, SortAsc, Sparkles, Download, FileText, MessageSquare, Code, Save, FileJson, AlignLeft, Edit3, Plus, Trash2, X, Check, Copy, AlertTriangle, Wand2, Database, MoreHorizontal, Maximize2, CheckCircle2, Search, Table as TableIcon, Eye, Terminal } from 'lucide-react';
+import { Filter, SortAsc, Sparkles, Download, FileText, MessageSquare, Code, Save, FileJson, AlignLeft, Edit3, Plus, Trash2, X, Check, Copy, AlertTriangle, Wand2, Database, MoreHorizontal, Maximize2, CheckCircle2, Search, Table as TableIcon, Eye, Terminal, ChevronRight, RefreshCw, Layers } from 'lucide-react';
 
 interface DatasetsProps {
   datasets: Dataset[];
@@ -108,6 +108,7 @@ export const Datasets: React.FC<DatasetsProps> = ({ datasets }) => {
   // Filtering & Sorting State
   const [sortBy, setSortBy] = useState<SortOption>('name');
   const [filterBy, setFilterBy] = useState<FilterOption>('all');
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Template Management State
   const [templates, setTemplates] = useState<DatasetTemplate[]>(() => {
@@ -288,7 +289,11 @@ export const Datasets: React.FC<DatasetsProps> = ({ datasets }) => {
   };
 
   const filteredDatasets = datasets
-    .filter(d => filterBy === 'all' || d.type === filterBy)
+    .filter(d => {
+        const matchesFilter = filterBy === 'all' || d.type === filterBy;
+        const matchesSearch = d.name.toLowerCase().includes(searchQuery.toLowerCase());
+        return matchesFilter && matchesSearch;
+    })
     .sort((a, b) => {
         if (sortBy === 'rows') return b.rows - a.rows;
         if (sortBy === 'size') return parseFloat(b.size) - parseFloat(a.size);
@@ -297,19 +302,19 @@ export const Datasets: React.FC<DatasetsProps> = ({ datasets }) => {
 
   const getFormatBadge = (format?: string) => {
       switch(format) {
-          case 'Alpaca': return <span className="text-[10px] bg-pink-500/10 text-pink-400 px-2 py-0.5 rounded border border-pink-500/20 font-medium">Alpaca</span>;
-          case 'ShareGPT': return <span className="text-[10px] bg-cyan-500/10 text-cyan-400 px-2 py-0.5 rounded border border-cyan-500/20 font-medium">ShareGPT</span>;
-          case 'ChatML': return <span className="text-[10px] bg-green-500/10 text-green-400 px-2 py-0.5 rounded border border-green-500/20 font-medium">ChatML</span>;
-          default: return <span className="text-[10px] bg-gray-800 text-gray-400 px-2 py-0.5 rounded border border-gray-700 font-medium">{format || 'Custom'}</span>;
+          case 'Alpaca': return <span className="text-[9px] bg-pink-500/10 text-pink-300 px-1.5 py-0.5 rounded border border-pink-500/20 font-bold uppercase tracking-wider">Alpaca</span>;
+          case 'ShareGPT': return <span className="text-[9px] bg-cyan-500/10 text-cyan-300 px-1.5 py-0.5 rounded border border-cyan-500/20 font-bold uppercase tracking-wider">ShareGPT</span>;
+          case 'ChatML': return <span className="text-[9px] bg-green-500/10 text-green-300 px-1.5 py-0.5 rounded border border-green-500/20 font-bold uppercase tracking-wider">ChatML</span>;
+          default: return <span className="text-[9px] bg-gray-800 text-gray-300 px-1.5 py-0.5 rounded border border-gray-700 font-bold uppercase tracking-wider">{format || 'Custom'}</span>;
       }
   };
 
   const getTypeBadge = (type: string) => {
       switch(type) {
-          case 'SFT': return <span className="text-[10px] bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded border border-blue-500/20 font-bold tracking-wider">SFT</span>;
-          case 'DPO': return <span className="text-[10px] bg-orange-500/10 text-orange-400 px-2 py-0.5 rounded border border-orange-500/20 font-bold tracking-wider">DPO</span>;
-          case 'Pretrain': return <span className="text-[10px] bg-purple-500/10 text-purple-400 px-2 py-0.5 rounded border border-purple-500/20 font-bold tracking-wider">PRETRAIN</span>;
-          default: return <span className="text-[10px] bg-gray-800 text-gray-300 px-2 py-0.5 rounded border border-gray-700">{type}</span>;
+          case 'SFT': return <span className="text-[9px] bg-blue-500/10 text-blue-400 px-1.5 py-0.5 rounded border border-blue-500/20 font-black tracking-widest">SFT</span>;
+          case 'DPO': return <span className="text-[9px] bg-orange-500/10 text-orange-400 px-1.5 py-0.5 rounded border border-orange-500/20 font-black tracking-widest">DPO</span>;
+          case 'Pretrain': return <span className="text-[9px] bg-purple-500/10 text-purple-400 px-1.5 py-0.5 rounded border border-purple-500/20 font-black tracking-widest">PT</span>;
+          default: return <span className="text-[9px] bg-gray-800 text-gray-300 px-1.5 py-0.5 rounded border border-gray-700">{type}</span>;
       }
   };
 
@@ -397,229 +402,227 @@ export const Datasets: React.FC<DatasetsProps> = ({ datasets }) => {
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-space-xl h-full p-space-lg overflow-hidden relative">
+    <div className="flex flex-col lg:flex-row gap-space-lg h-full p-space-lg overflow-hidden relative">
       
       {/* LEFT COLUMN: Datasets List */}
-      <div className="flex flex-col space-y-space-md overflow-hidden">
-        <div className="flex justify-between items-end shrink-0">
+      <div className="flex-1 flex flex-col space-y-space-md min-w-0">
+        <div className="flex justify-between items-center shrink-0">
             <div>
-                <h2 className="text-type-heading-lg font-bold">📚 Data Curation</h2>
-                <p className="text-type-body text-gray-400 mt-1">Manage local training datasets.</p>
+                <h2 className="text-type-heading-lg font-bold flex items-center gap-space-sm text-white">
+                    <Database className="text-purple-500" /> Data Curation
+                </h2>
+                <p className="text-type-body text-gray-400 mt-1">Local dataset cache and management.</p>
             </div>
             
-            {/* Controls */}
-            <div className="flex gap-space-sm">
-                 <div className="relative group">
-                    <button className="bg-nebula-900 border border-nebula-700 p-2 rounded hover:bg-nebula-800 text-gray-400 hover:text-white transition-colors">
-                        <Filter size={16} />
-                    </button>
-                    <div className="absolute right-0 mt-2 w-32 bg-nebula-900 border border-nebula-700 rounded shadow-xl hidden group-hover:block z-10">
-                        {['all', 'SFT', 'DPO', 'Pretrain'].map(f => (
-                            <div 
-                                key={f} 
-                                onClick={() => setFilterBy(f as FilterOption)}
-                                className={`px-4 py-2 text-type-caption cursor-pointer hover:bg-purple-600/20 ${filterBy === f ? 'text-purple-400 font-bold' : 'text-gray-400'}`}
-                            >
-                                {f}
-                            </div>
-                        ))}
-                    </div>
-                 </div>
+            <button className="text-type-tiny bg-nebula-900 hover:bg-nebula-800 px-3 py-2 rounded text-purple-300 hover:text-white transition-all flex items-center gap-2 border border-nebula-700 hover:border-purple-500/50 shadow-sm font-bold uppercase tracking-wider">
+                <Download size={14} /> Import Data
+            </button>
+        </div>
 
-                 <div className="relative group">
-                    <button className="bg-nebula-900 border border-nebula-700 p-2 rounded hover:bg-nebula-800 text-gray-400 hover:text-white transition-colors">
-                        <SortAsc size={16} />
+        {/* Filter Bar */}
+        <div className="flex gap-space-md items-center bg-nebula-900 p-1.5 rounded-lg border border-nebula-700 shrink-0">
+            <div className="flex bg-nebula-950/50 rounded-md p-1 border border-nebula-800">
+                {['all', 'SFT', 'DPO', 'Pretrain'].map(f => (
+                    <button 
+                        key={f} 
+                        onClick={() => setFilterBy(f as FilterOption)}
+                        className={`px-3 py-1 rounded text-type-tiny font-bold uppercase transition-all ${filterBy === f ? 'bg-purple-600 text-white shadow-md' : 'text-gray-500 hover:text-gray-300'}`}
+                    >
+                        {f}
                     </button>
-                    <div className="absolute right-0 mt-2 w-32 bg-nebula-900 border border-nebula-700 rounded shadow-xl hidden group-hover:block z-10">
-                         {['name', 'size', 'rows'].map(s => (
-                            <div 
-                                key={s} 
-                                onClick={() => setSortBy(s as SortOption)}
-                                className={`px-4 py-2 text-type-caption cursor-pointer hover:bg-purple-600/20 ${sortBy === s ? 'text-purple-400 font-bold' : 'text-gray-400'}`}
-                            >
-                                Sort by {s}
-                            </div>
-                        ))}
-                    </div>
-                 </div>
+                ))}
+            </div>
+            <div className="h-4 w-px bg-nebula-700 mx-1"></div>
+            <div className="relative flex-1">
+                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
+                <input 
+                    type="text" 
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search datasets..." 
+                    className="w-full bg-nebula-950 border border-nebula-800 rounded-md pl-9 pr-4 py-1.5 text-xs text-white outline-none focus:border-purple-500/50 transition-colors placeholder-gray-600"
+                />
+            </div>
+            <div className="flex gap-1">
+                <button onClick={() => setSortBy('rows')} className={`p-1.5 rounded hover:bg-nebula-800 transition-colors ${sortBy === 'rows' ? 'text-purple-400' : 'text-gray-500'}`} title="Sort by Rows"><TableIcon size={14}/></button>
+                <button onClick={() => setSortBy('size')} className={`p-1.5 rounded hover:bg-nebula-800 transition-colors ${sortBy === 'size' ? 'text-purple-400' : 'text-gray-500'}`} title="Sort by Size"><AlignLeft size={14}/></button>
             </div>
         </div>
 
-        <div className="bg-nebula-900 border border-nebula-700 rounded-xl flex-1 overflow-hidden flex flex-col shadow-lg">
-            <div className="p-space-md border-b border-nebula-700 bg-nebula-950/30 flex justify-between items-center">
-                <span className="font-semibold text-gray-200 text-type-body flex items-center gap-2"><Database size={14}/> {filteredDatasets.length} Datasets</span>
-                <button className="text-type-tiny bg-nebula-800 px-3 py-1.5 rounded text-purple-300 hover:text-white transition-colors flex items-center gap-1 border border-nebula-700 hover:border-purple-500/50 shadow-sm">
-                    <Download size={12} /> Import .JSONL
-                </button>
-            </div>
-            <div className="overflow-y-auto flex-1 p-space-md space-y-space-md custom-scrollbar">
-                {filteredDatasets.map(ds => (
-                    <div 
-                        key={ds.id} 
-                        onDoubleClick={() => setViewingDataset(ds)}
-                        className="p-space-md rounded-xl bg-nebula-950/50 border border-nebula-700/50 hover:border-purple-500/30 hover:bg-nebula-900/80 transition-all cursor-pointer group relative overflow-hidden"
-                    >
-                        <div className="flex justify-between items-start mb-2">
-                            <div className="flex items-center gap-3">
-                                <div className="p-2 bg-nebula-900 rounded-lg border border-nebula-800 text-purple-400 group-hover:text-purple-300 group-hover:border-purple-500/30 transition-colors">
-                                    <FileJson size={18} />
-                                </div>
-                                <div>
-                                    <h4 className="font-bold text-gray-200 group-hover:text-white transition-colors text-type-body leading-tight">{ds.name}</h4>
-                                    <p className="text-type-tiny text-gray-500 mt-0.5 line-clamp-1">{ds.description}</p>
-                                </div>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                {getTypeBadge(ds.type)}
-                                {getFormatBadge(ds.format)}
-                            </div>
-                        </div>
-                        
-                        <div className="grid grid-cols-2 gap-4 mt-4 pt-3 border-t border-nebula-800/50">
-                            <div className="flex flex-col">
-                                <span className="text-[9px] uppercase text-gray-500 font-bold tracking-wider">Size</span>
-                                <span className="text-type-caption font-mono text-gray-300 flex items-center gap-1"><AlignLeft size={10}/> {ds.size}</span>
-                            </div>
-                            <div className="flex flex-col">
-                                <span className="text-[9px] uppercase text-gray-500 font-bold tracking-wider">Volume</span>
-                                <span className="text-type-caption font-mono text-gray-300 flex items-center gap-1"><TableIcon size={10}/> {ds.rows.toLocaleString()} rows</span>
-                            </div>
-                        </div>
+        <div className="flex-1 overflow-y-auto space-y-3 custom-scrollbar pr-1 pb-2">
+            {filteredDatasets.length === 0 && (
+                <div className="text-center py-10 opacity-50">
+                    <Database size={40} className="mx-auto mb-2 text-gray-600"/>
+                    <p className="text-sm">No datasets found matching your criteria.</p>
+                </div>
+            )}
+            {filteredDatasets.map(ds => (
+                <div 
+                    key={ds.id} 
+                    onDoubleClick={() => setViewingDataset(ds)}
+                    className="group bg-gradient-to-r from-nebula-900 to-nebula-950 border border-nebula-800 hover:border-purple-500/40 rounded-xl p-4 transition-all hover:shadow-[0_0_20px_rgba(124,58,237,0.05)] cursor-pointer relative overflow-hidden"
+                >
+                    <div className="absolute top-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button className="text-gray-500 hover:text-white p-1 bg-nebula-900 rounded-md border border-nebula-700 shadow-lg" onClick={(e) => { e.stopPropagation(); setViewingDataset(ds); }}>
+                            <Maximize2 size={14} />
+                        </button>
+                    </div>
 
-                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <Maximize2 size={12} className="text-gray-500" />
+                    <div className="flex justify-between items-start mb-3">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2.5 bg-nebula-950 rounded-lg border border-nebula-800 text-gray-400 group-hover:text-purple-400 group-hover:border-purple-500/30 transition-all shadow-inner">
+                                {ds.format === 'JSON' ? <FileJson size={18} /> : <FileText size={18} />}
+                            </div>
+                            <div>
+                                <h4 className="font-bold text-gray-200 text-sm group-hover:text-white transition-colors">{ds.name}</h4>
+                                <div className="flex items-center gap-2 mt-1">
+                                    {getTypeBadge(ds.type)}
+                                    {getFormatBadge(ds.format)}
+                                </div>
+                            </div>
                         </div>
                     </div>
-                ))}
-            </div>
+                    
+                    <p className="text-xs text-gray-500 mb-4 line-clamp-1 pl-1">{ds.description}</p>
+
+                    <div className="grid grid-cols-2 gap-2 bg-nebula-950/50 rounded-lg p-2 border border-nebula-800/50">
+                        <div className="flex flex-col px-2">
+                            <span className="text-[9px] uppercase text-gray-600 font-bold tracking-wider">Volume</span>
+                            <span className="text-xs font-mono text-gray-300 font-bold">{ds.rows.toLocaleString()}</span>
+                        </div>
+                        <div className="flex flex-col px-2 border-l border-nebula-800">
+                            <span className="text-[9px] uppercase text-gray-600 font-bold tracking-wider">Size</span>
+                            <span className="text-xs font-mono text-gray-300 font-bold">{ds.size}</span>
+                        </div>
+                    </div>
+                </div>
+            ))}
         </div>
       </div>
 
       {/* RIGHT COLUMN: Generator & Template Manager */}
-      <div className="flex flex-col space-y-space-md overflow-hidden relative">
+      <div className="w-full lg:w-[480px] xl:w-[550px] flex flex-col space-y-space-md shrink-0">
         <div className="flex justify-between items-center shrink-0">
-            <h2 className="text-type-heading-lg font-bold flex items-center gap-space-sm">
-                <Wand2 className="text-purple-500" /> Generator
+            <h2 className="text-type-heading-lg font-bold flex items-center gap-space-sm text-white">
+                <Wand2 className="text-purple-500" /> Synthetic Lab
             </h2>
-            
-            {/* Validation Badge */}
-            {generatedData.length > 0 && (
-                <div className={`px-3 py-1 rounded-full text-type-tiny font-bold flex items-center gap-2 border ${validationStatus === 'valid' ? 'bg-green-900/20 text-green-400 border-green-500/30' : validationStatus === 'invalid' ? 'bg-red-900/20 text-red-400 border-red-500/30' : 'hidden'}`}>
-                    {validationStatus === 'valid' ? <Check size={12} /> : <AlertTriangle size={12} />}
-                    {validationStatus === 'valid' ? 'Format Compatible' : validationMsg}
-                </div>
-            )}
+            <div className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center gap-2 border transition-all ${validationStatus === 'valid' ? 'bg-green-900/20 text-green-400 border-green-500/30' : validationStatus === 'invalid' ? 'bg-red-900/20 text-red-400 border-red-500/30' : 'opacity-0'}`}>
+                {validationStatus === 'valid' ? <Check size={12} /> : <AlertTriangle size={12} />}
+                {validationStatus === 'valid' ? 'Schema Valid' : 'Schema Error'}
+            </div>
         </div>
         
-        <div className="bg-nebula-900 border border-nebula-700 rounded-xl p-space-lg flex flex-col h-full relative overflow-hidden shadow-lg">
+        <div className="bg-nebula-900 border border-nebula-700 rounded-xl p-space-md flex flex-col h-full relative overflow-hidden shadow-2xl">
              {/* Background Decoration */}
              <div className="absolute top-0 right-0 p-space-2xl opacity-5 pointer-events-none">
-                <Sparkles size={120} />
+                <Sparkles size={180} />
              </div>
 
             {/* Template Manager Overlay/Mode */}
             {isManageMode && editingTemplate ? (
-                <div className="absolute inset-0 bg-nebula-900 z-20 flex flex-col p-space-lg animate-fade-in">
-                    <div className="flex justify-between items-center mb-4 border-b border-nebula-800 pb-2 shrink-0">
-                        <h3 className="font-bold text-white flex items-center gap-2">
-                            <Edit3 size={16}/> 
-                            {editingTemplate.isPreset ? 'View / Clone Template' : 'Edit Template'}
+                <div className="absolute inset-0 bg-nebula-900 z-20 flex flex-col p-6 animate-fade-in">
+                    <div className="flex justify-between items-center mb-6 border-b border-nebula-800 pb-4 shrink-0">
+                        <h3 className="font-bold text-white flex items-center gap-2 text-lg">
+                            <Edit3 size={18} className="text-purple-400"/> 
+                            {editingTemplate.isPreset ? 'View Template' : 'Edit Template'}
                         </h3>
-                        <button onClick={() => setIsManageMode(false)} className="text-gray-500 hover:text-white"><X size={20}/></button>
+                        <button onClick={() => setIsManageMode(false)} className="text-gray-500 hover:text-white p-1 hover:bg-nebula-800 rounded"><X size={20}/></button>
                     </div>
                     
-                    <div className="flex-1 flex flex-col min-h-0 overflow-hidden space-y-4">
-                        <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col space-y-4">
-                            <div className="flex gap-4 shrink-0">
-                                <div className="flex-1">
-                                    <label className="text-type-tiny text-gray-500 font-bold uppercase">Template Name</label>
-                                    <input 
-                                        value={editingTemplate.name} 
-                                        onChange={e => setEditingTemplate({...editingTemplate, name: e.target.value})}
-                                        className="w-full bg-nebula-950 border border-nebula-700 rounded p-2 text-white mt-1 outline-none focus:border-purple-500"
-                                    />
-                                </div>
-                                <div className="w-1/3">
-                                    <label className="text-type-tiny text-gray-500 font-bold uppercase">Format Tag</label>
-                                    <select 
-                                        value={editingTemplate.format}
-                                        onChange={e => setEditingTemplate({...editingTemplate, format: e.target.value as any})}
-                                        className="w-full bg-nebula-950 border border-nebula-700 rounded p-2 text-white mt-1 outline-none focus:border-purple-500"
-                                    >
-                                        <option value="Custom">Custom</option>
-                                        <option value="Alpaca">Alpaca</option>
-                                        <option value="ShareGPT">ShareGPT</option>
-                                        <option value="ChatML">ChatML</option>
-                                        <option value="JSON">JSON</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div className="shrink-0">
-                                <label className="text-type-tiny text-gray-500 font-bold uppercase">System Prompt (Context)</label>
-                                <textarea 
-                                    value={editingTemplate.systemPrompt} 
-                                    onChange={e => setEditingTemplate({...editingTemplate, systemPrompt: e.target.value})}
-                                    className="w-full bg-nebula-950 border border-nebula-700 rounded p-2 text-white mt-1 h-20 resize-none text-sm outline-none focus:border-purple-500"
+                    <div className="flex-1 overflow-y-auto custom-scrollbar space-y-6 pr-2">
+                        <div className="grid grid-cols-3 gap-4">
+                            <div className="col-span-2">
+                                <label className="text-xs text-gray-500 font-bold uppercase tracking-wider block mb-1">Template Name</label>
+                                <input 
+                                    value={editingTemplate.name} 
+                                    onChange={e => setEditingTemplate({...editingTemplate, name: e.target.value})}
+                                    className="w-full bg-nebula-950 border border-nebula-700 rounded-lg p-2.5 text-white text-sm outline-none focus:border-purple-500 transition-colors"
                                 />
                             </div>
-                            
-                            <div className="flex-1 flex flex-col min-h-[150px]">
-                                <label className="text-type-tiny text-gray-500 font-bold uppercase flex justify-between items-center mb-1">
-                                    <span>Target JSON Structure (Example)</span>
-                                    <span className="text-[10px] bg-nebula-800 px-2 py-0.5 rounded">The LLM will mimic this</span>
-                                </label>
-                                <textarea 
-                                    value={editingTemplate.exampleStructure} 
-                                    onChange={e => setEditingTemplate({...editingTemplate, exampleStructure: e.target.value})}
-                                    className="w-full flex-1 bg-nebula-950 border border-nebula-700 rounded p-2 text-green-400 font-mono text-xs resize-none outline-none focus:border-purple-500"
-                                    spellCheck={false}
-                                />
+                            <div>
+                                <label className="text-xs text-gray-500 font-bold uppercase tracking-wider block mb-1">Format</label>
+                                <select 
+                                    value={editingTemplate.format}
+                                    onChange={e => setEditingTemplate({...editingTemplate, format: e.target.value as any})}
+                                    className="w-full bg-nebula-950 border border-nebula-700 rounded-lg p-2.5 text-white text-sm outline-none focus:border-purple-500"
+                                >
+                                    <option value="Custom">Custom</option>
+                                    <option value="Alpaca">Alpaca</option>
+                                    <option value="ShareGPT">ShareGPT</option>
+                                    <option value="ChatML">ChatML</option>
+                                </select>
                             </div>
+                        </div>
+
+                        <div>
+                            <label className="text-xs text-gray-500 font-bold uppercase tracking-wider block mb-1">System Prompt Context</label>
+                            <textarea 
+                                value={editingTemplate.systemPrompt} 
+                                onChange={e => setEditingTemplate({...editingTemplate, systemPrompt: e.target.value})}
+                                className="w-full bg-nebula-950 border border-nebula-700 rounded-lg p-3 text-white text-sm h-24 resize-none outline-none focus:border-purple-500"
+                            />
+                        </div>
+                        
+                        <div className="flex-1 flex flex-col">
+                            <label className="text-xs text-gray-500 font-bold uppercase tracking-wider flex justify-between items-center mb-1">
+                                <span>Target JSON Structure</span>
+                                <span className="text-[9px] bg-nebula-800 px-2 py-0.5 rounded text-gray-400">One example object</span>
+                            </label>
+                            <textarea 
+                                value={editingTemplate.exampleStructure} 
+                                onChange={e => setEditingTemplate({...editingTemplate, exampleStructure: e.target.value})}
+                                className="w-full h-48 bg-nebula-950 border border-nebula-700 rounded-lg p-3 text-green-400 font-mono text-xs resize-none outline-none focus:border-purple-500"
+                                spellCheck={false}
+                            />
                         </div>
                     </div>
 
-                    <div className="flex justify-end gap-2 mt-4 pt-4 border-t border-nebula-800 shrink-0">
+                    <div className="flex justify-between items-center pt-4 border-t border-nebula-800 shrink-0 mt-2">
                         {!editingTemplate.isPreset && (
-                            <button onClick={() => handleDeleteTemplate(editingTemplate.id)} className="mr-auto text-red-400 hover:text-red-300 flex items-center gap-1 text-sm font-bold"><Trash2 size={14}/> Delete</button>
+                            <button onClick={() => handleDeleteTemplate(editingTemplate.id)} className="text-red-400 hover:text-red-300 flex items-center gap-1 text-xs font-bold uppercase tracking-wider hover:underline"><Trash2 size={14}/> Delete</button>
                         )}
-                        <button onClick={handleSaveTemplate} className="bg-purple-600 hover:bg-purple-500 text-white px-6 py-2 rounded font-bold flex items-center gap-2">
-                            <Save size={16}/> {editingTemplate.isPreset ? 'Save as Copy' : 'Save Template'}
-                        </button>
+                        <div className="flex gap-3 ml-auto">
+                             <button onClick={() => setIsManageMode(false)} className="px-4 py-2 text-gray-400 hover:text-white text-sm font-bold">Cancel</button>
+                             <button onClick={handleSaveTemplate} className="bg-purple-600 hover:bg-purple-500 text-white px-6 py-2 rounded-lg font-bold flex items-center gap-2 shadow-lg text-sm">
+                                <Save size={16}/> {editingTemplate.isPreset ? 'Clone & Save' : 'Save Changes'}
+                            </button>
+                        </div>
                     </div>
                 </div>
             ) : null}
 
             {/* Generator Controls */}
-            <div className="mb-space-lg space-y-space-md relative z-10 shrink-0">
+            <div className="mb-6 space-y-4 relative z-10 shrink-0">
                 <div className="flex flex-col gap-2">
-                     <div className="flex justify-between items-center text-type-tiny text-gray-500 font-bold uppercase">
-                         <span>Active Template</span>
+                     <div className="flex justify-between items-center">
+                         <span className="text-xs text-gray-500 font-bold uppercase tracking-widest">Select Template</span>
                          <button 
                             onClick={handleCreateTemplate}
-                            className="text-purple-400 hover:text-white flex items-center gap-1 transition-colors"
+                            className="text-purple-400 hover:text-white flex items-center gap-1 transition-colors text-[10px] font-bold uppercase tracking-wider"
                          >
-                             <Plus size={10}/> New Template
+                             <Plus size={10}/> New Custom
                          </button>
                      </div>
                      
-                     <div className="flex gap-2 overflow-x-auto pb-2 custom-scrollbar">
+                     {/* Horizontal Scrollable Template List */}
+                     <div className="flex gap-2 overflow-x-auto pb-2 custom-scrollbar mask-linear-fade">
                          {templates.map(tpl => (
                              <div 
                                 key={tpl.id}
-                                className={`flex items-center gap-2 px-3 py-2 rounded border transition-all cursor-pointer whitespace-nowrap group min-w-max ${
+                                className={`flex items-center gap-2 pl-3 pr-2 py-2 rounded-lg border transition-all cursor-pointer whitespace-nowrap group min-w-max ${
                                     selectedTemplateId === tpl.id 
-                                    ? 'bg-purple-600 border-purple-500 text-white shadow-lg' 
-                                    : 'bg-nebula-950 border-nebula-800 text-gray-400 hover:border-purple-500/50 hover:text-white'
+                                    ? 'bg-purple-600 border-purple-500 text-white shadow-lg shadow-purple-500/20' 
+                                    : 'bg-nebula-950 border-nebula-800 text-gray-400 hover:border-purple-500/50 hover:text-gray-200'
                                 }`}
                                 onClick={() => setSelectedTemplateId(tpl.id)}
                              >
                                  {tpl.format === 'Custom' ? <FileJson size={14}/> : 
                                   tpl.format === 'ChatML' || tpl.format === 'ShareGPT' ? <MessageSquare size={14}/> : 
                                   <FileText size={14}/>}
-                                 <span className="text-type-caption font-bold">{tpl.name}</span>
+                                 <span className="text-xs font-bold">{tpl.name}</span>
                                  <button 
                                     onClick={(e) => { e.stopPropagation(); handleEditTemplate(tpl); }}
-                                    className={`p-1 rounded-full hover:bg-black/20 ${selectedTemplateId === tpl.id ? 'text-purple-200' : 'text-gray-600 opacity-0 group-hover:opacity-100'}`}
+                                    className={`p-1 rounded-full hover:bg-black/20 ml-1 transition-opacity ${selectedTemplateId === tpl.id ? 'text-purple-100' : 'text-gray-500 opacity-0 group-hover:opacity-100'}`}
                                  >
                                      <Edit3 size={10} />
                                  </button>
@@ -628,78 +631,99 @@ export const Datasets: React.FC<DatasetsProps> = ({ datasets }) => {
                      </div>
                 </div>
 
-                <div>
-                    <label className="text-type-body font-medium text-gray-300 block mb-2">Topic / Domain</label>
-                    <div className="flex gap-space-md">
-                        <input 
-                            type="text" 
-                            value={topic}
-                            onChange={(e) => setTopic(e.target.value)}
-                            placeholder={activeTemplate.format === 'ShareGPT' ? "e.g. A debate about AI ethics" : "e.g. Python coding puzzles"}
-                            className="flex-1 bg-nebula-950 border border-nebula-700 rounded-lg p-3 text-white focus:ring-2 focus:ring-purple-500 outline-none placeholder-gray-600 text-type-body"
-                        />
-                        <button 
-                            onClick={handleGenerate}
-                            disabled={isGenerating}
-                            className="bg-purple-600 hover:bg-purple-500 text-white px-6 rounded-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_15px_rgba(139,92,246,0.3)] transition-all text-type-body whitespace-nowrap flex items-center gap-2"
-                        >
-                            {isGenerating ? <Wand2 size={16} className="animate-spin"/> : <Sparkles size={16}/>}
-                            {isGenerating ? 'Generating' : 'Generate'}
-                        </button>
-                    </div>
+                <div className="bg-nebula-950/50 p-1 rounded-xl border border-nebula-800 flex items-center gap-2">
+                    <input 
+                        type="text" 
+                        value={topic}
+                        onChange={(e) => setTopic(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && handleGenerate()}
+                        placeholder={activeTemplate.format === 'ShareGPT' ? "Enter a conversation topic..." : "Enter instruction domain..."}
+                        className="flex-1 bg-transparent border-none px-3 py-2 text-white focus:ring-0 outline-none placeholder-gray-600 text-sm font-medium"
+                    />
+                    <button 
+                        onClick={handleGenerate}
+                        disabled={isGenerating}
+                        className="bg-purple-600 hover:bg-purple-500 text-white px-4 py-2 rounded-lg font-bold disabled:opacity-50 disabled:cursor-not-allowed shadow-md transition-all text-xs whitespace-nowrap flex items-center gap-2"
+                    >
+                        {isGenerating ? <RefreshCw size={14} className="animate-spin"/> : <Sparkles size={14}/>}
+                        {isGenerating ? 'Generating...' : 'Generate Samples'}
+                    </button>
                 </div>
             </div>
 
-            {/* Generated Output */}
-            <div className="flex-1 bg-nebula-950 rounded-lg border border-nebula-800 p-space-md overflow-y-auto font-mono text-type-caption text-gray-300 relative z-10 custom-scrollbar">
-                 {!generatedData.length && !isGenerating && (
-                    <div className="absolute inset-0 flex items-center justify-center text-gray-600 flex-col gap-space-sm text-center px-8">
-                        <FileJson size={24} className="opacity-50" />
-                        <span>Select a <strong>{activeTemplate.name}</strong> template and enter a topic.</span>
-                        <div className="text-[10px] mt-2 opacity-50 bg-black/20 p-2 rounded max-w-full overflow-hidden text-ellipsis whitespace-nowrap">
-                            Target Schema: {activeTemplate.exampleStructure.substring(0, 50)}...
+            {/* Generated Output Console */}
+            <div className="flex-1 bg-[#0a0a0f] rounded-xl border border-nebula-800 flex flex-col relative overflow-hidden group shadow-inner">
+                 <div className="absolute top-0 left-0 right-0 h-6 bg-gradient-to-b from-[#0a0a0f] to-transparent z-10 pointer-events-none"></div>
+                 
+                 <div className="flex-1 overflow-y-auto p-4 font-mono text-xs text-gray-300 relative z-0 custom-scrollbar space-y-4">
+                     {!generatedData.length && !isGenerating && (
+                        <div className="flex flex-col items-center justify-center h-full text-gray-600 opacity-60">
+                            <Terminal size={32} className="mb-3"/>
+                            <p className="font-bold uppercase tracking-widest text-[10px]">Awaiting Instructions</p>
+                            <p className="mt-1 text-[10px]">Target Schema: {activeTemplate.format}</p>
+                        </div>
+                     )}
+                     
+                     {generatedData.map((item, i) => (
+                         <div key={i} className="relative pl-6 border-l-2 border-nebula-800 hover:border-purple-500/50 transition-colors animate-fade-in group/item">
+                             <div className="absolute left-0 top-0 -translate-x-[5px] w-2 h-2 rounded-full bg-nebula-800 group-hover/item:bg-purple-500 transition-colors"></div>
+                             <div className="flex justify-between items-center mb-1 opacity-50 text-[10px] uppercase font-bold tracking-wider">
+                                 <span>Sample 0{i+1}</span>
+                                 <button 
+                                    className="hover:text-white text-gray-500 opacity-0 group-hover/item:opacity-100 transition-opacity" 
+                                    onClick={() => navigator.clipboard.writeText(JSON.stringify(item, null, 2))}
+                                    title="Copy Code"
+                                 >
+                                     <Copy size={12}/>
+                                 </button>
+                             </div>
+                             <pre className="whitespace-pre-wrap break-all text-gray-400 group-hover/item:text-gray-300 transition-colors">
+                                 {JSON.stringify(item, null, 2)}
+                             </pre>
+                         </div>
+                     ))}
+                 </div>
+
+                 {generatedData.length > 0 && (
+                    <div className="p-3 bg-nebula-900 border-t border-nebula-800 flex justify-between items-center shrink-0 z-10">
+                        <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">{generatedData.length} items ready</span>
+                        <div className="flex gap-2">
+                            <button 
+                                onClick={() => setGeneratedData([])} 
+                                className="text-gray-500 hover:text-white p-2 rounded hover:bg-nebula-800 transition-colors"
+                                title="Clear Console"
+                            >
+                                <Trash2 size={14}/>
+                            </button>
+                            <button className="bg-green-600 hover:bg-green-500 text-white px-4 py-1.5 rounded-lg text-xs font-bold shadow-lg transition-all flex items-center gap-2">
+                                <Save size={14} /> Append to Dataset
+                            </button>
                         </div>
                     </div>
                  )}
-                 {generatedData.map((item, i) => (
-                     <div key={i} className="mb-4 pb-4 border-b border-nebula-800 last:border-0 animate-fade-in">
-                         <div className="text-purple-400 mb-2 font-bold opacity-70 flex justify-between">
-                             <span># Sample {i+1}</span>
-                             <button className="text-gray-500 hover:text-white" title="Copy JSON" onClick={() => navigator.clipboard.writeText(JSON.stringify(item, null, 2))}><Copy size={12}/></button>
-                         </div>
-                         <pre className="whitespace-pre-wrap text-[10px] text-gray-400">
-                             {JSON.stringify(item, null, 2)}
-                         </pre>
-                     </div>
-                 ))}
             </div>
-            
-            {generatedData.length > 0 && (
-                <div className="mt-4 flex justify-between items-center z-10 shrink-0">
-                    <span className="text-type-tiny text-gray-500">{generatedData.length} samples generated</span>
-                    <button className="text-type-body text-white bg-green-700 hover:bg-green-600 px-4 py-2 rounded shadow-lg transition-all flex items-center gap-space-sm">
-                        <Save size={14} /> Save to Dataset
-                    </button>
-                </div>
-            )}
         </div>
       </div>
 
       {/* Dataset Viewer Modal */}
       {viewingDataset && (
-          <div className="absolute inset-0 z-50 bg-nebula-950/90 backdrop-blur-sm flex items-center justify-center p-space-2xl animate-fade-in" onClick={() => setViewingDataset(null)}>
+          <div className="absolute inset-0 z-50 bg-nebula-950/90 backdrop-blur-md flex items-center justify-center p-space-lg animate-fade-in" onClick={() => setViewingDataset(null)}>
               <div 
-                className="bg-nebula-900 border border-nebula-700 rounded-xl w-full h-full flex flex-col shadow-2xl relative overflow-hidden max-w-5xl max-h-[85vh]"
+                className="bg-nebula-900 border border-nebula-700 rounded-2xl w-full h-full flex flex-col shadow-2xl relative overflow-hidden max-w-6xl max-h-[90vh]"
                 onClick={(e) => e.stopPropagation()}
               >
                   {/* Modal Header */}
-                  <div className="flex justify-between items-center p-space-lg border-b border-nebula-700 bg-nebula-950/50">
+                  <div className="flex justify-between items-center px-6 py-4 border-b border-nebula-800 bg-nebula-950/80 backdrop-blur-md">
                       <div>
-                          <h2 className="text-type-heading-md font-bold text-white flex items-center gap-3">
+                          <h2 className="text-xl font-bold text-white flex items-center gap-3">
                               {viewingDataset.name}
                               {getFormatBadge(viewingDataset.format)}
                           </h2>
-                          <p className="text-type-tiny text-gray-400 mt-1 uppercase font-bold tracking-widest">{viewingDataset.id} • {viewingDataset.rows} ROWS</p>
+                          <div className="flex items-center gap-3 mt-1 text-xs text-gray-400 font-mono uppercase tracking-wider">
+                              <span className="flex items-center gap-1"><Database size={10} /> {viewingDataset.rows.toLocaleString()} Rows</span>
+                              <span className="text-nebula-700">|</span>
+                              <span className="flex items-center gap-1"><AlignLeft size={10} /> {viewingDataset.size}</span>
+                          </div>
                       </div>
                       
                       <div className="flex items-center gap-4">
@@ -707,89 +731,101 @@ export const Datasets: React.FC<DatasetsProps> = ({ datasets }) => {
                           <div className="flex bg-nebula-950 p-1 rounded-lg border border-nebula-800">
                               <button 
                                 onClick={() => setViewMode('raw')}
-                                className={`px-3 py-1.5 rounded text-xs font-bold transition-all flex items-center gap-2 ${viewMode === 'raw' ? 'bg-purple-600 text-white' : 'text-gray-400 hover:text-white'}`}
+                                className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all flex items-center gap-2 ${viewMode === 'raw' ? 'bg-purple-600 text-white shadow-md' : 'text-gray-400 hover:text-white'}`}
                               >
-                                  <Code size={14} /> JSON
+                                  <Code size={14} /> JSON Source
                               </button>
                               <button 
                                 onClick={() => setViewMode('dry-run')}
-                                className={`px-3 py-1.5 rounded text-xs font-bold transition-all flex items-center gap-2 ${viewMode === 'dry-run' ? 'bg-purple-600 text-white' : 'text-gray-400 hover:text-white'}`}
+                                className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all flex items-center gap-2 ${viewMode === 'dry-run' ? 'bg-purple-600 text-white shadow-md' : 'text-gray-400 hover:text-white'}`}
                               >
-                                  <Terminal size={14} /> Dry Run
+                                  <Terminal size={14} /> Template Preview
                               </button>
                           </div>
 
-                          <div className="flex items-center gap-space-md border-l border-nebula-800 pl-4">
-                              {viewerValidation && (
-                                  <div className={`px-3 py-1 rounded text-[10px] font-bold uppercase flex items-center gap-2 border ${viewerValidation.valid ? 'bg-green-900/20 text-green-400 border-green-500/30' : 'bg-red-900/20 text-red-400 border-red-500/30'}`}>
-                                      {viewerValidation.valid ? <CheckCircle2 size={12}/> : <AlertTriangle size={12}/>}
-                                      {viewerValidation.msg}
-                                  </div>
-                              )}
-                              <button 
-                                onClick={handleRunViewerValidation}
-                                className="px-3 py-1.5 bg-nebula-800 border border-nebula-700 hover:border-purple-500 text-gray-300 hover:text-white rounded text-xs font-bold transition-all"
-                              >
-                                  Run Validation
-                              </button>
-                              <button onClick={() => setViewingDataset(null)} className="p-2 hover:bg-nebula-800 rounded-full text-gray-400 hover:text-white transition-colors">
-                                  <X size={24} />
-                              </button>
-                          </div>
+                          <div className="h-6 w-px bg-nebula-800 mx-2"></div>
+
+                          <button onClick={() => setViewingDataset(null)} className="p-2 hover:bg-nebula-800 rounded-full text-gray-400 hover:text-white transition-colors">
+                              <X size={24} />
+                          </button>
                       </div>
                   </div>
 
                   {/* Modal Content */}
                   <div className="flex-1 flex overflow-hidden">
-                      <div className="w-64 bg-nebula-900/50 border-r border-nebula-800 p-space-md overflow-y-auto">
-                          <h4 className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-4">Metadata</h4>
-                          <div className="space-y-4">
+                      {/* Left Sidebar Metadata */}
+                      <div className="w-64 bg-nebula-900/50 border-r border-nebula-800 p-6 overflow-y-auto shrink-0">
+                          <h4 className="text-[10px] text-gray-500 font-black uppercase tracking-[0.2em] mb-6">Manifest</h4>
+                          
+                          <div className="space-y-6">
                               <div>
-                                  <label className="text-[9px] text-gray-600 block mb-1">TYPE</label>
+                                  <label className="text-[9px] text-gray-500 font-bold uppercase block mb-1">Dataset Type</label>
                                   {getTypeBadge(viewingDataset.type)}
                               </div>
                               <div>
-                                  <label className="text-[9px] text-gray-600 block mb-1">SIZE</label>
-                                  <span className="text-type-caption font-mono text-gray-300">{viewingDataset.size}</span>
+                                  <label className="text-[9px] text-gray-500 font-bold uppercase block mb-1">Description</label>
+                                  <p className="text-xs text-gray-300 leading-relaxed">{viewingDataset.description}</p>
                               </div>
-                              <div>
-                                  <label className="text-[9px] text-gray-600 block mb-1">DESCRIPTION</label>
-                                  <p className="text-xs text-gray-400 leading-relaxed">{viewingDataset.description}</p>
+                              
+                              <div className="pt-4 border-t border-nebula-800">
+                                  <label className="text-[9px] text-gray-500 font-bold uppercase block mb-2">Health Check</label>
+                                  {viewerValidation ? (
+                                       <div className={`px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-2 border ${viewerValidation.valid ? 'bg-green-900/20 text-green-400 border-green-500/30' : 'bg-red-900/20 text-red-400 border-red-500/30'}`}>
+                                          {viewerValidation.valid ? <CheckCircle2 size={14}/> : <AlertTriangle size={14}/>}
+                                          {viewerValidation.msg}
+                                      </div>
+                                  ) : (
+                                      <button 
+                                        onClick={handleRunViewerValidation}
+                                        className="w-full py-2 bg-nebula-800 border border-nebula-700 hover:border-purple-500 text-gray-400 hover:text-white rounded-lg text-xs font-bold transition-all uppercase tracking-wider"
+                                      >
+                                          Run Diagnostics
+                                      </button>
+                                  )}
                               </div>
                           </div>
                       </div>
                       
-                      <div className="flex-1 bg-nebula-950 p-space-lg overflow-y-auto custom-scrollbar relative group">
+                      {/* Main Viewer Area */}
+                      <div className="flex-1 bg-[#0a0a0f] relative group overflow-hidden flex flex-col">
                           {viewMode === 'raw' ? (
-                              <>
-                                  <div className="absolute top-4 right-6 text-[10px] text-gray-600 font-mono uppercase tracking-widest pointer-events-none group-hover:text-purple-500 transition-colors">
-                                      Preview Mode (Read-Only)
+                              <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
+                                  <div className="absolute top-4 right-6 text-[10px] text-gray-600 font-mono uppercase tracking-widest pointer-events-none group-hover:text-purple-500 transition-colors z-10">
+                                      Read-Only
                                   </div>
                                   <SyntaxHighlight code={datasetContent} />
-                              </>
+                              </div>
                           ) : (
-                              <div className="max-w-3xl mx-auto space-y-6">
-                                  <div className="flex justify-between items-center mb-4">
-                                      <h3 className="text-white font-bold flex items-center gap-2">
-                                          <Eye size={16} className="text-blue-400"/> Template Preview
-                                      </h3>
-                                      <select 
-                                          value={dryRunTemplate} 
-                                          onChange={(e) => setDryRunTemplate(e.target.value)}
-                                          className="bg-nebula-900 border border-nebula-700 text-gray-300 text-xs rounded p-2 outline-none focus:border-purple-500"
-                                      >
-                                          <option value="ChatML">ChatML (OpenAI)</option>
-                                          <option value="Llama-3">Llama 3 (Official)</option>
-                                          <option value="Alpaca">Alpaca (Standard)</option>
-                                      </select>
-                                  </div>
-                                  
-                                  {renderDryRun()}
+                              <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
+                                  <div className="max-w-3xl mx-auto space-y-8">
+                                      <div className="flex justify-between items-end border-b border-nebula-800 pb-4">
+                                          <div>
+                                              <h3 className="text-white font-bold flex items-center gap-2 text-lg">
+                                                  <Eye size={18} className="text-blue-400"/> Template Render
+                                              </h3>
+                                              <p className="text-gray-500 text-xs mt-1">Preview how the model will see this data during training.</p>
+                                          </div>
+                                          <select 
+                                              value={dryRunTemplate} 
+                                              onChange={(e) => setDryRunTemplate(e.target.value)}
+                                              className="bg-nebula-900 border border-nebula-700 text-gray-300 text-xs font-bold rounded-lg p-2 outline-none focus:border-purple-500 cursor-pointer"
+                                          >
+                                              <option value="ChatML">ChatML (OpenAI)</option>
+                                              <option value="Llama-3">Llama 3 (Official)</option>
+                                              <option value="Alpaca">Alpaca (Standard)</option>
+                                          </select>
+                                      </div>
+                                      
+                                      {renderDryRun()}
 
-                                  <div className="p-4 bg-yellow-900/10 border border-yellow-500/20 rounded-lg text-xs text-yellow-500/80 leading-relaxed flex items-start gap-3">
-                                      <AlertTriangle size={16} className="shrink-0 mt-0.5"/>
-                                      <div>
-                                          <strong>Tokenizer Warning:</strong> This is a simulation based on standard templates. Actual training requires the tokenizer's `apply_chat_template` method to match the base model exactly.
+                                      <div className="flex gap-4 p-4 bg-yellow-900/10 border border-yellow-500/20 rounded-xl">
+                                          <AlertTriangle size={20} className="text-yellow-500 shrink-0 mt-0.5"/>
+                                          <div>
+                                              <h4 className="text-yellow-500 font-bold text-xs uppercase tracking-wider mb-1">Tokenizer Alignment</h4>
+                                              <p className="text-gray-400 text-xs leading-relaxed">
+                                                  This preview uses standard string templates. For exact tokenization during training, ensure your <code>tokenizer_config.json</code> matches the selected chat template format.
+                                              </p>
+                                          </div>
                                       </div>
                                   </div>
                               </div>
