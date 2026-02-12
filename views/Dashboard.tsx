@@ -60,8 +60,47 @@ export const Dashboard: React.FC<DashboardProps> = ({ serverConfig }) => {
 
   return (
     <div className="h-full overflow-y-auto space-y-6 animate-fade-in p-8 custom-scrollbar">
-      {/* Alerts Moved to Top */}
+      {/* Alerts & Stats Container */}
       <div className="bg-nebula-900 border border-nebula-700 rounded-xl p-6">
+        
+        {/* Quick Stats moved here */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <StatCard 
+                title="Active Models" 
+                value="3" 
+                icon="🧠" 
+                trend="+1 Loaded" 
+                trendUp={true} 
+                size="sm"
+                className="bg-nebula-950/50 border-nebula-800 shadow-none"
+            />
+            <StatCard 
+                title="Total VRAM" 
+                value={`${serverConfig.vramTotal} GB`} 
+                icon="💾" 
+                size="sm"
+                className="bg-nebula-950/50 border-nebula-800 shadow-none"
+            />
+            <StatCard 
+                title="GPU Temp" 
+                value="68°C" 
+                icon="🌡️" 
+                trend="Nominal" 
+                trendUp={true} 
+                size="sm"
+                className="bg-nebula-950/50 border-nebula-800 shadow-none"
+            />
+            <StatCard 
+                title="Daily Tokens" 
+                value="85.2k" 
+                icon="⚡" 
+                trend="+12% vs avg" 
+                trendUp={true} 
+                size="sm"
+                className="bg-nebula-950/50 border-nebula-800 shadow-none"
+            />
+        </div>
+
         <h3 className="text-lg font-semibold mb-4">🚀 Recent Alerts</h3>
         <div className="space-y-3">
           <div className="flex items-center gap-4 p-3 bg-nebula-950/50 rounded-lg border border-nebula-700/50">
@@ -81,13 +120,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ serverConfig }) => {
             <span className="ml-auto text-xs text-gray-600">1h ago</span>
           </div>
         </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard title="Active Models" value="3" icon="🧠" trend="+1 Loaded" trendUp={true} />
-        <StatCard title="Total VRAM" value={`${serverConfig.vramTotal} GB`} icon="💾" />
-        <StatCard title="GPU Temp" value="68°C" icon="🌡️" trend="Nominal" trendUp={true} />
-        <StatCard title="Daily Tokens" value="85.2k" icon="⚡" trend="+12% vs avg" trendUp={true} />
       </div>
 
       {/* Visualization Carousel */}

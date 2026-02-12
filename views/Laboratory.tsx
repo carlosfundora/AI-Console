@@ -186,7 +186,7 @@ export const Laboratory: React.FC<LaboratoryProps> = ({ models }) => {
                         <div className="grid grid-cols-2 gap-space-xl">
                             <div className="space-y-space-md">
                                 <label className="text-purple-400 text-type-body font-bold uppercase block mb-2">Synthesis Method</label>
-                                <div className="grid grid-cols-1 gap-space-sm max-h-[350px] overflow-y-auto pr-2 custom-scrollbar border border-nebula-800/50 rounded-lg p-1">
+                                <div className="grid grid-cols-1 gap-space-sm border border-nebula-800/50 rounded-lg p-1">
                                     {(['linear', 'slerp', 'task_arithmetic', 'ties', 'dare_linear', 'dare_ties', 'model_stock', 'passthrough'] as MergeMethod[]).map(m => (
                                         <button 
                                             key={m}
@@ -299,7 +299,7 @@ export const Laboratory: React.FC<LaboratoryProps> = ({ models }) => {
                                         <h4 className="text-purple-400 font-bold flex items-center gap-space-sm text-type-body"><Merge size={16}/> Input Models</h4>
                                         <span className="text-type-tiny text-gray-500 uppercase tracking-wider">{inputModels.length} Layers</span>
                                     </div>
-                                    <div className="space-y-space-sm max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+                                    <div className="space-y-space-sm">
                                         {inputModels.map((im, index) => (
                                             <div key={im.id} className="flex gap-space-sm animate-fade-in items-center group">
                                                 <div className="text-type-tiny text-gray-600 font-mono w-4">{index + 1}</div>

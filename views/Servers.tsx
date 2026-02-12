@@ -101,7 +101,7 @@ export const Servers: React.FC<ServersProps> = ({ servers, models, onUpdateServe
              <div className="flex justify-between items-center">
                 <div>
                      <h2 className="text-2xl font-bold flex items-center gap-2">
-                        <ServerIcon className="text-purple-500" /> Server Configurations
+                        <PythonIcon className="text-purple-500" /> Server Configurations
                      </h2>
                      <p className="text-sm text-gray-400 mt-1">Manage Python venvs, Llama.cpp instances, and inference endpoints.</p>
                 </div>

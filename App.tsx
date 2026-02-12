@@ -521,7 +521,7 @@ const App: React.FC = () => {
     { id: 'datasets', label: 'Datasets', icon: <ClipboardDataIcon size={20} /> },
     { id: 'training', label: 'Training', icon: <DraftingCompassIcon size={20} /> }, 
     { id: 'laboratory', label: 'Laboratory', icon: <FlaskConical size={20} /> },
-    { id: 'servers', label: 'Servers', icon: <Server size={20} /> },
+    { id: 'servers', label: 'Servers', icon: <PythonIcon size={20} /> },
     { id: 'models', label: 'Model Registry', icon: <BrainCircuit size={20} /> },
     { id: 'agents', label: 'Agentic Prompts', icon: <Bot size={20} /> },
     { id: 'chat', label: 'Chat', icon: <MessageSquare size={20} /> },
@@ -619,10 +619,10 @@ const App: React.FC = () => {
             <div className="flex gap-space-md items-center">
                 <span className="flex items-center gap-space-xs"><span className="w-2 h-2 rounded-full bg-green-500"></span> System Online</span>
                 {SERVER_CONFIG.rocmEnabled && (
-                  <div className="flex items-center gap-2 px-2 py-0.5 bg-red-900/20 border border-red-500/30 rounded-full">
-                      <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
-                      <span className="text-[10px] text-red-200 font-medium">AMD ROCm Active</span>
-                  </div>
+                  <span className="flex items-center gap-space-xs">
+                      <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
+                      <span className="text-gray-500">AMD ROCm Active</span>
+                  </span>
                 )}
                 <span className="flex items-center gap-space-xs">GPU Util: 12%</span>
                 <span className="flex items-center gap-space-xs">VRAM: 8/12 GB</span>
