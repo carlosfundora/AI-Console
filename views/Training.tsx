@@ -385,41 +385,63 @@ export const Training: React.FC<TrainingProps> = ({ models, datasets }) => {
                             )}
 
                             {mode === 'dpo' && (
-                                <div className="grid grid-cols-2 gap-space-md">
-                                    <div>
-                                        <label className="text-type-tiny text-gray-500 font-bold uppercase">Beta (Temperature)</label>
-                                        <input 
-                                            type="number" 
-                                            step={0.1}
-                                            min={0}
-                                            max={1}
-                                            value={dpoConfig.beta}
-                                            onChange={(e) => setDpoConfig({...dpoConfig, beta: parseFloat(e.target.value)})}
-                                            className="w-full bg-nebula-950 border border-nebula-700 rounded p-space-md text-white mt-1 text-type-body" 
-                                        />
-                                        <span className="text-type-tiny text-gray-600 block mt-1">Controls deviation (0.1 - 0.5)</span>
+                                <div className="space-y-space-md">
+                                    <div className="grid grid-cols-2 gap-space-md">
+                                        <div>
+                                            <label className="text-type-tiny text-gray-500 font-bold uppercase">Beta (Temperature)</label>
+                                            <input 
+                                                type="number" 
+                                                step={0.1}
+                                                min={0}
+                                                max={1}
+                                                value={dpoConfig.beta}
+                                                onChange={(e) => setDpoConfig({...dpoConfig, beta: parseFloat(e.target.value)})}
+                                                className="w-full bg-nebula-950 border border-nebula-700 rounded p-space-md text-white mt-1 text-type-body focus:border-purple-500 outline-none" 
+                                            />
+                                            <span className="text-type-tiny text-gray-600 block mt-1">Controls deviation (0.1 - 0.5)</span>
+                                        </div>
+                                        <div>
+                                            <label className="text-type-tiny text-gray-500 font-bold uppercase">Learning Rate</label>
+                                            <input type="number" defaultValue={1e-6} step={1e-7} className="w-full bg-nebula-950 border border-nebula-700 rounded p-space-md text-white mt-1 text-type-body focus:border-purple-500 outline-none" />
+                                        </div>
+                                        <div>
+                                            <label className="text-type-tiny text-gray-500 font-bold uppercase">Max Prompt Length</label>
+                                            <input 
+                                                type="number" 
+                                                value={dpoConfig.maxPromptLength}
+                                                onChange={(e) => setDpoConfig({...dpoConfig, maxPromptLength: parseInt(e.target.value)})}
+                                                className="w-full bg-nebula-950 border border-nebula-700 rounded p-space-md text-white mt-1 text-type-body focus:border-purple-500 outline-none" 
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="text-type-tiny text-gray-500 font-bold uppercase">Max Seq Length</label>
+                                            <input 
+                                                type="number" 
+                                                value={dpoConfig.maxLength}
+                                                onChange={(e) => setDpoConfig({...dpoConfig, maxLength: parseInt(e.target.value)})}
+                                                className="w-full bg-nebula-950 border border-nebula-700 rounded p-space-md text-white mt-1 text-type-body focus:border-purple-500 outline-none" 
+                                            />
+                                        </div>
                                     </div>
+                                    
                                     <div>
-                                        <label className="text-type-tiny text-gray-500 font-bold uppercase">Learning Rate</label>
-                                        <input type="number" defaultValue={1e-6} step={1e-7} className="w-full bg-nebula-950 border border-nebula-700 rounded p-space-md text-white mt-1 text-type-body" />
-                                    </div>
-                                    <div>
-                                        <label className="text-type-tiny text-gray-500 font-bold uppercase">Max Prompt Length</label>
-                                        <input 
-                                            type="number" 
-                                            value={dpoConfig.maxPromptLength}
-                                            onChange={(e) => setDpoConfig({...dpoConfig, maxPromptLength: parseInt(e.target.value)})}
-                                            className="w-full bg-nebula-950 border border-nebula-700 rounded p-space-md text-white mt-1 text-type-body" 
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="text-type-tiny text-gray-500 font-bold uppercase">Max Seq Length</label>
-                                        <input 
-                                            type="number" 
-                                            value={dpoConfig.maxLength}
-                                            onChange={(e) => setDpoConfig({...dpoConfig, maxLength: parseInt(e.target.value)})}
-                                            className="w-full bg-nebula-950 border border-nebula-700 rounded p-space-md text-white mt-1 text-type-body" 
-                                        />
+                                        <label className="text-type-tiny text-gray-500 font-bold uppercase mb-space-xs block">Loss Type</label>
+                                        <div className="grid grid-cols-3 gap-2">
+                                            {['sigmoid', 'hinge', 'ipo'].map(l => (
+                                                <button 
+                                                    key={l}
+                                                    onClick={() => setDpoConfig({...dpoConfig, lossType: l})}
+                                                    className={`py-2 rounded border text-type-tiny font-bold uppercase transition-all ${dpoConfig.lossType === l ? 'bg-purple-600 border-purple-500 text-white' : 'bg-nebula-900 border-nebula-700 text-gray-400 hover:text-white'}`}
+                                                >
+                                                    {l}
+                                                </button>
+                                            ))}
+                                        </div>
+                                        <p className="text-type-tiny text-gray-500 mt-2">
+                                            {dpoConfig.lossType === 'sigmoid' && "Standard DPO loss. Good default."}
+                                            {dpoConfig.lossType === 'hinge' && "L1 hinge loss. More robust to outliers."}
+                                            {dpoConfig.lossType === 'ipo' && "Identity Preference Optimization (IPO)."}
+                                        </p>
                                     </div>
                                 </div>
                             )}
@@ -493,34 +515,24 @@ export const Training: React.FC<TrainingProps> = ({ models, datasets }) => {
 
                         {mode === 'dpo' && (
                             <div className="p-space-lg bg-nebula-950/50 border border-nebula-800 rounded-xl h-full">
-                                <h4 className="text-purple-400 text-type-body font-bold mb-space-md flex items-center gap-space-sm"><SlidersHorizontal size={14}/> DPO Trainer Settings (TRL)</h4>
+                                <h4 className="text-purple-400 text-type-body font-bold mb-space-md flex items-center gap-space-sm"><SlidersHorizontal size={14}/> DPO Advanced Settings</h4>
                                 <div className="space-y-space-lg">
-                                    <div>
-                                        <label className="text-type-tiny text-gray-500 font-bold uppercase mb-space-xs block">Loss Type</label>
-                                        <div className="grid grid-cols-3 gap-2">
-                                            {['sigmoid', 'hinge', 'ipo'].map(l => (
-                                                <button 
-                                                    key={l}
-                                                    onClick={() => setDpoConfig({...dpoConfig, lossType: l})}
-                                                    className={`py-2 rounded border text-type-tiny font-bold uppercase transition-all ${dpoConfig.lossType === l ? 'bg-purple-600 border-purple-500 text-white' : 'bg-nebula-900 border-nebula-700 text-gray-400 hover:text-white'}`}
-                                                >
-                                                    {l}
-                                                </button>
-                                            ))}
-                                        </div>
-                                        <p className="text-type-tiny text-gray-500 mt-2">
-                                            {dpoConfig.lossType === 'sigmoid' && "Standard DPO loss. Good default."}
-                                            {dpoConfig.lossType === 'hinge' && "L1 hinge loss. More robust to outliers."}
-                                            {dpoConfig.lossType === 'ipo' && "Identity Preference Optimization (IPO)."}
-                                        </p>
-                                    </div>
-                                    
                                     <div className="flex items-center gap-4 bg-nebula-900/50 p-3 rounded border border-nebula-800">
                                         <ThumbsUp size={20} className="text-green-500" />
                                         <div className="flex-1">
                                             <div className="text-type-body text-white font-bold">Reward Signal</div>
                                             <div className="text-type-tiny text-gray-500">Implicit reward maximization via preference pairs</div>
                                         </div>
+                                    </div>
+                                    
+                                    <div>
+                                        <label className="text-type-tiny text-gray-500 font-bold uppercase mb-space-xs block">Gradient Accumulation</label>
+                                        <select className="w-full bg-nebula-900 border border-nebula-700 rounded p-2 text-white text-type-body focus:border-purple-500 outline-none">
+                                            <option value="1">1 Step</option>
+                                            <option value="2">2 Steps</option>
+                                            <option value="4">4 Steps</option>
+                                            <option value="8">8 Steps</option>
+                                        </select>
                                     </div>
                                 </div>
                             </div>

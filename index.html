@@ -32,6 +32,23 @@
                 400: '#4ade80', 
               }
             },
+            boxShadow: {
+              'glow-purple': '0 0 20px rgba(124, 58, 237, 0.15)',
+              'glow-purple-sm': '0 0 10px rgba(124, 58, 237, 0.1)',
+              'glow-purple-lg': '0 0 30px rgba(124, 58, 237, 0.25)',
+              'glow-green': '0 0 20px rgba(34, 197, 94, 0.15)',
+              'glow-blue': '0 0 20px rgba(59, 130, 246, 0.15)',
+              'glow-orange': '0 0 20px rgba(249, 115, 22, 0.15)',
+              'depth-card': '0 10px 30px -10px rgba(0, 0, 0, 0.7)',
+              'depth-raised': '0 20px 40px -10px rgba(0, 0, 0, 0.8)',
+              'inner-glass': 'inset 0 1px 0 0 rgba(255, 255, 255, 0.05)',
+            },
+            backgroundImage: {
+              'gradient-card': 'linear-gradient(to bottom, #0a0a0e, #030304)',
+              'gradient-glass': 'linear-gradient(180deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.01) 100%)',
+              'gradient-active': 'linear-gradient(180deg, rgba(124, 58, 237, 0.1) 0%, rgba(124, 58, 237, 0.02) 100%)',
+              'gradient-glow': 'radial-gradient(circle at center, rgba(124, 58, 237, 0.15) 0%, transparent 70%)',
+            },
             // Enforcing the 4px max radius constraint globally
             borderRadius: {
               'none': '0',
@@ -74,6 +91,7 @@
               'fade-in': 'fadeIn 0.4s ease-out',
               'heartbeat': 'heartbeat 2s ease-in-out infinite',
               'scanline': 'scanline 8s linear infinite',
+              'shimmer': 'shimmer 2s linear infinite',
             },
             keyframes: {
               'pulse-glow': {
@@ -91,6 +109,10 @@
               scanline: {
                 '0%': { backgroundPosition: '0% 0%' },
                 '100%': { backgroundPosition: '0% 100%' },
+              },
+              shimmer: {
+                '0%': { transform: 'translateX(-100%)' },
+                '100%': { transform: 'translateX(100%)' }
               }
             }
           }
@@ -149,9 +171,15 @@
       }
       
       .glass-panel {
-        background: rgba(10, 10, 14, 0.7);
-        backdrop-filter: blur(16px);
-        border: 1px solid rgba(255, 255, 255, 0.06);
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.01) 100%);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.05);
+      }
+
+      .card-gradient {
+        background-image: linear-gradient(to bottom, #0a0a0e, #030304);
+        border: 1px solid rgba(255, 255, 255, 0.05);
       }
 
       /* Custom PrismJS Overrides for Nebula Theme */
