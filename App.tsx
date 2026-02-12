@@ -209,7 +209,7 @@ Ensure your browser supports WebGPU and you have enabled unsafe-webgpu flags if 
           size: '2.7GB', 
           created: '2025-12-05', 
           baseModel: 'Mistral-7B', 
-          status: ModelStatus.Ready,
+          status: ModelStatus.Ready, 
           metrics: {
             latencyMs: 1100,
             vramGB: 3.1,
@@ -457,7 +457,7 @@ const App: React.FC = () => {
           <div className="absolute inset-0 bg-gradient-to-r from-purple-500/5 to-transparent pointer-events-none"></div>
           <div className="flex items-center gap-6 relative z-10">
                {/* Logo */}
-              <div className="text-xl font-black tracking-widest text-nebula-100 border-2 border-nebula-100 px-2 py-0.5">
+              <div className="text-xl font-black tracking-widest text-nebula-100 border-2 border-nebula-100 px-2 py-0.5 rounded">
                   R-AI
               </div>
               
@@ -502,7 +502,7 @@ const App: React.FC = () => {
               <button
                 key={item.id}
                 onClick={() => setActiveTab(item.id as ViewState)}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded text-sm font-medium transition-all duration-200 ${
                   activeTab === item.id 
                     ? 'bg-nebula-900 text-purple-400 border border-nebula-700 shadow-md' 
                     : 'text-gray-400 hover:text-white hover:bg-nebula-900/50'
@@ -515,12 +515,12 @@ const App: React.FC = () => {
           </nav>
         </aside>
 
-        {/* Main Content */}
-        <main className="flex-1 flex flex-col min-w-0 bg-nebula-950">
+        {/* Main Content - FIXED overflow-hidden to allow children to handle scroll */}
+        <main className="flex-1 flex flex-col min-w-0 bg-nebula-950 overflow-hidden relative">
           
           {/* View Content */}
-          <div className="flex-1 overflow-auto p-8 relative">
-            <div className="max-w-7xl mx-auto h-full">
+          <div className="flex-1 overflow-hidden p-8 flex flex-col">
+            <div className="max-w-7xl mx-auto w-full h-full flex flex-col">
               {activeTab === 'dashboard' && <Dashboard serverConfig={SERVER_CONFIG} />}
               {activeTab === 'benchmarks' && <Benchmarks results={MOCK_BENCHMARKS} models={MOCK_MODELS} servers={servers} />}
               {activeTab === 'datasets' && <Datasets datasets={MOCK_DATASETS} />}

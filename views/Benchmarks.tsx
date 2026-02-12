@@ -295,7 +295,7 @@ export const Benchmarks: React.FC<BenchmarksProps> = ({ results, models, servers
 
   const renderDataView = () => (
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-fade-in h-full overflow-hidden pb-4">
-          <div className="bg-nebula-900 border border-nebula-700 rounded-xl p-4 flex flex-col">
+          <div className="bg-nebula-900 border border-nebula-700 rounded p-4 flex flex-col">
               <div className="flex justify-between items-center mb-4 border-b border-nebula-800 pb-2">
                   <h3 className="font-bold text-gray-200 flex items-center gap-2"><FileText size={16} className="text-blue-400" /> Documents (PDF/HTML)</h3>
                   <button onClick={() => addMockData('PDF')} className="p-1 hover:bg-nebula-800 rounded text-gray-400 hover:text-white"><Plus size={16}/></button>
@@ -313,7 +313,7 @@ export const Benchmarks: React.FC<BenchmarksProps> = ({ results, models, servers
               </div>
           </div>
 
-          <div className="bg-nebula-900 border border-nebula-700 rounded-xl p-4 flex flex-col">
+          <div className="bg-nebula-900 border border-nebula-700 rounded p-4 flex flex-col">
               <div className="flex justify-between items-center mb-4 border-b border-nebula-800 pb-2">
                   <h3 className="font-bold text-gray-200 flex items-center gap-2"><Code size={16} className="text-green-400" /> Prompts (Txt/Json)</h3>
                   <button onClick={() => addMockData('Prompt')} className="p-1 hover:bg-nebula-800 rounded text-gray-400 hover:text-white"><Plus size={16}/></button>
@@ -331,7 +331,7 @@ export const Benchmarks: React.FC<BenchmarksProps> = ({ results, models, servers
               </div>
           </div>
 
-          <div className="bg-nebula-900 border border-nebula-700 rounded-xl p-4 flex flex-col">
+          <div className="bg-nebula-900 border border-nebula-700 rounded p-4 flex flex-col">
               <div className="flex justify-between items-center mb-4 border-b border-nebula-800 pb-2">
                   <h3 className="font-bold text-gray-200 flex items-center gap-2"><Table size={16} className="text-orange-400" /> Structured (SQL/CSV)</h3>
                   <button onClick={() => addMockData('SQL')} className="p-1 hover:bg-nebula-800 rounded text-gray-400 hover:text-white"><Plus size={16}/></button>
@@ -356,7 +356,7 @@ export const Benchmarks: React.FC<BenchmarksProps> = ({ results, models, servers
       {/* Header Controls */}
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">📊 Benchmarks & Analytics</h2>
-        <div className="flex bg-nebula-900 rounded-lg p-1 border border-nebula-700">
+        <div className="flex bg-nebula-900 rounded p-1 border border-nebula-700">
              <button 
                 onClick={() => setActiveView('matrix')}
                 className={`px-3 py-1.5 rounded text-sm transition-all ${activeView === 'matrix' ? 'bg-nebula-700 text-white' : 'text-gray-400 hover:text-white'}`}
@@ -386,7 +386,7 @@ export const Benchmarks: React.FC<BenchmarksProps> = ({ results, models, servers
 
       {activeView === 'matrix' && (
         <div className="space-y-6 animate-fade-in flex-1 overflow-y-auto">
-            <div className="overflow-x-auto rounded-xl border border-nebula-800">
+            <div className="overflow-x-auto rounded border border-nebula-800">
               <table className="w-full text-left bg-nebula-900">
                 <thead className="bg-nebula-950 text-gray-400 uppercase text-xs">
                   <tr>
@@ -428,7 +428,7 @@ export const Benchmarks: React.FC<BenchmarksProps> = ({ results, models, servers
       {/* Result Detail Modal */}
       {selectedResult && (
           <div className="absolute inset-0 bg-nebula-950/95 backdrop-blur-md z-50 flex items-center justify-center p-8 animate-fade-in">
-              <div className="bg-nebula-900 border border-nebula-700 rounded-2xl w-full max-w-4xl h-[80vh] flex flex-col shadow-2xl relative overflow-hidden">
+              <div className="bg-nebula-900 border border-nebula-700 rounded w-full max-w-4xl h-[80vh] flex flex-col shadow-2xl relative overflow-hidden">
                   <div className="p-6 border-b border-nebula-700 flex justify-between items-start bg-nebula-950/50">
                       <div>
                           <div className="flex items-center gap-3">
@@ -449,19 +449,19 @@ export const Benchmarks: React.FC<BenchmarksProps> = ({ results, models, servers
                   <div className="flex-1 overflow-y-auto p-8">
                       {/* Top Level Metrics */}
                       <div className="grid grid-cols-4 gap-6 mb-8">
-                          <div className="bg-nebula-950 p-4 rounded-xl border border-nebula-800">
+                          <div className="bg-nebula-950 p-4 rounded border border-nebula-800">
                               <div className="text-xs text-gray-500 uppercase font-bold mb-1">Score ({selectedResult.metric})</div>
                               <div className="text-3xl font-black text-green-400">{selectedResult.score}</div>
                           </div>
-                          <div className="bg-nebula-950 p-4 rounded-xl border border-nebula-800">
+                          <div className="bg-nebula-950 p-4 rounded border border-nebula-800">
                               <div className="text-xs text-gray-500 uppercase font-bold mb-1">Throughput</div>
                               <div className="text-3xl font-black text-blue-400">{selectedResult.tokensPerSecond ? selectedResult.tokensPerSecond.toFixed(1) : '-'} <span className="text-sm text-gray-600 font-normal">t/s</span></div>
                           </div>
-                          <div className="bg-nebula-950 p-4 rounded-xl border border-nebula-800">
+                          <div className="bg-nebula-950 p-4 rounded border border-nebula-800">
                               <div className="text-xs text-gray-500 uppercase font-bold mb-1">Total Latency</div>
                               <div className="text-3xl font-black text-purple-400">{selectedResult.latency} <span className="text-sm text-gray-600 font-normal">ms</span></div>
                           </div>
-                          <div className="bg-nebula-950 p-4 rounded-xl border border-nebula-800">
+                          <div className="bg-nebula-950 p-4 rounded border border-nebula-800">
                               <div className="text-xs text-gray-500 uppercase font-bold mb-1">Hardware</div>
                               <div className="text-sm font-medium text-gray-200 mt-2">{selectedResult.hardwareName}</div>
                           </div>
@@ -471,7 +471,7 @@ export const Benchmarks: React.FC<BenchmarksProps> = ({ results, models, servers
                       {selectedResult.segments && selectedResult.segments.length > 0 ? (
                           <div className="space-y-4">
                               <h3 className="text-lg font-bold text-white flex items-center gap-2"><Layers size={18} className="text-yellow-500"/> Pipeline Execution Breakdown</h3>
-                              <div className="bg-nebula-950 rounded-xl border border-nebula-800 overflow-hidden">
+                              <div className="bg-nebula-950 rounded border border-nebula-800 overflow-hidden">
                                   <div className="grid grid-cols-12 gap-4 p-3 bg-nebula-900 border-b border-nebula-800 text-xs font-bold text-gray-500 uppercase">
                                       <div className="col-span-4">Step Name</div>
                                       <div className="col-span-2">Type</div>
@@ -502,7 +502,7 @@ export const Benchmarks: React.FC<BenchmarksProps> = ({ results, models, servers
                               </div>
                           </div>
                       ) : (
-                          <div className="p-8 bg-nebula-950/50 border border-nebula-800 border-dashed rounded-xl flex flex-col items-center justify-center text-gray-500">
+                          <div className="p-8 bg-nebula-950/50 border border-nebula-800 border-dashed rounded flex flex-col items-center justify-center text-gray-500">
                               <Info size={32} className="mb-2 opacity-50" />
                               <p>No granular segment data available for this run.</p>
                           </div>
@@ -517,7 +517,7 @@ export const Benchmarks: React.FC<BenchmarksProps> = ({ results, models, servers
       {activeView === 'trends' && (
          <div className="flex-1 overflow-y-auto animate-fade-in">
              <div className="grid grid-cols-1 gap-6">
-                <div className="bg-nebula-900 border border-nebula-700 rounded-xl p-6 h-96">
+                <div className="bg-nebula-900 border border-nebula-700 rounded p-6 h-96">
                     <h3 className="text-lg font-bold mb-4">Throughput Trends</h3>
                     <ResponsiveContainer width="100%" height="100%">
                         <LineChart data={trendData}>
@@ -530,7 +530,7 @@ export const Benchmarks: React.FC<BenchmarksProps> = ({ results, models, servers
                         </LineChart>
                     </ResponsiveContainer>
                 </div>
-                 <div className="bg-nebula-900 border border-nebula-700 rounded-xl p-6 h-96">
+                 <div className="bg-nebula-900 border border-nebula-700 rounded p-6 h-96">
                     <h3 className="text-lg font-bold mb-4">Latency by Model</h3>
                      <ResponsiveContainer width="100%" height="100%">
                         <BarChart data={trendData}>
@@ -550,7 +550,7 @@ export const Benchmarks: React.FC<BenchmarksProps> = ({ results, models, servers
           <div className="flex flex-1 min-h-0 gap-6 animate-fade-in overflow-hidden">
               {/* Left Sidebar: Tag Palette */}
               <div className="w-64 flex flex-col gap-4">
-                  <div className="p-4 bg-nebula-900 border border-nebula-700 rounded-xl">
+                  <div className="p-4 bg-nebula-900 border border-nebula-700 rounded">
                       <h3 className="text-sm font-bold text-gray-300 mb-4 uppercase tracking-wider">Components</h3>
                       <div className="space-y-2 max-h-[calc(100vh-350px)] overflow-y-auto pr-2">
                           {(['Custom', 'Retrieval', 'Embedding', 'Tool Calling', 'Generation', 'ColBERT', 'Extraction', 'Routing', 'Classification'] as BenchmarkStepType[]).map(tag => (
@@ -573,7 +573,7 @@ export const Benchmarks: React.FC<BenchmarksProps> = ({ results, models, servers
                   {/* Create New Button in Sidebar */}
                   <button 
                       onClick={handleNewConfig}
-                      className="p-4 bg-purple-600 hover:bg-purple-500 text-white rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg transition-all"
+                      className="p-4 bg-purple-600 hover:bg-purple-500 text-white rounded font-bold flex items-center justify-center gap-2 shadow-lg transition-all"
                   >
                       <Plus size={18} /> Create New Test
                   </button>
@@ -582,7 +582,7 @@ export const Benchmarks: React.FC<BenchmarksProps> = ({ results, models, servers
               {/* Main Canvas: List of Tests */}
               <div className="flex-1 flex flex-col min-w-0 bg-transparent overflow-y-auto space-y-4 pr-2">
                   {savedConfigs.length === 0 && (
-                      <div className="flex-1 flex flex-col items-center justify-center text-gray-600 border-2 border-dashed border-nebula-800 rounded-xl">
+                      <div className="flex-1 flex flex-col items-center justify-center text-gray-600 border-2 border-dashed border-nebula-800 rounded">
                           <Layers size={48} className="mb-4 opacity-20" />
                           <p>No tests created. Click 'Create New Test' to start.</p>
                       </div>
@@ -593,7 +593,7 @@ export const Benchmarks: React.FC<BenchmarksProps> = ({ results, models, servers
                           key={config.id}
                           onDragOver={(e) => e.preventDefault()}
                           onDrop={(e) => handleDropOnConfig(e, config.id)}
-                          className={`bg-nebula-900 border ${expandedConfigId === config.id ? 'border-purple-500 ring-1 ring-purple-500/30' : 'border-nebula-700'} rounded-xl transition-all overflow-hidden shadow-lg`}
+                          className={`bg-nebula-900 border ${expandedConfigId === config.id ? 'border-purple-500 ring-1 ring-purple-500/30' : 'border-nebula-700'} rounded transition-all overflow-hidden shadow-lg`}
                       >
                           {/* Test Header */}
                           <div 
@@ -698,7 +698,7 @@ export const Benchmarks: React.FC<BenchmarksProps> = ({ results, models, servers
                                           <span className="text-[10px] text-gray-600">Drag tags here to add</span>
                                       </div>
                                       
-                                      <div className="space-y-3 min-h-[100px] p-2 border-2 border-dashed border-nebula-800/50 rounded-xl bg-nebula-900/20">
+                                      <div className="space-y-3 min-h-[100px] p-2 border-2 border-dashed border-nebula-800/50 rounded bg-nebula-900/20">
                                           {config.steps.length === 0 && (
                                               <div className="flex items-center justify-center h-full py-8 text-gray-600 text-xs">
                                                   Drop components here
