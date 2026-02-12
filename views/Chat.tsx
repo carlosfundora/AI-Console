@@ -272,44 +272,44 @@ export const Chat: React.FC<ChatProps> = ({ models, servers, agents = [], onUpda
     };
 
     return (
-        <div className="flex flex-col h-full gap-4 animate-fade-in relative">
+        <div className="flex flex-col h-full gap-space-lg animate-fade-in relative p-space-lg">
             {/* Header / Toolbar */}
-            <div className="flex flex-col gap-4 bg-nebula-900 border border-nebula-700 p-4 rounded shadow-md">
+            <div className="flex flex-col gap-space-sm bg-nebula-900 border border-nebula-700 p-space-md rounded-xl shadow-md">
                 <div className="flex justify-between items-center">
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-space-md">
                         <div className={`p-2 rounded border ${selectedServer?.status === 'Online' ? 'bg-green-900/20 border-green-500 text-green-400 shadow-[0_0_10px_rgba(34,197,94,0.2)]' : selectedServer?.status === 'Starting' ? 'bg-yellow-900/20 border-yellow-500 text-yellow-400' : 'bg-nebula-800 border-nebula-700 text-gray-400'}`}>
                             {selectedServer?.type === 'WebGPU' ? <BrainCircuit size={20} /> : <Bot size={20} />}
                         </div>
                         
-                        <div className="flex gap-4">
+                        <div className="flex gap-space-md">
                             <div className="flex flex-col">
-                                <label className="text-[10px] text-gray-500 uppercase font-bold">Target Server</label>
+                                <label className="text-type-tiny text-gray-500 uppercase font-bold">Target Server</label>
                                 <select 
                                     value={selectedServerId}
                                     onChange={(e) => setSelectedServerId(e.target.value)}
-                                    className="bg-transparent text-white font-medium text-sm outline-none cursor-pointer hover:text-purple-300 transition-colors w-40"
+                                    className="bg-transparent text-white font-medium text-type-caption outline-none cursor-pointer hover:text-purple-300 transition-colors w-40"
                                 >
                                     {servers.map(s => <option key={s.id} value={s.id} className="bg-nebula-900 text-white">{s.name}</option>)}
                                 </select>
                             </div>
 
                             <div className="flex flex-col">
-                                <label className="text-[10px] text-gray-500 uppercase font-bold">Active Model</label>
+                                <label className="text-type-tiny text-gray-500 uppercase font-bold">Active Model</label>
                                 <select 
                                     value={selectedModelId}
                                     onChange={(e) => setSelectedModelId(e.target.value)}
-                                    className="bg-transparent text-white font-medium text-sm outline-none cursor-pointer hover:text-purple-300 transition-colors w-48"
+                                    className="bg-transparent text-white font-medium text-type-caption outline-none cursor-pointer hover:text-purple-300 transition-colors w-48"
                                 >
                                     {models.map(m => <option key={m.id} value={m.id} className="bg-nebula-900 text-white">{m.name}</option>)}
                                 </select>
                             </div>
 
                             <div className="flex flex-col pl-4 border-l border-nebula-800">
-                                <label className="text-[10px] text-gray-500 uppercase font-bold flex items-center gap-1"><Briefcase size={10}/> Agent Preset</label>
+                                <label className="text-type-tiny text-gray-500 uppercase font-bold flex items-center gap-1"><Briefcase size={10}/> Agent Preset</label>
                                 <select 
                                     value={selectedAgentId}
                                     onChange={(e) => setSelectedAgentId(e.target.value)}
-                                    className="bg-transparent text-white font-medium text-sm outline-none cursor-pointer hover:text-purple-300 transition-colors w-40"
+                                    className="bg-transparent text-white font-medium text-type-caption outline-none cursor-pointer hover:text-purple-300 transition-colors w-40"
                                 >
                                     <option value="" className="bg-nebula-900 text-gray-400">None (Raw Mode)</option>
                                     {agents.map(a => <option key={a.id} value={a.id} className="bg-nebula-900 text-white">{a.name}</option>)}
@@ -318,17 +318,17 @@ export const Chat: React.FC<ChatProps> = ({ models, servers, agents = [], onUpda
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-space-md">
                         <div className="flex bg-nebula-950 rounded p-1 border border-nebula-800">
                              <button 
                                 onClick={() => setIsAudioMode(false)}
-                                className={`flex items-center gap-2 px-3 py-1 rounded text-xs font-bold transition-all ${!isAudioMode ? 'bg-purple-600 text-white' : 'text-gray-500 hover:text-white'}`}
+                                className={`flex items-center gap-2 px-3 py-1 rounded text-type-tiny font-bold transition-all ${!isAudioMode ? 'bg-purple-600 text-white' : 'text-gray-500 hover:text-white'}`}
                             >
                                 <MessageSquare size={12} /> Text
                             </button>
                             <button 
                                 onClick={() => setIsAudioMode(true)}
-                                className={`flex items-center gap-2 px-3 py-1 rounded text-xs font-bold transition-all ${isAudioMode ? 'bg-purple-600 text-white' : 'text-gray-500 hover:text-white'}`}
+                                className={`flex items-center gap-2 px-3 py-1 rounded text-type-tiny font-bold transition-all ${isAudioMode ? 'bg-purple-600 text-white' : 'text-gray-500 hover:text-white'}`}
                             >
                                 <Mic size={12} /> Audio
                             </button>
@@ -345,25 +345,25 @@ export const Chat: React.FC<ChatProps> = ({ models, servers, agents = [], onUpda
                 </div>
 
                 <div className="flex items-center justify-between border-t border-nebula-800 pt-3">
-                     <div className="flex items-center gap-4">
+                     <div className="flex items-center gap-space-md">
                          {/* Server Status / Action Area */}
                          {selectedServer?.status === 'Offline' && (
                             <button 
                                 onClick={handleLaunch}
-                                className="px-3 py-1 bg-purple-600 hover:bg-purple-500 text-white rounded text-xs font-bold flex items-center gap-2 transition-all shadow-[0_0_10px_rgba(139,92,246,0.3)]"
+                                className="px-3 py-1 bg-purple-600 hover:bg-purple-500 text-white rounded text-type-tiny font-bold flex items-center gap-2 transition-all shadow-[0_0_10px_rgba(139,92,246,0.3)]"
                             >
                                 <Power size={12} /> {selectedServer.type === 'WebGPU' ? 'Load Model (ONNX)' : 'Launch Server'}
                             </button>
                         )}
                         
                         {selectedServer?.status === 'Starting' && (
-                             <div className="flex items-center gap-2 px-3 py-1 bg-yellow-900/20 border border-yellow-500/30 rounded text-yellow-400 text-xs font-bold">
+                             <div className="flex items-center gap-2 px-3 py-1 bg-yellow-900/20 border border-yellow-500/30 rounded text-yellow-400 text-type-tiny font-bold">
                                 <Loader2 size={12} className="animate-spin" /> Booting...
                             </div>
                         )}
 
                          {/* Modifiers */}
-                         <div className="flex items-center gap-3 pl-4 border-l border-nebula-800 text-xs text-gray-500">
+                         <div className="flex items-center gap-3 pl-4 border-l border-nebula-800 text-type-tiny text-gray-500">
                              <span className="flex items-center gap-1" title="Context Window"><Layers size={12}/> 8192</span>
                              <span className="flex items-center gap-1" title="Temperature"><Thermometer size={12}/> 0.7</span>
                              <span className="flex items-center gap-1" title="Flash Attention"><Zap size={12}/> FlashAttn</span>
@@ -373,7 +373,7 @@ export const Chat: React.FC<ChatProps> = ({ models, servers, agents = [], onUpda
                     </div>
                     
                     {/* Telemetry */}
-                    <div className="flex items-center gap-4 text-xs font-mono">
+                    <div className="flex items-center gap-space-md text-type-tiny font-mono">
                          <div className="flex items-center gap-2 px-2 py-1 bg-nebula-950 rounded border border-nebula-800 text-gray-300">
                              <Activity size={12} className="text-blue-400" />
                              <span>45.2 t/s</span>
@@ -387,23 +387,23 @@ export const Chat: React.FC<ChatProps> = ({ models, servers, agents = [], onUpda
             </div>
 
             {/* Chat Area */}
-            <div className="flex-1 bg-nebula-950/50 border border-nebula-800 rounded p-6 overflow-y-auto relative">
+            <div className="flex-1 bg-nebula-900 border border-nebula-700 rounded-xl p-space-lg overflow-y-auto relative custom-scrollbar">
                 {messages.length === 0 && (
                      <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-600 opacity-50 pointer-events-none">
                         <Server size={64} className="mb-4" />
                         <p>Select a server & model to begin</p>
                     </div>
                 )}
-                <div className="space-y-6">
+                <div className="space-y-space-lg">
                     {messages.map((msg) => (
-                        <div key={msg.id} className={`flex gap-4 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
+                        <div key={msg.id} className={`flex gap-space-md ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
                             <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${msg.role === 'user' ? 'bg-blue-600' : 'bg-purple-600'}`}>
                                 {msg.role === 'user' ? <User size={16} /> : <Bot size={16} />}
                             </div>
-                            <div className={`max-w-[70%] rounded px-4 py-3 text-sm leading-relaxed ${
+                            <div className={`max-w-[70%] rounded px-4 py-3 text-type-body leading-relaxed ${
                                 msg.role === 'user' 
                                 ? 'bg-blue-900/30 border border-blue-500/30 text-blue-100' 
-                                : 'bg-nebula-900 border border-nebula-700 text-gray-200'
+                                : 'bg-nebula-950 border border-nebula-700 text-gray-200'
                             }`}>
                                 {/* Attachments Display */}
                                 {msg.attachments && msg.attachments.length > 0 && (
@@ -411,7 +411,7 @@ export const Chat: React.FC<ChatProps> = ({ models, servers, agents = [], onUpda
                                         {msg.attachments.map(att => (
                                             <div key={att.id} className="bg-black/20 rounded p-2 flex items-center gap-2 border border-white/10">
                                                 {att.type === 'image' ? <ImageIcon size={14} className="text-purple-400"/> : <File size={14} className="text-blue-400"/>}
-                                                <span className="text-xs truncate max-w-[150px]">{att.name}</span>
+                                                <span className="text-type-tiny truncate max-w-[150px]">{att.name}</span>
                                             </div>
                                         ))}
                                     </div>
@@ -451,7 +451,7 @@ export const Chat: React.FC<ChatProps> = ({ models, servers, agents = [], onUpda
                         </div>
                     ))}
                     {isTyping && (
-                         <div className="flex gap-4">
+                         <div className="flex gap-space-md">
                             <div className="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center shrink-0">
                                 <Bot size={16} />
                             </div>
@@ -467,7 +467,7 @@ export const Chat: React.FC<ChatProps> = ({ models, servers, agents = [], onUpda
             </div>
 
             {/* Input Area */}
-            <div className="bg-nebula-900 border border-nebula-700 rounded p-2">
+            <div className="bg-nebula-900 border border-nebula-700 rounded-xl p-2">
                 {/* Attachments Preview */}
                 {attachments.length > 0 && (
                     <div className="flex gap-2 p-2 mb-2 overflow-x-auto bg-nebula-950/50 rounded">
@@ -481,7 +481,7 @@ export const Chat: React.FC<ChatProps> = ({ models, servers, agents = [], onUpda
                                     </div>
                                 )}
                                 <div className="flex-1 min-w-0">
-                                    <div className="text-xs truncate text-gray-300" title={att.name}>{att.name}</div>
+                                    <div className="text-type-tiny truncate text-gray-300" title={att.name}>{att.name}</div>
                                 </div>
                                 <button 
                                     onClick={() => removeAttachment(att.id)}
@@ -544,7 +544,7 @@ export const Chat: React.FC<ChatProps> = ({ models, servers, agents = [], onUpda
                             onKeyDown={(e) => e.key === 'Enter' && handleSend()}
                             placeholder={selectedServer?.status === 'Online' ? "Type your message..." : "Server is offline..."}
                             disabled={selectedServer?.status !== 'Online'}
-                            className="flex-1 bg-transparent border-none outline-none text-white px-2 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="flex-1 bg-transparent border-none outline-none text-white px-2 py-2 disabled:opacity-50 disabled:cursor-not-allowed text-type-body"
                         />
                         <button 
                             onClick={handleSend}

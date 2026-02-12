@@ -37,75 +37,75 @@ export const Training: React.FC<TrainingProps> = ({ models, datasets }) => {
   const isDataMixingSupported = ['lora', 'sft', 'distill'].includes(mode);
 
   return (
-    <div className="flex h-full gap-8 text-nebula-100 font-sans animate-fade-in">
+    <div className="flex h-full gap-space-lg text-nebula-100 font-sans animate-fade-in p-space-lg overflow-hidden">
       {/* Main Configuration Chamber */}
-      <div className="flex-1 flex flex-col gap-6 min-w-0">
-         <div className="flex justify-between items-center">
+      <div className="flex-1 flex flex-col gap-space-lg min-w-0 overflow-hidden">
+         <div className="flex justify-between items-center shrink-0">
             <div>
-                 <h2 className="text-2xl font-bold flex items-center gap-2">
+                 <h2 className="text-type-heading-lg font-bold flex items-center gap-space-sm">
                     <Terminal className="text-purple-500" /> Training Console
                  </h2>
-                 <p className="text-sm text-gray-400 mt-1">Fine-tune, distill, and adapt models to new domains.</p>
+                 <p className="text-type-body text-gray-400 mt-1">Fine-tune, distill, and adapt models to new domains.</p>
             </div>
             
             <div className="flex bg-nebula-900 rounded-lg p-1 border border-nebula-700">
                 <button 
                     onClick={() => setMode('lora')}
-                    className={`px-4 py-2 rounded text-sm font-bold transition-all flex items-center gap-2 ${mode === 'lora' ? 'bg-purple-600 text-white shadow-lg' : 'text-gray-400 hover:text-white'}`}
+                    className={`px-4 py-2 rounded text-type-body font-bold transition-all flex items-center gap-space-sm ${mode === 'lora' ? 'bg-purple-600 text-white shadow-lg' : 'text-gray-400 hover:text-white'}`}
                 >
                     <Layers size={16} /> LoRA
                 </button>
                 <button 
                      onClick={() => setMode('sft')}
-                     className={`px-4 py-2 rounded text-sm font-bold transition-all flex items-center gap-2 ${mode === 'sft' ? 'bg-purple-600 text-white shadow-lg' : 'text-gray-400 hover:text-white'}`}
+                     className={`px-4 py-2 rounded text-type-body font-bold transition-all flex items-center gap-space-sm ${mode === 'sft' ? 'bg-purple-600 text-white shadow-lg' : 'text-gray-400 hover:text-white'}`}
                 >
                     <Database size={16} /> SFT
                 </button>
                 <button 
                      onClick={() => setMode('distill')}
-                     className={`px-4 py-2 rounded text-sm font-bold transition-all flex items-center gap-2 ${mode === 'distill' ? 'bg-purple-600 text-white shadow-lg' : 'text-gray-400 hover:text-white'}`}
+                     className={`px-4 py-2 rounded text-type-body font-bold transition-all flex items-center gap-space-sm ${mode === 'distill' ? 'bg-purple-600 text-white shadow-lg' : 'text-gray-400 hover:text-white'}`}
                 >
                     <Cpu size={16} /> DistillKit
                 </button>
                  <button 
                      onClick={() => setMode('agent')}
-                     className={`px-4 py-2 rounded text-sm font-bold transition-all flex items-center gap-2 ${mode === 'agent' ? 'bg-purple-600 text-white shadow-lg' : 'text-gray-400 hover:text-white'}`}
+                     className={`px-4 py-2 rounded text-type-body font-bold transition-all flex items-center gap-space-sm ${mode === 'agent' ? 'bg-purple-600 text-white shadow-lg' : 'text-gray-400 hover:text-white'}`}
                 >
                     <Wrench size={16} /> Agent
                 </button>
                 <button 
                      onClick={() => setMode('audio')}
-                     className={`px-4 py-2 rounded text-sm font-bold transition-all flex items-center gap-2 ${mode === 'audio' ? 'bg-purple-600 text-white shadow-lg' : 'text-gray-400 hover:text-white'}`}
+                     className={`px-4 py-2 rounded text-type-body font-bold transition-all flex items-center gap-space-sm ${mode === 'audio' ? 'bg-purple-600 text-white shadow-lg' : 'text-gray-400 hover:text-white'}`}
                 >
                     <Mic size={16} /> Audio FT
                 </button>
             </div>
         </div>
 
-        <div className="flex-1 bg-nebula-900 border border-nebula-700 rounded-xl p-6 relative overflow-y-auto backdrop-blur-sm">
+        <div className="flex-1 bg-nebula-900 border border-nebula-700 rounded-xl p-space-lg relative overflow-y-auto backdrop-blur-sm custom-scrollbar">
              {/* Background Decoration */}
-            <div className="absolute top-0 right-0 p-8 opacity-5 pointer-events-none">
+            <div className="absolute top-0 right-0 p-space-2xl opacity-5 pointer-events-none">
                 <Activity size={200} />
             </div>
 
-            <div className="space-y-8 relative z-10">
+            <div className="space-y-space-xl relative z-10">
                 {/* Topology Config */}
-                <div className="bg-nebula-950/50 border border-nebula-800 rounded-xl p-6">
-                    <h3 className="text-purple-400 text-sm font-bold mb-4 flex items-center gap-2 uppercase tracking-wider">
+                <div className="bg-nebula-950/50 border border-nebula-800 rounded-xl p-space-lg">
+                    <h3 className="text-purple-400 text-type-body font-bold mb-space-md flex items-center gap-space-sm uppercase tracking-wider">
                         <GitMerge size={16}/> Training Topology
                     </h3>
                     
-                    <div className="flex flex-col md:flex-row gap-8 items-start">
+                    <div className="flex flex-col md:flex-row gap-space-xl items-start">
                         {/* Teacher Column */}
                         <div className="flex-1 w-full">
-                            <label className="text-xs text-gray-500 font-bold uppercase mb-2 flex items-center gap-2">
+                            <label className="text-type-tiny text-gray-500 font-bold uppercase mb-space-xs flex items-center gap-space-sm">
                                 <GraduationCap size={14} /> Teacher (Oracle)
-                                {mode === 'distill' && <span className="text-red-400 text-[10px]">* Required</span>}
+                                {mode === 'distill' && <span className="text-red-400">* Required</span>}
                             </label>
                             <select 
                                 value={teacherModelId}
                                 onChange={(e) => setTeacherModelId(e.target.value)}
-                                className="w-full bg-nebula-900 border border-nebula-700 rounded-lg p-3 text-white focus:border-purple-500 outline-none transition-colors"
+                                className="w-full bg-nebula-900 border border-nebula-700 rounded-lg p-space-md text-white focus:border-purple-500 outline-none transition-colors text-type-body"
                             >
                                 <option value="">None (Self-Supervised)</option>
                                 <optgroup label="Local Models">
@@ -119,7 +119,7 @@ export const Training: React.FC<TrainingProps> = ({ models, datasets }) => {
                                     <option value="gemini-1.5-pro">Gemini 1.5 Pro (Google)</option>
                                 </optgroup>
                             </select>
-                            <p className="text-[10px] text-gray-500 mt-2 leading-relaxed">
+                            <p className="text-type-tiny text-gray-500 mt-space-xs leading-relaxed">
                                 The teacher provides soft labels, reasoning traces, or synthetic data to guide the student models.
                             </p>
                         </div>
@@ -131,22 +131,22 @@ export const Training: React.FC<TrainingProps> = ({ models, datasets }) => {
 
                         {/* Students Column */}
                         <div className="flex-1 w-full">
-                            <div className="flex justify-between items-center mb-2">
-                                <label className="text-xs text-gray-500 font-bold uppercase flex items-center gap-2">
+                            <div className="flex justify-between items-center mb-space-xs">
+                                <label className="text-type-tiny text-gray-500 font-bold uppercase flex items-center gap-space-sm">
                                     <Users size={14} /> Student Models
                                 </label>
-                                <button onClick={addStudent} className="text-[10px] bg-purple-900/30 text-purple-300 px-2 py-1 rounded hover:bg-purple-600 hover:text-white transition-colors flex items-center gap-1">
+                                <button onClick={addStudent} className="text-type-tiny bg-purple-900/30 text-purple-300 px-2 py-1 rounded hover:bg-purple-600 hover:text-white transition-colors flex items-center gap-1">
                                     <Plus size={10} /> Add
                                 </button>
                             </div>
                             
-                            <div className="space-y-2">
+                            <div className="space-y-space-sm">
                                 {studentModels.map((studentId, idx) => (
-                                    <div key={idx} className="flex gap-2">
+                                    <div key={idx} className="flex gap-space-sm">
                                         <select 
                                             value={studentId}
                                             onChange={(e) => updateStudent(idx, e.target.value)}
-                                            className="flex-1 bg-nebula-900 border border-nebula-700 rounded-lg p-3 text-white focus:border-purple-500 outline-none transition-colors"
+                                            className="flex-1 bg-nebula-900 border border-nebula-700 rounded-lg p-space-md text-white focus:border-purple-500 outline-none transition-colors text-type-body"
                                         >
                                             <option value="">Select Student...</option>
                                             {models.map(m => (
@@ -156,7 +156,7 @@ export const Training: React.FC<TrainingProps> = ({ models, datasets }) => {
                                         <button 
                                             onClick={() => removeStudent(idx)}
                                             disabled={studentModels.length <= 1}
-                                            className="p-3 bg-nebula-900 border border-nebula-700 rounded-lg text-gray-500 hover:text-red-400 hover:border-red-500/50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                            className="p-space-md bg-nebula-900 border border-nebula-700 rounded-lg text-gray-500 hover:text-red-400 hover:border-red-500/50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                         >
                                             <X size={16} />
                                         </button>
@@ -168,16 +168,16 @@ export const Training: React.FC<TrainingProps> = ({ models, datasets }) => {
                 </div>
 
                 {/* Dataset & Params Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                     <div className="space-y-4">
-                        <label className="text-purple-400 text-xs font-bold uppercase block tracking-wider">Dataset Configuration</label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-space-xl">
+                     <div className="space-y-space-md">
+                        <label className="text-purple-400 text-type-tiny font-bold uppercase block tracking-wider">Dataset Configuration</label>
                         
-                         <div className="space-y-2">
-                             <label className="text-sm text-gray-400 font-medium">Training Data (Primary)</label>
+                         <div className="space-y-space-xs">
+                             <label className="text-type-body text-gray-400 font-medium">Training Data (Primary)</label>
                              <select 
                                 value={datasetsConfig.primary}
                                 onChange={(e) => setDatasetsConfig({...datasetsConfig, primary: e.target.value})}
-                                className="w-full bg-nebula-950 border border-nebula-700 rounded p-3 text-white focus:border-purple-500 outline-none transition-colors"
+                                className="w-full bg-nebula-950 border border-nebula-700 rounded p-space-md text-white focus:border-purple-500 outline-none transition-colors text-type-body"
                             >
                                 <option value="">Select Dataset...</option>
                                 {datasets.map(d => <option key={d.id} value={d.id}>{d.name} ({d.rows.toLocaleString()} rows)</option>)}
@@ -185,24 +185,24 @@ export const Training: React.FC<TrainingProps> = ({ models, datasets }) => {
                         </div>
 
                         {/* Hyperparameters */}
-                        <div className="pt-4 space-y-4">
-                            <label className="text-purple-400 text-xs font-bold uppercase block tracking-wider">Hyperparameters</label>
+                        <div className="pt-space-md space-y-space-md">
+                            <label className="text-purple-400 text-type-tiny font-bold uppercase block tracking-wider">Hyperparameters</label>
                             
                             {mode === 'lora' && (
-                                 <div className="grid grid-cols-2 gap-4">
+                                 <div className="grid grid-cols-2 gap-space-md">
                                     <div>
-                                        <label className="text-xs text-gray-500 font-bold uppercase">Rank (r)</label>
-                                        <input type="number" defaultValue={16} className="w-full bg-nebula-950 border border-nebula-700 rounded p-3 text-white mt-1" />
+                                        <label className="text-type-tiny text-gray-500 font-bold uppercase">Rank (r)</label>
+                                        <input type="number" defaultValue={16} className="w-full bg-nebula-950 border border-nebula-700 rounded p-space-md text-white mt-1 text-type-body" />
                                     </div>
                                     <div>
-                                        <label className="text-xs text-gray-500 font-bold uppercase">Alpha</label>
-                                        <input type="number" defaultValue={32} className="w-full bg-nebula-950 border border-nebula-700 rounded p-3 text-white mt-1" />
+                                        <label className="text-type-tiny text-gray-500 font-bold uppercase">Alpha</label>
+                                        <input type="number" defaultValue={32} className="w-full bg-nebula-950 border border-nebula-700 rounded p-space-md text-white mt-1 text-type-body" />
                                     </div>
                                     <div className="col-span-2">
-                                         <label className="text-xs text-gray-500 font-bold uppercase">Target Modules</label>
-                                         <div className="flex gap-2 mt-1">
+                                         <label className="text-type-tiny text-gray-500 font-bold uppercase">Target Modules</label>
+                                         <div className="flex gap-space-sm mt-1">
                                             {['q_proj', 'v_proj', 'k_proj', 'o_proj'].map(mod => (
-                                                <span key={mod} className="px-3 py-1 bg-nebula-800 border border-nebula-600 rounded text-xs text-gray-300 cursor-pointer hover:bg-purple-900/50 hover:border-purple-500">{mod}</span>
+                                                <span key={mod} className="px-3 py-1 bg-nebula-800 border border-nebula-600 rounded text-type-tiny text-gray-300 cursor-pointer hover:bg-purple-900/50 hover:border-purple-500">{mod}</span>
                                             ))}
                                          </div>
                                     </div>
@@ -210,48 +210,48 @@ export const Training: React.FC<TrainingProps> = ({ models, datasets }) => {
                             )}
 
                             {(mode === 'sft' || mode === 'agent' || mode === 'audio' || mode === 'distill') && (
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="grid grid-cols-2 gap-space-md">
                                     <div>
-                                        <label className="text-xs text-gray-500 font-bold uppercase">Epochs</label>
-                                        <input type="number" defaultValue={3} className="w-full bg-nebula-950 border border-nebula-700 rounded p-3 text-white mt-1" />
+                                        <label className="text-type-tiny text-gray-500 font-bold uppercase">Epochs</label>
+                                        <input type="number" defaultValue={3} className="w-full bg-nebula-950 border border-nebula-700 rounded p-space-md text-white mt-1 text-type-body" />
                                     </div>
                                     <div>
-                                        <label className="text-xs text-gray-500 font-bold uppercase">Learning Rate</label>
-                                        <input type="number" defaultValue={2e-5} step={1e-6} className="w-full bg-nebula-950 border border-nebula-700 rounded p-3 text-white mt-1" />
+                                        <label className="text-type-tiny text-gray-500 font-bold uppercase">Learning Rate</label>
+                                        <input type="number" defaultValue={2e-5} step={1e-6} className="w-full bg-nebula-950 border border-nebula-700 rounded p-space-md text-white mt-1 text-type-body" />
                                     </div>
                                 </div>
                             )}
                         </div>
                      </div>
 
-                     <div className="space-y-4">
+                     <div className="space-y-space-md">
                         {isDataMixingSupported && (
-                            <div className="p-5 bg-nebula-950/50 border border-nebula-800 rounded-xl h-full">
-                                <h4 className="text-purple-400 text-sm font-bold mb-4 flex items-center gap-2"><Database size={14}/> Advanced Data Mixing Strategy</h4>
-                                <div className="space-y-6">
+                            <div className="p-space-lg bg-nebula-950/50 border border-nebula-800 rounded-xl h-full">
+                                <h4 className="text-purple-400 text-type-body font-bold mb-space-md flex items-center gap-space-sm"><Database size={14}/> Advanced Data Mixing Strategy</h4>
+                                <div className="space-y-space-md">
                                     <div>
-                                        <label className="text-xs text-gray-500 font-bold uppercase mb-2 block">Positive / Additive (Reinforcement)</label>
+                                        <label className="text-type-tiny text-gray-500 font-bold uppercase mb-space-xs block">Positive / Additive (Reinforcement)</label>
                                         <select 
                                             value={datasetsConfig.additive}
                                             onChange={(e) => setDatasetsConfig({...datasetsConfig, additive: e.target.value})}
-                                            className="w-full bg-nebula-900 border border-nebula-700 rounded p-3 text-white text-sm outline-none focus:border-purple-500 transition-colors"
+                                            className="w-full bg-nebula-900 border border-nebula-700 rounded p-space-md text-white text-type-body outline-none focus:border-purple-500 transition-colors"
                                         >
                                             <option value="">None</option>
                                             {datasets.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
                                         </select>
-                                        <p className="text-[10px] text-gray-500 mt-2">Injects high-quality examples (e.g. Golden sets) to steer behavior during training.</p>
+                                        <p className="text-type-tiny text-gray-500 mt-space-xs">Injects high-quality examples (e.g. Golden sets) to steer behavior during training.</p>
                                     </div>
                                     <div>
-                                        <label className="text-xs text-gray-500 font-bold uppercase mb-2 block">Negative / Contrastive (Rejection)</label>
+                                        <label className="text-type-tiny text-gray-500 font-bold uppercase mb-space-xs block">Negative / Contrastive (Rejection)</label>
                                         <select 
                                             value={datasetsConfig.contrastive}
                                             onChange={(e) => setDatasetsConfig({...datasetsConfig, contrastive: e.target.value})}
-                                            className="w-full bg-nebula-900 border border-nebula-700 rounded p-3 text-white text-sm outline-none focus:border-purple-500 transition-colors"
+                                            className="w-full bg-nebula-900 border border-nebula-700 rounded p-space-md text-white text-type-body outline-none focus:border-purple-500 transition-colors"
                                         >
                                             <option value="">None</option>
                                             {datasets.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
                                         </select>
-                                        <p className="text-[10px] text-gray-500 mt-2">Used for DPO/ORPO preference optimization or to unlearn behaviors.</p>
+                                        <p className="text-type-tiny text-gray-500 mt-space-xs">Used for DPO/ORPO preference optimization or to unlearn behaviors.</p>
                                     </div>
                                 </div>
                             </div>
@@ -259,18 +259,18 @@ export const Training: React.FC<TrainingProps> = ({ models, datasets }) => {
 
                         {/* Mode Specific Configs */}
                         {mode === 'agent' && (
-                             <div className="p-5 bg-nebula-950/50 border border-nebula-800 rounded-xl h-full">
-                                <h4 className="text-purple-400 text-sm font-bold mb-4 flex items-center gap-2"><Wrench size={14}/> Agent Tool Config</h4>
+                             <div className="p-space-lg bg-nebula-950/50 border border-nebula-800 rounded-xl h-full">
+                                <h4 className="text-purple-400 text-type-body font-bold mb-space-md flex items-center gap-space-sm"><Wrench size={14}/> Agent Tool Config</h4>
                                 <div>
-                                    <label className="text-xs text-gray-500 font-bold uppercase mb-2 block">Format Enforcement</label>
-                                    <div className="space-y-2">
-                                        <label className="flex items-center gap-2 p-2 bg-nebula-900 rounded border border-nebula-700 cursor-pointer">
+                                    <label className="text-type-tiny text-gray-500 font-bold uppercase mb-space-xs block">Format Enforcement</label>
+                                    <div className="space-y-space-sm">
+                                        <label className="flex items-center gap-space-sm p-space-sm bg-nebula-900 rounded border border-nebula-700 cursor-pointer">
                                             <input type="radio" name="format" defaultChecked className="accent-purple-500" />
-                                            <span className="text-sm text-gray-300">Strict JSON (Constrained Decoding)</span>
+                                            <span className="text-type-body text-gray-300">Strict JSON (Constrained Decoding)</span>
                                         </label>
-                                        <label className="flex items-center gap-2 p-2 bg-nebula-900 rounded border border-nebula-700 cursor-pointer">
+                                        <label className="flex items-center gap-space-sm p-space-sm bg-nebula-900 rounded border border-nebula-700 cursor-pointer">
                                             <input type="radio" name="format" className="accent-purple-500" />
-                                            <span className="text-sm text-gray-300">Thought + Action (ReAct)</span>
+                                            <span className="text-type-body text-gray-300">Thought + Action (ReAct)</span>
                                         </label>
                                     </div>
                                 </div>
@@ -278,11 +278,11 @@ export const Training: React.FC<TrainingProps> = ({ models, datasets }) => {
                         )}
                         
                         {mode === 'audio' && (
-                            <div className="p-5 bg-nebula-950/50 border border-nebula-800 rounded-xl h-full">
-                                <h4 className="text-purple-400 text-sm font-bold mb-4 flex items-center gap-2"><Mic size={14}/> Audio Specifics</h4>
-                                <div className="space-y-4">
+                            <div className="p-space-lg bg-nebula-950/50 border border-nebula-800 rounded-xl h-full">
+                                <h4 className="text-purple-400 text-type-body font-bold mb-space-md flex items-center gap-space-sm"><Mic size={14}/> Audio Specifics</h4>
+                                <div className="space-y-space-md">
                                     <div>
-                                        <label className="text-xs text-gray-500 font-bold uppercase mb-2 block">CTC Loss Weight</label>
+                                        <label className="text-type-tiny text-gray-500 font-bold uppercase mb-space-xs block">CTC Loss Weight</label>
                                         <input type="range" min="0" max="1" step="0.1" defaultValue="0.3" className="w-full accent-purple-500" />
                                     </div>
                                 </div>
@@ -292,12 +292,12 @@ export const Training: React.FC<TrainingProps> = ({ models, datasets }) => {
                 </div>
 
                 {/* Footer Actions */}
-                <div className="pt-6 border-t border-nebula-800 flex justify-between items-center">
-                    <div className="flex items-center gap-4 text-xs text-gray-500">
-                        <span className="flex items-center gap-1"><Lock size={12}/> VRAM Protected</span>
-                        <span className="flex items-center gap-1"><AlertTriangle size={12}/> Backup Enabled</span>
+                <div className="pt-space-lg border-t border-nebula-800 flex justify-between items-center">
+                    <div className="flex items-center gap-space-md text-type-caption text-gray-500">
+                        <span className="flex items-center gap-space-xs"><Lock size={12}/> VRAM Protected</span>
+                        <span className="flex items-center gap-space-xs"><AlertTriangle size={12}/> Backup Enabled</span>
                     </div>
-                    <button className="px-8 py-3 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded shadow-[0_0_20px_rgba(139,92,246,0.3)] hover:shadow-[0_0_30px_rgba(139,92,246,0.5)] transition-all flex items-center gap-3">
+                    <button className="px-8 py-3 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded shadow-[0_0_20px_rgba(139,92,246,0.3)] hover:shadow-[0_0_30px_rgba(139,92,246,0.5)] transition-all flex items-center gap-space-sm">
                         <Play size={18} fill="currentColor" />
                         START TRAINING JOB
                     </button>
@@ -307,16 +307,16 @@ export const Training: React.FC<TrainingProps> = ({ models, datasets }) => {
       </div>
 
       {/* Sidebar: Resources & Queue */}
-      <div className="w-80 flex flex-col gap-6">
+      <div className="w-80 flex flex-col gap-space-lg shrink-0">
            {/* Resource Monitor */}
-           <div className="bg-nebula-900 border border-nebula-700 rounded-xl p-5 shadow-lg">
-                <h3 className="text-sm font-bold text-gray-200 mb-4 flex items-center gap-2">
+           <div className="bg-nebula-900 border border-nebula-700 rounded-xl p-space-md shadow-lg">
+                <h3 className="text-type-body font-bold text-gray-200 mb-space-md flex items-center gap-space-sm">
                     <Zap size={16} className="text-yellow-500" /> Resource Estimate
                 </h3>
                 
-                <div className="space-y-4">
+                <div className="space-y-space-md">
                     <div>
-                        <div className="flex justify-between text-xs text-gray-400 mb-1">
+                        <div className="flex justify-between text-type-caption text-gray-400 mb-1">
                             <span>VRAM Usage</span>
                             <span className="text-white">18.4 GB</span>
                         </div>
@@ -325,53 +325,53 @@ export const Training: React.FC<TrainingProps> = ({ models, datasets }) => {
                         </div>
                     </div>
                     
-                    <div className="grid grid-cols-2 gap-4 pt-2">
-                        <div className="p-2 bg-nebula-950 rounded border border-nebula-800">
-                            <span className="text-[10px] text-gray-500 uppercase block">Est. Duration</span>
-                            <span className="text-sm font-mono text-white">4h 12m</span>
+                    <div className="grid grid-cols-2 gap-space-md pt-2">
+                        <div className="p-space-sm bg-nebula-950 rounded border border-nebula-800">
+                            <span className="text-type-tiny text-gray-500 uppercase block">Est. Duration</span>
+                            <span className="text-type-body font-mono text-white">4h 12m</span>
                         </div>
-                        <div className="p-2 bg-nebula-950 rounded border border-nebula-800">
-                            <span className="text-[10px] text-gray-500 uppercase block">Est. Cost</span>
-                            <span className="text-sm font-mono text-white">$2.40</span>
+                        <div className="p-space-sm bg-nebula-950 rounded border border-nebula-800">
+                            <span className="text-type-tiny text-gray-500 uppercase block">Est. Cost</span>
+                            <span className="text-type-body font-mono text-white">$2.40</span>
                         </div>
                     </div>
                 </div>
            </div>
 
            {/* Active Queue */}
-           <div className="flex-1 bg-nebula-900 border border-nebula-700 rounded-xl p-5 shadow-lg flex flex-col">
-                <h3 className="text-sm font-bold text-gray-200 mb-4 flex items-center gap-2">
+           <div className="flex-1 bg-nebula-900 border border-nebula-700 rounded-xl p-space-md shadow-lg flex flex-col">
+                <h3 className="text-type-body font-bold text-gray-200 mb-space-md flex items-center gap-space-sm">
                     <Clock size={16} className="text-blue-500" /> Job Queue
                 </h3>
                 
-                <div className="flex-1 overflow-y-auto space-y-3">
+                <div className="flex-1 overflow-y-auto space-y-space-sm">
                     {/* Active Job */}
-                    <div className="p-3 bg-nebula-950 border border-purple-500/50 rounded relative overflow-hidden group">
+                    <div className="p-space-sm bg-nebula-950 border border-purple-500/50 rounded relative overflow-hidden group">
                         <div className="absolute top-0 left-0 w-1 h-full bg-purple-500"></div>
                         <div className="flex justify-between items-start mb-1">
-                             <span className="text-xs font-bold text-white">Llama-3-SFT-v1</span>
+                             <span className="text-type-caption font-bold text-white">Llama-3-SFT-v1</span>
                              <RotateCw size={12} className="text-purple-400 animate-spin" />
                         </div>
-                        <div className="text-[10px] text-gray-500 mb-2">Step 450/1000 • Loss: 1.24</div>
+                        <div className="text-type-tiny text-gray-500 mb-2">Step 450/1000 • Loss: 1.24</div>
                         <div className="w-full bg-nebula-900 h-1 rounded-full overflow-hidden">
                             <div className="bg-purple-500 h-full w-[45%]"></div>
                         </div>
                     </div>
 
                     {/* Completed Job */}
-                    <div className="p-3 bg-nebula-950/50 border border-nebula-800 rounded opacity-70 hover:opacity-100 transition-opacity">
+                    <div className="p-space-sm bg-nebula-950/50 border border-nebula-800 rounded opacity-70 hover:opacity-100 transition-opacity">
                         <div className="flex justify-between items-start mb-1">
-                             <span className="text-xs font-bold text-gray-300">Q-LoRA Mistral</span>
+                             <span className="text-type-caption font-bold text-gray-300">Q-LoRA Mistral</span>
                              <CheckCircle size={12} className="text-green-500" />
                         </div>
-                        <div className="text-[10px] text-gray-500">Completed 2h ago</div>
+                        <div className="text-type-tiny text-gray-500">Completed 2h ago</div>
                     </div>
 
                     {/* Pending Job */}
-                    <div className="p-3 bg-nebula-950/30 border border-nebula-800/50 border-dashed rounded text-gray-500">
+                    <div className="p-space-sm bg-nebula-950/30 border border-nebula-800/50 border-dashed rounded text-gray-500">
                         <div className="flex justify-between items-start mb-1">
-                             <span className="text-xs font-bold">DPO-Alignment</span>
-                             <span className="text-[10px] bg-nebula-800 px-1 rounded">Pending</span>
+                             <span className="text-type-caption font-bold">DPO-Alignment</span>
+                             <span className="text-type-tiny bg-nebula-800 px-1 rounded">Pending</span>
                         </div>
                     </div>
                 </div>

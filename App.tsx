@@ -535,13 +535,13 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-nebula-950 text-nebula-100 font-sans overflow-hidden">
+    <div className="flex flex-col h-screen bg-nebula-950 text-nebula-100 font-sans overflow-hidden text-type-body">
       {/* Streamlined Top Header with Glassmorphism */}
-      <header className="h-16 bg-nebula-950/70 backdrop-blur-md border-b border-white/5 flex items-center justify-between px-6 z-30 shrink-0 relative shadow-lg">
+      <header className="h-header bg-nebula-950/70 backdrop-blur-md border-b border-white/5 flex items-center justify-between px-space-lg z-30 shrink-0 relative shadow-lg">
           <div className="absolute inset-0 bg-gradient-to-r from-purple-500/5 to-transparent pointer-events-none"></div>
-          <div className="flex items-center gap-6 relative z-10">
+          <div className="flex items-center gap-space-lg relative z-10">
                {/* Logo */}
-              <div className="text-xl font-black tracking-widest text-nebula-100 border-2 border-nebula-100 px-2 py-0.5 rounded">
+              <div className="text-type-heading-md font-black tracking-widest text-nebula-100 border-2 border-nebula-100 px-2 py-0.5 rounded">
                   R-AI
               </div>
               
@@ -549,22 +549,22 @@ const App: React.FC = () => {
               <div className="h-6 w-px bg-white/10 mx-2"></div>
 
               {/* Breadcrumb / Title */}
-              <div className="flex items-center gap-4">
-                  <h1 className="text-lg font-semibold text-white capitalize">{getPageTitle(activeTab)}</h1>
-                  {activeTab === 'training' && <span className="text-xs bg-purple-900/50 text-purple-300 px-2 py-1 rounded border border-purple-500/20">Active Job: Llama-SFT-v1</span>}
+              <div className="flex items-center gap-space-md">
+                  <h1 className="text-type-heading-sm font-semibold text-white capitalize">{getPageTitle(activeTab)}</h1>
+                  {activeTab === 'training' && <span className="text-type-tiny bg-purple-900/50 text-purple-300 px-2 py-1 rounded border border-purple-500/20">Active Job: Llama-SFT-v1</span>}
               </div>
           </div>
           
-          <div className="flex items-center gap-6 relative z-10">
+          <div className="flex items-center gap-space-lg relative z-10">
               {SERVER_CONFIG.rocmEnabled && (
                   <div className="hidden md:flex items-center gap-2 px-3 py-1 bg-red-900/20 border border-red-500/30 rounded-full">
                       <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
-                      <span className="text-xs text-red-200 font-medium">AMD ROCm Active</span>
+                      <span className="text-type-caption text-red-200 font-medium">AMD ROCm Active</span>
                   </div>
               )}
               <div className="text-right hidden sm:block">
-                  <p className="text-xs text-gray-400">Environment</p>
-                  <p className="text-sm font-mono text-purple-300">{SERVER_CONFIG.gpuType} • {SERVER_CONFIG.vramTotal}GB</p>
+                  <p className="text-type-caption text-gray-400">Environment</p>
+                  <p className="text-type-body font-mono text-purple-300">{SERVER_CONFIG.gpuType} • {SERVER_CONFIG.vramTotal}GB</p>
               </div>
               
               {/* Settings Button */}
@@ -580,13 +580,13 @@ const App: React.FC = () => {
 
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar */}
-        <aside className="w-64 bg-nebula-950 border-r border-nebula-800 flex flex-col z-20">
-          <nav className="flex-1 p-4 space-y-2">
+        <aside className="w-sidebar bg-nebula-950 border-r border-nebula-800 flex flex-col z-20">
+          <nav className="flex-1 p-space-md space-y-space-xs">
             {navItems.map(item => (
               <button
                 key={item.id}
                 onClick={() => setActiveTab(item.id as ViewState)}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded text-sm font-medium transition-all duration-200 ${
+                className={`w-full flex items-center gap-space-md px-4 py-3 rounded text-type-body font-medium transition-all duration-200 ${
                   activeTab === item.id 
                     ? 'bg-nebula-900 text-purple-400 border border-nebula-700 shadow-md' 
                     : 'text-gray-400 hover:text-white hover:bg-nebula-900/50'
@@ -621,15 +621,15 @@ const App: React.FC = () => {
       </div>
 
        {/* Full Width Footer with Glassmorphism */}
-      <footer className="h-8 bg-nebula-950/70 backdrop-blur-md border-t border-white/5 flex items-center justify-between px-4 text-xs text-gray-500 select-none z-40 relative shadow-[0_-5px_15px_rgba(0,0,0,0.2)]">
-            <div className="flex gap-4">
-                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-green-500"></span> System Online</span>
-                <span className="flex items-center gap-1">GPU Util: 12%</span>
-                <span className="flex items-center gap-1">VRAM: 8/12 GB</span>
+      <footer className="h-8 bg-nebula-950/70 backdrop-blur-md border-t border-white/5 flex items-center justify-between px-4 text-type-caption text-gray-500 select-none z-40 relative shadow-[0_-5px_15px_rgba(0,0,0,0.2)]">
+            <div className="flex gap-space-md">
+                <span className="flex items-center gap-space-xs"><span className="w-2 h-2 rounded-full bg-green-500"></span> System Online</span>
+                <span className="flex items-center gap-space-xs">GPU Util: 12%</span>
+                <span className="flex items-center gap-space-xs">VRAM: 8/12 GB</span>
             </div>
             
              {/* Global Loading Indicator */}
-            <div className="flex items-center gap-2 text-purple-400 animate-pulse">
+            <div className="flex items-center gap-space-sm text-purple-400 animate-pulse">
                 <Loader2 size={12} className="animate-spin" />
                 <span>Processing Background Tasks...</span>
             </div>

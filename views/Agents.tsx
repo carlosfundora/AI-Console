@@ -151,11 +151,11 @@ export const Agents: React.FC<AgentsProps> = ({ agents, onSaveAgent, onDeleteAge
     };
 
     return (
-        <div className="flex h-full gap-6 animate-fade-in">
+        <div className="flex h-full gap-space-lg animate-fade-in p-space-lg overflow-hidden">
             {/* Sidebar List */}
-            <div className="w-72 flex flex-col gap-4 bg-nebula-900 border border-nebula-700 rounded-xl p-4 shadow-lg">
-                <div className="flex justify-between items-center border-b border-nebula-800 pb-4">
-                    <h3 className="font-bold text-gray-200 flex items-center gap-2">
+            <div className="w-72 flex flex-col gap-space-md bg-nebula-900 border border-nebula-700 rounded-xl p-space-md shadow-lg shrink-0 overflow-hidden">
+                <div className="flex justify-between items-center border-b border-nebula-800 pb-4 shrink-0">
+                    <h3 className="font-bold text-gray-200 flex items-center gap-space-sm text-type-body">
                         <Bot className="text-purple-500" /> Agents & Tools
                     </h3>
                     <button 
@@ -167,22 +167,22 @@ export const Agents: React.FC<AgentsProps> = ({ agents, onSaveAgent, onDeleteAge
                     </button>
                 </div>
                 
-                <div className="flex-1 overflow-y-auto space-y-2">
+                <div className="flex-1 overflow-y-auto space-y-space-sm custom-scrollbar">
                     {agents.length === 0 && (
-                        <div className="text-sm text-gray-500 text-center py-8 italic">No agents defined.</div>
+                        <div className="text-type-body text-gray-500 text-center py-8 italic">No agents defined.</div>
                     )}
                     {agents.map(agent => (
                         <div 
                             key={agent.id}
                             onClick={() => handleSelectAgent(agent)}
-                            className={`p-3 rounded-lg cursor-pointer border transition-all ${
+                            className={`p-space-sm rounded-lg cursor-pointer border transition-all ${
                                 selectedAgentId === agent.id 
                                 ? 'bg-purple-900/30 border-purple-500 text-white' 
                                 : 'bg-nebula-950 border-nebula-800 text-gray-400 hover:border-purple-500/30 hover:text-gray-200'
                             }`}
                         >
-                            <div className="font-bold text-sm truncate">{agent.name}</div>
-                            <div className="text-[10px] opacity-70 mt-1 truncate">{agent.description || 'No description'}</div>
+                            <div className="font-bold text-type-body truncate">{agent.name}</div>
+                            <div className="text-type-tiny opacity-70 mt-1 truncate">{agent.description || 'No description'}</div>
                         </div>
                     ))}
                 </div>
@@ -193,33 +193,33 @@ export const Agents: React.FC<AgentsProps> = ({ agents, onSaveAgent, onDeleteAge
                 {selectedAgentId ? (
                     <div className="flex flex-col h-full">
                         {/* Header */}
-                        <div className="p-4 border-b border-nebula-800 flex justify-between items-center bg-nebula-950/50">
+                        <div className="p-space-md border-b border-nebula-800 flex justify-between items-center bg-nebula-950/50 shrink-0">
                             <div className="flex-1 mr-4">
                                 <input 
                                     type="text" 
                                     value={currentAgent.name} 
                                     onChange={(e) => setCurrentAgent({...currentAgent, name: e.target.value})}
-                                    className="bg-transparent text-lg font-bold text-white outline-none w-full placeholder-gray-600"
+                                    className="bg-transparent text-type-heading-md font-bold text-white outline-none w-full placeholder-gray-600"
                                     placeholder="Agent Name"
                                 />
                                 <input 
                                     type="text" 
                                     value={currentAgent.description} 
                                     onChange={(e) => setCurrentAgent({...currentAgent, description: e.target.value})}
-                                    className="bg-transparent text-xs text-gray-400 outline-none w-full mt-1 placeholder-gray-600"
+                                    className="bg-transparent text-type-caption text-gray-400 outline-none w-full mt-1 placeholder-gray-600"
                                     placeholder="Short description of the agent's capability..."
                                 />
                             </div>
-                            <div className="flex gap-2">
+                            <div className="flex gap-space-sm">
                                 <button 
                                     onClick={handleDelete}
-                                    className="px-3 py-2 text-red-400 hover:bg-red-900/20 rounded text-sm transition-colors border border-transparent hover:border-red-900/50"
+                                    className="px-3 py-2 text-red-400 hover:bg-red-900/20 rounded text-type-body transition-colors border border-transparent hover:border-red-900/50"
                                 >
                                     <Trash2 size={16} />
                                 </button>
                                 <button 
                                     onClick={handleSave}
-                                    className="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded text-sm font-bold flex items-center gap-2 shadow-lg transition-colors"
+                                    className="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded text-type-body font-bold flex items-center gap-space-sm shadow-lg transition-colors"
                                 >
                                     <Save size={16} /> Save Agent
                                 </button>
@@ -227,44 +227,44 @@ export const Agents: React.FC<AgentsProps> = ({ agents, onSaveAgent, onDeleteAge
                         </div>
 
                         {/* Content */}
-                        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                        <div className="flex-1 overflow-y-auto p-space-lg space-y-space-lg custom-scrollbar">
                             
                             {/* System Prompt */}
-                            <div className="space-y-2">
-                                <label className="text-xs uppercase text-purple-400 font-bold flex items-center gap-2">
+                            <div className="space-y-space-xs">
+                                <label className="text-type-tiny uppercase text-purple-400 font-bold flex items-center gap-space-sm">
                                     <Briefcase size={14} /> System Prompt / Instructions
                                 </label>
                                 <textarea 
                                     value={currentAgent.systemPrompt}
                                     onChange={(e) => setCurrentAgent({...currentAgent, systemPrompt: e.target.value})}
-                                    className="w-full h-40 bg-nebula-950 border border-nebula-800 rounded-lg p-4 text-sm text-gray-300 focus:border-purple-500 outline-none font-mono leading-relaxed resize-none"
+                                    className="w-full h-40 bg-nebula-950 border border-nebula-800 rounded-lg p-space-md text-type-body text-gray-300 focus:border-purple-500 outline-none font-mono leading-relaxed resize-none"
                                     placeholder="You are a helpful assistant..."
                                 />
                             </div>
 
                             {/* Tools Schema */}
-                            <div className="space-y-2">
-                                <div className="flex justify-between items-end mb-2">
-                                    <label className="text-xs uppercase text-purple-400 font-bold flex items-center gap-2">
+                            <div className="space-y-space-xs">
+                                <div className="flex justify-between items-end mb-space-xs">
+                                    <label className="text-type-tiny uppercase text-purple-400 font-bold flex items-center gap-space-sm">
                                         <FileJson size={14} /> Tool Definitions (JSON Schema)
                                     </label>
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Examples:</span>
+                                    <div className="flex items-center gap-space-sm">
+                                        <span className="text-type-tiny text-gray-500 uppercase font-bold tracking-wider">Examples:</span>
                                         <button 
                                             onClick={() => loadTemplate('search')}
-                                            className="text-[10px] bg-nebula-950 border border-nebula-800 hover:border-purple-500 hover:text-white px-2 py-1 rounded text-gray-400 transition-all flex items-center gap-1"
+                                            className="text-type-tiny bg-nebula-950 border border-nebula-800 hover:border-purple-500 hover:text-white px-2 py-1 rounded text-gray-400 transition-all flex items-center gap-1"
                                         >
                                             <Globe size={10} /> Web Search
                                         </button>
                                         <button 
                                             onClick={() => loadTemplate('code')}
-                                            className="text-[10px] bg-nebula-950 border border-nebula-800 hover:border-purple-500 hover:text-white px-2 py-1 rounded text-gray-400 transition-all flex items-center gap-1"
+                                            className="text-type-tiny bg-nebula-950 border border-nebula-800 hover:border-purple-500 hover:text-white px-2 py-1 rounded text-gray-400 transition-all flex items-center gap-1"
                                         >
                                             <Code size={10} /> Python Exec
                                         </button>
                                         <button 
                                             onClick={() => loadTemplate('api')}
-                                            className="text-[10px] bg-nebula-950 border border-nebula-800 hover:border-purple-500 hover:text-white px-2 py-1 rounded text-gray-400 transition-all flex items-center gap-1"
+                                            className="text-type-tiny bg-nebula-950 border border-nebula-800 hover:border-purple-500 hover:text-white px-2 py-1 rounded text-gray-400 transition-all flex items-center gap-1"
                                         >
                                             <Database size={10} /> API Fetch
                                         </button>
@@ -274,73 +274,73 @@ export const Agents: React.FC<AgentsProps> = ({ agents, onSaveAgent, onDeleteAge
                                     <textarea 
                                         value={currentAgent.toolsSchema}
                                         onChange={(e) => setCurrentAgent({...currentAgent, toolsSchema: e.target.value})}
-                                        className="w-full h-48 bg-nebula-950 border border-nebula-800 rounded-lg p-4 text-xs text-green-400 focus:border-purple-500 outline-none font-mono resize-none"
+                                        className="w-full h-48 bg-nebula-950 border border-nebula-800 rounded-lg p-space-md text-xs text-green-400 focus:border-purple-500 outline-none font-mono resize-none"
                                         spellCheck={false}
                                     />
-                                    <div className="absolute top-2 right-2 text-[10px] text-gray-600 bg-nebula-900 px-2 py-1 rounded">JSON</div>
+                                    <div className="absolute top-2 right-2 text-type-tiny text-gray-600 bg-nebula-900 px-2 py-1 rounded">JSON</div>
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                            <div className="grid grid-cols-1 xl:grid-cols-2 gap-space-lg">
                                 {/* Environment Variables */}
-                                <div className="bg-nebula-950/50 border border-nebula-800 rounded-lg p-4">
+                                <div className="bg-nebula-950/50 border border-nebula-800 rounded-lg p-space-md">
                                     <div className="flex justify-between items-center mb-3">
-                                        <label className="text-xs uppercase text-gray-500 font-bold flex items-center gap-2">
+                                        <label className="text-type-tiny uppercase text-gray-500 font-bold flex items-center gap-space-sm">
                                             <Key size={14} /> Environment Variables
                                         </label>
-                                        <button onClick={addEnvVar} className="text-[10px] bg-nebula-900 hover:bg-nebula-800 px-2 py-1 rounded text-purple-400 border border-nebula-700">
+                                        <button onClick={addEnvVar} className="text-type-tiny bg-nebula-900 hover:bg-nebula-800 px-2 py-1 rounded text-purple-400 border border-nebula-700">
                                             + Add Var
                                         </button>
                                     </div>
-                                    <div className="space-y-2 max-h-40 overflow-y-auto">
+                                    <div className="space-y-space-sm max-h-40 overflow-y-auto custom-scrollbar">
                                         {currentAgent.envVars.map((env, i) => (
-                                            <div key={i} className="flex gap-2">
+                                            <div key={i} className="flex gap-space-sm">
                                                 <input 
                                                     placeholder="KEY" 
                                                     value={env.key}
                                                     onChange={(e) => updateEnvVar(i, 'key', e.target.value)}
-                                                    className="flex-1 bg-nebula-900 border border-nebula-700 rounded p-1.5 text-xs text-gray-300 outline-none focus:border-purple-500 font-mono"
+                                                    className="flex-1 bg-nebula-900 border border-nebula-700 rounded p-1.5 text-type-caption text-gray-300 outline-none focus:border-purple-500 font-mono"
                                                 />
                                                 <input 
                                                     placeholder="VALUE" 
                                                     value={env.value}
                                                     onChange={(e) => updateEnvVar(i, 'value', e.target.value)}
-                                                    className="flex-1 bg-nebula-900 border border-nebula-700 rounded p-1.5 text-xs text-gray-300 outline-none focus:border-purple-500 font-mono"
+                                                    className="flex-1 bg-nebula-900 border border-nebula-700 rounded p-1.5 text-type-caption text-gray-300 outline-none focus:border-purple-500 font-mono"
                                                 />
                                                 <button onClick={() => removeEnvVar(i)} className="text-gray-500 hover:text-red-400 px-1">
                                                     <X size={14} />
                                                 </button>
                                             </div>
                                         ))}
-                                        {currentAgent.envVars.length === 0 && <div className="text-xs text-gray-600 italic">No environment variables defined.</div>}
+                                        {currentAgent.envVars.length === 0 && <div className="text-type-caption text-gray-600 italic">No environment variables defined.</div>}
                                     </div>
                                 </div>
 
                                 {/* External Paths */}
-                                <div className="bg-nebula-950/50 border border-nebula-800 rounded-lg p-4">
+                                <div className="bg-nebula-950/50 border border-nebula-800 rounded-lg p-space-md">
                                     <div className="flex justify-between items-center mb-3">
-                                        <label className="text-xs uppercase text-gray-500 font-bold flex items-center gap-2">
+                                        <label className="text-type-tiny uppercase text-gray-500 font-bold flex items-center gap-space-sm">
                                             <FolderOpen size={14} /> External Paths / Includes
                                         </label>
-                                        <button onClick={addPath} className="text-[10px] bg-nebula-900 hover:bg-nebula-800 px-2 py-1 rounded text-purple-400 border border-nebula-700">
+                                        <button onClick={addPath} className="text-type-tiny bg-nebula-900 hover:bg-nebula-800 px-2 py-1 rounded text-purple-400 border border-nebula-700">
                                             + Add Path
                                         </button>
                                     </div>
-                                    <div className="space-y-2 max-h-40 overflow-y-auto">
+                                    <div className="space-y-space-sm max-h-40 overflow-y-auto custom-scrollbar">
                                         {currentAgent.externalPaths.map((path, i) => (
-                                            <div key={i} className="flex gap-2">
+                                            <div key={i} className="flex gap-space-sm">
                                                 <input 
                                                     placeholder="/path/to/script.py or ./config/" 
                                                     value={path}
                                                     onChange={(e) => updatePath(i, e.target.value)}
-                                                    className="flex-1 bg-nebula-900 border border-nebula-700 rounded p-1.5 text-xs text-gray-300 outline-none focus:border-purple-500 font-mono"
+                                                    className="flex-1 bg-nebula-900 border border-nebula-700 rounded p-1.5 text-type-caption text-gray-300 outline-none focus:border-purple-500 font-mono"
                                                 />
                                                 <button onClick={() => removePath(i)} className="text-gray-500 hover:text-red-400 px-1">
                                                     <X size={14} />
                                                 </button>
                                             </div>
                                         ))}
-                                        {currentAgent.externalPaths.length === 0 && <div className="text-xs text-gray-600 italic">No external paths linked.</div>}
+                                        {currentAgent.externalPaths.length === 0 && <div className="text-type-caption text-gray-600 italic">No external paths linked.</div>}
                                     </div>
                                 </div>
                             </div>
