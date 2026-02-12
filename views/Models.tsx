@@ -1,7 +1,6 @@
-
 import React, { useState } from 'react';
 import { Model, ModelVersion, ServerProfile, BenchmarkResult } from '../types';
-import { GitBranch, Box, FileCode, Tag, ExternalLink, Cpu, Terminal, Scale, X, BarChart2, Filter, Check, Server, FileText, Activity, Plus, RefreshCw, Trash2, Layers, Zap, Merge, Scissors, User, FlaskConical, Beaker, Database, ArrowLeftRight, TrendingUp, Play, Loader2, BrainCircuit, Eraser, HardDrive, LayoutTemplate, ScanLine } from 'lucide-react';
+import { GitBranch, Box, FileCode, Tag, ExternalLink, Cpu, Terminal, Scale, X, BarChart2, Filter, Check, Server, FileText, Activity, Plus, RefreshCw, Trash2, Layers, Zap, Merge, Scissors, User, FlaskConical, Beaker, Database, ArrowLeftRight, TrendingUp, Play, Loader2, BrainCircuit, Eraser, HardDrive, LayoutTemplate, ScanLine, ArrowUp, ArrowDown, Minus, Settings } from 'lucide-react';
 
 interface ModelsProps {
   models: Model[];
@@ -182,6 +181,15 @@ export const Models: React.FC<ModelsProps> = ({ models, servers, benchmarks, onA
       return 'Transformer (Decoder-Only)';
   };
 
+  // Helper to estimate GPU layers based on params (heuristic)
+  const estimateGpuLayers = (params: string) => {
+      if (params.includes('70B')) return 80;
+      if (params.includes('7B')) return 32;
+      if (params.includes('13B')) return 40;
+      if (params.includes('1.2B')) return 22;
+      return 'N/A';
+  };
+
   // --- Drag and Drop Logic ---
   const onDragStart = (e: React.DragEvent, modelId: string) => {
     setDraggingModelId(modelId);
@@ -202,6 +210,41 @@ export const Models: React.FC<ModelsProps> = ({ models, servers, benchmarks, onA
 
   const onDragOver = (e: React.DragEvent) => {
     e.preventDefault();
+  };
+
+  // --- Comparison Helper ---
+  const ComparisonMetric = ({ label, value, otherValue, unit, lowerIsBetter = false }: { label: string, value?: number, otherValue?: number, unit: string, lowerIsBetter?: boolean }) => {
+      if (value === undefined) return <div><span className="text-gray-500 block">{label}</span><span className="text-gray-500">-</span></div>;
+      
+      let colorClass = 'text-white';
+      let Icon = null;
+
+      if (otherValue !== undefined) {
+          const diff = value - otherValue;
+          const isBetter = lowerIsBetter ? diff < 0 : diff > 0;
+          const isTie = diff === 0;
+
+          if (isTie) {
+              colorClass = 'text-yellow-400';
+              Icon = <Minus size={12} />;
+          } else if (isBetter) {
+              colorClass = 'text-green-400';
+              Icon = lowerIsBetter ? <ArrowDown size={12} /> : <ArrowUp size={12} />;
+          } else {
+              colorClass = 'text-red-400';
+              Icon = lowerIsBetter ? <ArrowUp size={12} /> : <ArrowDown size={12} />;
+          }
+      }
+
+      return (
+          <div>
+              <span className="text-gray-500 block">{label}</span>
+              <div className={`flex items-center gap-1 font-mono font-bold ${colorClass}`}>
+                  {value} {unit}
+                  {Icon}
+              </div>
+          </div>
+      );
   };
 
   return (
@@ -661,6 +704,32 @@ export const Models: React.FC<ModelsProps> = ({ models, servers, benchmarks, onA
                                         </div>
                                     </div>
 
+                                    {/* Enhanced Technical Details Section */}
+                                    <div className="bg-white/5 p-4 rounded border border-white/5">
+                                        <h4 className="font-bold text-white mb-3 flex items-center gap-2 text-xs uppercase tracking-wider"><Settings size={14}/> Technical Specs & Runtime</h4>
+                                        <div className="space-y-2 mb-4">
+                                            {selectedModel.versions.map(v => (
+                                                <div key={v.id} className="flex justify-between items-center bg-black/20 p-2 rounded border border-white/5 text-xs">
+                                                    <div>
+                                                        <span className="text-purple-300 font-bold">{v.name}</span>
+                                                        <span className="text-gray-500 ml-2">({v.format})</span>
+                                                    </div>
+                                                    <div className="text-right">
+                                                        <div className="text-gray-300"><span className="text-gray-500 uppercase font-bold text-[9px]">Quant:</span> {v.quantization}</div>
+                                                        <div className="text-gray-300"><span className="text-gray-500 uppercase font-bold text-[9px]">GPU Layers:</span> {estimateGpuLayers(selectedModel.params)}</div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                        
+                                        <div>
+                                            <div className="text-[10px] text-gray-500 uppercase font-bold mb-1">Last Configured Startup Flags</div>
+                                            <div className="font-mono text-[10px] text-green-400 bg-black/40 p-2 rounded border border-white/10 break-all">
+                                                {getCompatibleServers(selectedModel.id)[0]?.startupFlags || "No specific flags recorded."}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
                                     <div className="bg-white/5 p-4 rounded border border-white/5">
                                         <h4 className="font-bold text-white mb-3 flex items-center gap-2 text-xs uppercase tracking-wider"><Server size={14}/> Server Compatibility</h4>
                                         <div className="space-y-2">
@@ -796,21 +865,38 @@ export const Models: React.FC<ModelsProps> = ({ models, servers, benchmarks, onA
 
                                 <div className="bg-nebula-900/50 p-6 rounded-xl border border-white/5">
                                     <div className="text-xs text-gray-400 font-bold uppercase mb-4 flex justify-between">
-                                        <span>Performance Score</span>
-                                        <span className="text-white">88/100</span>
-                                    </div>
-                                    <div className="w-full bg-nebula-950 h-2 rounded-full overflow-hidden">
-                                        <div className="h-full bg-purple-500 w-[88%] shadow-[0_0_10px_#8b5cf6]"></div>
+                                        <span>Performance Metrics</span>
+                                        <span className="text-white">Active</span>
                                     </div>
                                     <div className="mt-4 grid grid-cols-2 gap-4 text-xs">
-                                        <div>
-                                            <span className="text-gray-500 block">Latency</span>
-                                            <span className="text-white font-mono">{comparisonPair[0].metrics?.latencyMs || '45'}ms</span>
-                                        </div>
-                                        <div>
-                                            <span className="text-gray-500 block">Throughput</span>
-                                            <span className="text-white font-mono">{comparisonPair[0].metrics?.tokensPerSecond || '120'} t/s</span>
-                                        </div>
+                                        <ComparisonMetric 
+                                            label="Latency" 
+                                            value={comparisonPair[0].metrics?.latencyMs} 
+                                            otherValue={comparisonPair[1].metrics?.latencyMs}
+                                            unit="ms"
+                                            lowerIsBetter={true}
+                                        />
+                                        <ComparisonMetric 
+                                            label="Throughput" 
+                                            value={comparisonPair[0].metrics?.tokensPerSecond} 
+                                            otherValue={comparisonPair[1].metrics?.tokensPerSecond}
+                                            unit="t/s"
+                                            lowerIsBetter={false}
+                                        />
+                                        <ComparisonMetric 
+                                            label="VRAM" 
+                                            value={comparisonPair[0].metrics?.vramGB} 
+                                            otherValue={comparisonPair[1].metrics?.vramGB}
+                                            unit="GB"
+                                            lowerIsBetter={true}
+                                        />
+                                        <ComparisonMetric 
+                                            label="Perplexity" 
+                                            value={comparisonPair[0].metrics?.perplexity} 
+                                            otherValue={comparisonPair[1].metrics?.perplexity}
+                                            unit=""
+                                            lowerIsBetter={true}
+                                        />
                                     </div>
                                 </div>
 
@@ -852,21 +938,38 @@ export const Models: React.FC<ModelsProps> = ({ models, servers, benchmarks, onA
 
                                 <div className="bg-nebula-900/50 p-6 rounded-xl border border-white/5">
                                     <div className="text-xs text-gray-400 font-bold uppercase mb-4 flex justify-between">
-                                        <span>Performance Score</span>
-                                        <span className="text-white">92/100</span>
-                                    </div>
-                                    <div className="w-full bg-nebula-950 h-2 rounded-full overflow-hidden">
-                                        <div className="h-full bg-blue-500 w-[92%] shadow-[0_0_10px_#3b82f6]"></div>
+                                        <span>Performance Metrics</span>
+                                        <span className="text-white">Active</span>
                                     </div>
                                     <div className="mt-4 grid grid-cols-2 gap-4 text-xs">
-                                        <div>
-                                            <span className="text-gray-500 block">Latency</span>
-                                            <span className="text-white font-mono">{comparisonPair[1].metrics?.latencyMs || '38'}ms</span>
-                                        </div>
-                                        <div>
-                                            <span className="text-gray-500 block">Throughput</span>
-                                            <span className="text-white font-mono">{comparisonPair[1].metrics?.tokensPerSecond || '145'} t/s</span>
-                                        </div>
+                                        <ComparisonMetric 
+                                            label="Latency" 
+                                            value={comparisonPair[1].metrics?.latencyMs} 
+                                            otherValue={comparisonPair[0].metrics?.latencyMs}
+                                            unit="ms"
+                                            lowerIsBetter={true}
+                                        />
+                                        <ComparisonMetric 
+                                            label="Throughput" 
+                                            value={comparisonPair[1].metrics?.tokensPerSecond} 
+                                            otherValue={comparisonPair[0].metrics?.tokensPerSecond}
+                                            unit="t/s"
+                                            lowerIsBetter={false}
+                                        />
+                                        <ComparisonMetric 
+                                            label="VRAM" 
+                                            value={comparisonPair[1].metrics?.vramGB} 
+                                            otherValue={comparisonPair[0].metrics?.vramGB}
+                                            unit="GB"
+                                            lowerIsBetter={true}
+                                        />
+                                        <ComparisonMetric 
+                                            label="Perplexity" 
+                                            value={comparisonPair[1].metrics?.perplexity} 
+                                            otherValue={comparisonPair[0].metrics?.perplexity}
+                                            unit=""
+                                            lowerIsBetter={true}
+                                        />
                                     </div>
                                 </div>
 
