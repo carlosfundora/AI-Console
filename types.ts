@@ -71,7 +71,8 @@ export interface RAGConfig {
   k: number;
 }
 
-export type BenchmarkStepType = 'Phase' | 'Generation' | 'RAG' | 'Embedding' | 'Ingestion' | 'ToolUse' | 'ColBERT';
+// Updated Tags based on requirements
+export type BenchmarkStepType = 'Custom' | 'Retrieval' | 'Embedding' | 'Tool Calling' | 'Generation';
 
 export interface BenchmarkStep {
     id: string;
@@ -83,15 +84,13 @@ export interface BenchmarkStep {
     substeps?: BenchmarkStep[]; // For Phases containing other steps
     config: {
         datasetId?: string;
-        // RAG/Ingest/ColBERT
+        // Generic params for the tag types
         chunkSize?: number;
         overlap?: number;
         vectorStore?: string;
         rerankTopK?: number;
-        // Tool
         toolSchemaUrl?: string;
         metric?: 'ExactMatch' | 'Semantic' | 'FunctionCallValidity' | 'Throughput';
-        // Ingestion
         sourcePath?: string;
         docType?: 'PDF' | 'Markdown' | 'HTML';
     };
@@ -104,6 +103,7 @@ export interface AdvancedBenchmarkConfig {
   modelId: string; // Default model if not overridden in step
   versionId?: string; 
   hardware: 'GPU' | 'CPU' | 'Dual-GPU';
+  scriptPath?: string; // Path to the executable test script
   
   parameters: {
       contextSize: number;

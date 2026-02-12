@@ -111,7 +111,7 @@ model = AutoModelForCausalLM.from_pretrained("LiquidAI/LFM2.5-1.2B")
   { 
     id: 'liquid-lfm-2.5-audio', 
     name: 'LFM 2.5 Audio 1.5B', 
-    provider: 'LiquidAI',
+    provider: 'LiquidAI', 
     family: 'Liquid',
     description: 'Multimodal audio model capable of ASR, TTS, and interleaved conversation. WebGPU optimized.',
     tags: ['Audio', 'Multimodal', 'WebGPU-Ready'],
@@ -331,9 +331,9 @@ const MOCK_BENCHMARKS: BenchmarkResult[] = [
       type: 'RAG', 
       notes: 'LFM2.5 Pipeline + Dual Embed',
       segments: [
-          { stepId: 's1', stepName: 'PDF Ingestion', type: 'Ingestion', duration: 500 },
-          { stepId: 's2', stepName: 'Hybrid Search (Chroma)', type: 'RAG', duration: 400 },
-          { stepId: 's3', stepName: 'Reranking (ColBERT)', type: 'ColBERT', duration: 1200 },
+          { stepId: 's1', stepName: 'PDF Ingestion', type: 'Custom', duration: 500 },
+          { stepId: 's2', stepName: 'Hybrid Search (Chroma)', type: 'Retrieval', duration: 400 },
+          { stepId: 's3', stepName: 'Reranking (ColBERT)', type: 'Retrieval', duration: 1200 },
           { stepId: 's4', stepName: 'Generation (Saul-7B)', type: 'Generation', duration: 17510 }
       ]
   },
