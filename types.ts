@@ -188,6 +188,8 @@ export interface LabArtifact {
     sourceModel: string;
     size: string;
     created: string;
+    description?: string;
+    usage?: string;
 }
 
 export interface AgentConfig {

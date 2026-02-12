@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Model, LabArtifact } from '../types';
-import { FlaskConical, Dna, Merge, Scissors, Zap, Box, Save, Plus, Trash2, CheckCircle, Loader2, BarChart2, TrendingDown, Activity, Settings } from 'lucide-react';
+import { FlaskConical, Dna, Merge, Scissors, Zap, Box, Save, Plus, Trash2, CheckCircle, Loader2, BarChart2, TrendingDown, Activity, Settings, X, FileText, Info } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 
 interface LaboratoryProps {
@@ -13,9 +13,36 @@ type MergeMethod = 'arcee_fusion' | 'passthrough' | 'task_arithmetic' | 'dare_li
 
 // Mock Inventory Data
 const MOCK_INVENTORY: LabArtifact[] = [
-    { id: 'a1', type: 'Tokenizer', name: 'Llama-3-Special-Tok', sourceModel: 'Llama-3-8b', size: '12MB', created: '2023-10-25' },
-    { id: 'a2', type: 'Adapter', name: 'LFM-Reasoning-LoRA', sourceModel: 'LFM-2.5', size: '150MB', created: '2023-10-26' },
-    { id: 'a3', type: 'MedusaHead', name: 'Medusa-Draft-v1', sourceModel: 'Mistral-7b', size: '450MB', created: '2023-10-27' },
+    { 
+        id: 'a1', 
+        type: 'Tokenizer', 
+        name: 'Llama-3-Special-Tok', 
+        sourceModel: 'Llama-3-8b', 
+        size: '12MB', 
+        created: '2023-10-25',
+        description: 'Modified tokenizer with added special tokens for function calling and structured JSON output.',
+        usage: 'Use this tokenizer when fine-tuning Llama-3 models for agentic workflows.'
+    },
+    { 
+        id: 'a2', 
+        type: 'Adapter', 
+        name: 'LFM-Reasoning-LoRA', 
+        sourceModel: 'LFM-2.5', 
+        size: '150MB', 
+        created: '2023-10-26',
+        description: 'LoRA adapter trained on a high-quality CoT dataset (GSM8K + Math) to improve reasoning capabilities.',
+        usage: 'Load with LFM-2.5-1.2B base model. Recommended alpha=32.'
+    },
+    { 
+        id: 'a3', 
+        type: 'MedusaHead', 
+        name: 'Medusa-Draft-v1', 
+        sourceModel: 'Mistral-7b', 
+        size: '450MB', 
+        created: '2023-10-27',
+        description: 'Experimental Medusa heads (4 heads) for speculative decoding acceleration on Mistral 7B.',
+        usage: 'Compatible with any Mistral-7B-v0.1 derived model. Expect 1.8x - 2.2x speedup.'
+    },
 ];
 
 const MOCK_LOSS_DATA = [
@@ -29,6 +56,7 @@ export const Laboratory: React.FC<LaboratoryProps> = ({ models }) => {
   const [mode, setMode] = useState<LabMode>('merge');
   const [mergeMethod, setMergeMethod] = useState<MergeMethod>('arcee_fusion');
   const [inventory, setInventory] = useState<LabArtifact[]>(MOCK_INVENTORY);
+  const [selectedArtifact, setSelectedArtifact] = useState<LabArtifact | null>(null);
   const [inputModels, setInputModels] = useState<{id: number, modelId: string, weight: number}[]>([
       { id: 1, modelId: '', weight: 1.0 },
       { id: 2, modelId: '', weight: 1.0 }
@@ -84,6 +112,16 @@ export const Laboratory: React.FC<LaboratoryProps> = ({ models }) => {
       }, 2000);
   };
 
+  const handleDeleteArtifact = (id: string, e: React.MouseEvent) => {
+      e.stopPropagation();
+      if (confirm('Are you sure you want to delete this artifact? This action cannot be undone.')) {
+          setInventory(inventory.filter(item => item.id !== id));
+          if (selectedArtifact?.id === id) {
+              setSelectedArtifact(null);
+          }
+      }
+  };
+
   const getMergeMethodInfo = (m: MergeMethod) => {
       switch(m) {
           case 'arcee_fusion': return { label: 'Arcee Fusion', desc: 'Dynamic thresholding for fusing important changes.', base: 'Required' };
@@ -95,7 +133,7 @@ export const Laboratory: React.FC<LaboratoryProps> = ({ models }) => {
   };
 
   return (
-    <div className="flex h-full gap-space-lg text-nebula-100 font-sans overflow-hidden p-space-lg">
+    <div className="flex h-full gap-space-lg text-nebula-100 font-sans overflow-hidden p-space-lg relative">
         {/* Main Chamber */}
         <div className="flex-1 flex flex-col gap-space-lg min-w-0 h-full overflow-hidden">
             
@@ -510,16 +548,27 @@ export const Laboratory: React.FC<LaboratoryProps> = ({ models }) => {
              
              <div className="flex-1 overflow-y-auto space-y-space-sm custom-scrollbar pr-1">
                  {inventory.map(item => (
-                     <div key={item.id} className="p-space-sm bg-nebula-950/50 border border-nebula-800 rounded hover:border-purple-500/50 hover:bg-purple-900/10 transition-all cursor-pointer group">
+                     <div 
+                        key={item.id} 
+                        onClick={() => setSelectedArtifact(item)}
+                        className={`p-space-sm bg-nebula-950/50 border rounded transition-all cursor-pointer group relative ${selectedArtifact?.id === item.id ? 'border-purple-500 bg-purple-900/10' : 'border-nebula-800 hover:border-purple-500/50 hover:bg-purple-900/10'}`}
+                     >
                          <div className="flex justify-between items-start mb-1">
                              <span className="text-[10px] uppercase text-purple-400 font-bold border border-nebula-800 px-1 rounded bg-nebula-900">{item.type}</span>
                              <Save size={12} className="text-gray-600 group-hover:text-purple-400" />
                          </div>
-                         <div className="font-bold text-type-body text-gray-200 truncate mb-1">{item.name}</div>
+                         <div className="font-bold text-type-body text-gray-200 truncate mb-1 pr-6">{item.name}</div>
                          <div className="text-[10px] text-gray-500 font-mono">
                              Src: {item.sourceModel} <br/>
                              Size: {item.size}
                          </div>
+                         <button 
+                            onClick={(e) => handleDeleteArtifact(item.id, e)}
+                            className="absolute bottom-2 right-2 p-1.5 text-gray-600 hover:text-red-400 hover:bg-nebula-900 rounded opacity-0 group-hover:opacity-100 transition-all"
+                            title="Delete Artifact"
+                         >
+                             <Trash2 size={12} />
+                         </button>
                      </div>
                  ))}
              </div>
@@ -531,6 +580,68 @@ export const Laboratory: React.FC<LaboratoryProps> = ({ models }) => {
                  </div>
              </div>
         </div>
+
+        {/* Artifact Detail Modal */}
+        {selectedArtifact && (
+            <div className="absolute inset-0 bg-nebula-950/95 backdrop-blur-sm z-50 flex items-center justify-center p-space-lg animate-fade-in" onClick={() => setSelectedArtifact(null)}>
+                <div 
+                    className="bg-nebula-900 border border-nebula-700 rounded-xl w-full max-w-lg shadow-2xl relative overflow-hidden flex flex-col"
+                    onClick={(e) => e.stopPropagation()}
+                >
+                    <div className="p-space-lg border-b border-nebula-800 bg-nebula-950/50 flex justify-between items-start">
+                        <div>
+                            <div className="flex items-center gap-space-sm mb-1">
+                                <span className="text-[10px] uppercase text-purple-400 font-bold border border-nebula-800 px-2 py-0.5 rounded bg-nebula-900">{selectedArtifact.type}</span>
+                                <span className="text-[10px] text-gray-500 font-mono">{selectedArtifact.created}</span>
+                            </div>
+                            <h3 className="text-type-heading-md font-bold text-white">{selectedArtifact.name}</h3>
+                        </div>
+                        <button onClick={() => setSelectedArtifact(null)} className="text-gray-400 hover:text-white p-1 rounded hover:bg-nebula-800 transition-colors">
+                            <X size={20} />
+                        </button>
+                    </div>
+                    
+                    <div className="p-space-lg space-y-space-lg overflow-y-auto max-h-[60vh]">
+                        <div className="grid grid-cols-2 gap-space-md">
+                            <div className="bg-nebula-950 p-3 rounded border border-nebula-800">
+                                <div className="text-type-tiny text-gray-500 uppercase font-bold">Source Model</div>
+                                <div className="text-white font-mono text-type-body">{selectedArtifact.sourceModel}</div>
+                            </div>
+                            <div className="bg-nebula-950 p-3 rounded border border-nebula-800">
+                                <div className="text-type-tiny text-gray-500 uppercase font-bold">Size</div>
+                                <div className="text-white font-mono text-type-body">{selectedArtifact.size}</div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <h4 className="text-type-caption font-bold text-gray-400 uppercase mb-2 flex items-center gap-2"><FileText size={14}/> Description</h4>
+                            <p className="text-gray-300 text-type-body leading-relaxed bg-nebula-950/30 p-3 rounded border border-nebula-800/50">
+                                {selectedArtifact.description || "No description available for this artifact."}
+                            </p>
+                        </div>
+
+                        <div>
+                            <h4 className="text-type-caption font-bold text-gray-400 uppercase mb-2 flex items-center gap-2"><Info size={14}/> Usage Instructions</h4>
+                            <p className="text-gray-300 text-type-body leading-relaxed bg-nebula-950/30 p-3 rounded border border-nebula-800/50">
+                                {selectedArtifact.usage || "No specific usage instructions provided."}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="p-space-md border-t border-nebula-800 bg-nebula-950/30 flex justify-end gap-space-md">
+                        <button 
+                            onClick={(e) => handleDeleteArtifact(selectedArtifact.id, e)}
+                            className="px-4 py-2 text-red-400 hover:bg-red-900/20 rounded text-sm font-bold transition-colors border border-transparent hover:border-red-900/50"
+                        >
+                            Delete Artifact
+                        </button>
+                        <button onClick={() => setSelectedArtifact(null)} className="px-4 py-2 bg-nebula-800 hover:bg-nebula-700 text-white rounded text-sm font-bold transition-colors border border-nebula-700">
+                            Close
+                        </button>
+                    </div>
+                </div>
+            </div>
+        )}
     </div>
   );
 };

@@ -556,12 +556,6 @@ const App: React.FC = () => {
           </div>
           
           <div className="flex items-center gap-space-lg relative z-10">
-              {SERVER_CONFIG.rocmEnabled && (
-                  <div className="hidden md:flex items-center gap-2 px-3 py-1 bg-red-900/20 border border-red-500/30 rounded-full">
-                      <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
-                      <span className="text-type-caption text-red-200 font-medium">AMD ROCm Active</span>
-                  </div>
-              )}
               <div className="text-right hidden sm:block">
                   <p className="text-type-caption text-gray-400">Environment</p>
                   <p className="text-type-body font-mono text-purple-300">{SERVER_CONFIG.gpuType} • {SERVER_CONFIG.vramTotal}GB</p>
@@ -621,9 +615,15 @@ const App: React.FC = () => {
       </div>
 
        {/* Full Width Footer with Glassmorphism */}
-      <footer className="h-8 bg-nebula-950/70 backdrop-blur-md border-t border-white/5 flex items-center justify-between px-4 text-type-caption text-gray-500 select-none z-40 relative shadow-[0_-5px_15px_rgba(0,0,0,0.2)]">
-            <div className="flex gap-space-md">
+      <footer className="h-8 bg-nebula-950/70 backdrop-blur-md border-t border-white/5 flex items-center justify-between px-4 text-type-caption text-gray-500 select-none z-40 relative shadow-[0_-5px_15px_rgba(0,0,0,0.2)] w-full">
+            <div className="flex gap-space-md items-center">
                 <span className="flex items-center gap-space-xs"><span className="w-2 h-2 rounded-full bg-green-500"></span> System Online</span>
+                {SERVER_CONFIG.rocmEnabled && (
+                  <div className="flex items-center gap-2 px-2 py-0.5 bg-red-900/20 border border-red-500/30 rounded-full">
+                      <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
+                      <span className="text-[10px] text-red-200 font-medium">AMD ROCm Active</span>
+                  </div>
+                )}
                 <span className="flex items-center gap-space-xs">GPU Util: 12%</span>
                 <span className="flex items-center gap-space-xs">VRAM: 8/12 GB</span>
             </div>
