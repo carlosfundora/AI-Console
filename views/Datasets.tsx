@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Dataset, DatasetTemplate } from '../types';
 import { generateSyntheticDataSample } from '../services/geminiService';
-import { Filter, SortAsc, Sparkles, Download, FileText, MessageSquare, Code, Save, FileJson, AlignLeft, Edit3, Plus, Trash2, X, Check, Copy, AlertTriangle, Wand2, Database, MoreHorizontal, Maximize2, CheckCircle2, Search, Table as TableIcon } from 'lucide-react';
+import { Filter, SortAsc, Sparkles, Download, FileText, MessageSquare, Code, Save, FileJson, AlignLeft, Edit3, Plus, Trash2, X, Check, Copy, AlertTriangle, Wand2, Database, MoreHorizontal, Maximize2, CheckCircle2, Search, Table as TableIcon, Eye, Terminal } from 'lucide-react';
 
 interface DatasetsProps {
   datasets: Dataset[];
@@ -134,6 +134,8 @@ export const Datasets: React.FC<DatasetsProps> = ({ datasets }) => {
   const [viewingDataset, setViewingDataset] = useState<Dataset | null>(null);
   const [datasetContent, setDatasetContent] = useState<string>('');
   const [viewerValidation, setViewerValidation] = useState<{valid: boolean, msg: string} | null>(null);
+  const [viewMode, setViewMode] = useState<'raw' | 'dry-run'>('raw');
+  const [dryRunTemplate, setDryRunTemplate] = useState('ChatML');
 
   const activeTemplate = templates.find(t => t.id === selectedTemplateId) || templates[0];
 
@@ -141,6 +143,7 @@ export const Datasets: React.FC<DatasetsProps> = ({ datasets }) => {
   useEffect(() => {
       if (viewingDataset) {
           setViewerValidation(null);
+          setViewMode('raw');
           // Simulate loading content based on format
           let mockContent = [];
           const count = 3;
@@ -247,6 +250,41 @@ export const Datasets: React.FC<DatasetsProps> = ({ datasets }) => {
     } finally {
       setIsGenerating(false);
     }
+  };
+
+  const renderDryRun = () => {
+      try {
+          const data = JSON.parse(datasetContent);
+          const item = Array.isArray(data) ? data[0] : data;
+          
+          let preview = '';
+          
+          // Simple heuristic to extract conversation-like structure
+          let messages = [];
+          if (item.messages) messages = item.messages;
+          else if (item.conversations) messages = item.conversations.map((c: any) => ({ role: c.from === 'human' ? 'user' : 'assistant', content: c.value }));
+          else if (item.instruction) messages = [{role: 'user', content: item.instruction}, {role: 'assistant', content: item.output}];
+          
+          if (dryRunTemplate === 'ChatML') {
+              preview = messages.map((m: any) => `<|im_start|>${m.role}\n${m.content}<|im_end|>`).join('\n') + '\n<|im_start|>assistant';
+          } else if (dryRunTemplate === 'Llama-3') {
+              preview = `<|begin_of_text|>` + messages.map((m: any) => `<|start_header_id|>${m.role}<|end_header_id|>\n\n${m.content}<|eot_id|>`).join('');
+          } else if (dryRunTemplate === 'Alpaca') {
+              if (item.instruction) {
+                  preview = `### Instruction:\n${item.instruction}\n\n${item.input ? `### Input:\n${item.input}\n\n` : ''}### Response:\n${item.output}`;
+              } else {
+                  preview = `(Auto-converted from chat)\n### Instruction:\n${messages[0]?.content || ''}\n\n### Response:\n${messages[1]?.content || ''}`;
+              }
+          }
+
+          return (
+              <div className="bg-black/40 p-4 rounded-lg border border-white/10 font-mono text-sm leading-relaxed whitespace-pre-wrap text-gray-300">
+                  {preview || "Could not map data structure to template."}
+              </div>
+          );
+      } catch (e) {
+          return <div className="text-red-400">Invalid JSON data for dry run.</div>;
+      }
   };
 
   const filteredDatasets = datasets
@@ -663,22 +701,41 @@ export const Datasets: React.FC<DatasetsProps> = ({ datasets }) => {
                           </h2>
                           <p className="text-type-tiny text-gray-400 mt-1 uppercase font-bold tracking-widest">{viewingDataset.id} • {viewingDataset.rows} ROWS</p>
                       </div>
-                      <div className="flex items-center gap-space-md">
-                          {viewerValidation && (
-                              <div className={`px-3 py-1 rounded text-[10px] font-bold uppercase flex items-center gap-2 border ${viewerValidation.valid ? 'bg-green-900/20 text-green-400 border-green-500/30' : 'bg-red-900/20 text-red-400 border-red-500/30'}`}>
-                                  {viewerValidation.valid ? <CheckCircle2 size={12}/> : <AlertTriangle size={12}/>}
-                                  {viewerValidation.msg}
-                              </div>
-                          )}
-                          <button 
-                            onClick={handleRunViewerValidation}
-                            className="px-3 py-1.5 bg-nebula-800 border border-nebula-700 hover:border-purple-500 text-gray-300 hover:text-white rounded text-xs font-bold transition-all"
-                          >
-                              Run Validation
-                          </button>
-                          <button onClick={() => setViewingDataset(null)} className="p-2 hover:bg-nebula-800 rounded-full text-gray-400 hover:text-white transition-colors">
-                              <X size={24} />
-                          </button>
+                      
+                      <div className="flex items-center gap-4">
+                          {/* View Mode Toggle */}
+                          <div className="flex bg-nebula-950 p-1 rounded-lg border border-nebula-800">
+                              <button 
+                                onClick={() => setViewMode('raw')}
+                                className={`px-3 py-1.5 rounded text-xs font-bold transition-all flex items-center gap-2 ${viewMode === 'raw' ? 'bg-purple-600 text-white' : 'text-gray-400 hover:text-white'}`}
+                              >
+                                  <Code size={14} /> JSON
+                              </button>
+                              <button 
+                                onClick={() => setViewMode('dry-run')}
+                                className={`px-3 py-1.5 rounded text-xs font-bold transition-all flex items-center gap-2 ${viewMode === 'dry-run' ? 'bg-purple-600 text-white' : 'text-gray-400 hover:text-white'}`}
+                              >
+                                  <Terminal size={14} /> Dry Run
+                              </button>
+                          </div>
+
+                          <div className="flex items-center gap-space-md border-l border-nebula-800 pl-4">
+                              {viewerValidation && (
+                                  <div className={`px-3 py-1 rounded text-[10px] font-bold uppercase flex items-center gap-2 border ${viewerValidation.valid ? 'bg-green-900/20 text-green-400 border-green-500/30' : 'bg-red-900/20 text-red-400 border-red-500/30'}`}>
+                                      {viewerValidation.valid ? <CheckCircle2 size={12}/> : <AlertTriangle size={12}/>}
+                                      {viewerValidation.msg}
+                                  </div>
+                              )}
+                              <button 
+                                onClick={handleRunViewerValidation}
+                                className="px-3 py-1.5 bg-nebula-800 border border-nebula-700 hover:border-purple-500 text-gray-300 hover:text-white rounded text-xs font-bold transition-all"
+                              >
+                                  Run Validation
+                              </button>
+                              <button onClick={() => setViewingDataset(null)} className="p-2 hover:bg-nebula-800 rounded-full text-gray-400 hover:text-white transition-colors">
+                                  <X size={24} />
+                              </button>
+                          </div>
                       </div>
                   </div>
 
@@ -703,10 +760,40 @@ export const Datasets: React.FC<DatasetsProps> = ({ datasets }) => {
                       </div>
                       
                       <div className="flex-1 bg-nebula-950 p-space-lg overflow-y-auto custom-scrollbar relative group">
-                          <div className="absolute top-4 right-6 text-[10px] text-gray-600 font-mono uppercase tracking-widest pointer-events-none group-hover:text-purple-500 transition-colors">
-                              Preview Mode (Read-Only)
-                          </div>
-                          <SyntaxHighlight code={datasetContent} />
+                          {viewMode === 'raw' ? (
+                              <>
+                                  <div className="absolute top-4 right-6 text-[10px] text-gray-600 font-mono uppercase tracking-widest pointer-events-none group-hover:text-purple-500 transition-colors">
+                                      Preview Mode (Read-Only)
+                                  </div>
+                                  <SyntaxHighlight code={datasetContent} />
+                              </>
+                          ) : (
+                              <div className="max-w-3xl mx-auto space-y-6">
+                                  <div className="flex justify-between items-center mb-4">
+                                      <h3 className="text-white font-bold flex items-center gap-2">
+                                          <Eye size={16} className="text-blue-400"/> Template Preview
+                                      </h3>
+                                      <select 
+                                          value={dryRunTemplate} 
+                                          onChange={(e) => setDryRunTemplate(e.target.value)}
+                                          className="bg-nebula-900 border border-nebula-700 text-gray-300 text-xs rounded p-2 outline-none focus:border-purple-500"
+                                      >
+                                          <option value="ChatML">ChatML (OpenAI)</option>
+                                          <option value="Llama-3">Llama 3 (Official)</option>
+                                          <option value="Alpaca">Alpaca (Standard)</option>
+                                      </select>
+                                  </div>
+                                  
+                                  {renderDryRun()}
+
+                                  <div className="p-4 bg-yellow-900/10 border border-yellow-500/20 rounded-lg text-xs text-yellow-500/80 leading-relaxed flex items-start gap-3">
+                                      <AlertTriangle size={16} className="shrink-0 mt-0.5"/>
+                                      <div>
+                                          <strong>Tokenizer Warning:</strong> This is a simulation based on standard templates. Actual training requires the tokenizer's `apply_chat_template` method to match the base model exactly.
+                                      </div>
+                                  </div>
+                              </div>
+                          )}
                       </div>
                   </div>
               </div>

@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Model, ModelVersion, ServerProfile, BenchmarkResult } from '../types';
-import { GitBranch, Box, FileCode, Tag, ExternalLink, Cpu, Terminal, Scale, X, BarChart2, Filter, Check, Server, FileText, Activity, Plus, RefreshCw, Trash2, Layers, Zap, Merge, Scissors, User, FlaskConical, Beaker, Database, ArrowLeftRight, TrendingUp, Play, Loader2, BrainCircuit } from 'lucide-react';
+import { GitBranch, Box, FileCode, Tag, ExternalLink, Cpu, Terminal, Scale, X, BarChart2, Filter, Check, Server, FileText, Activity, Plus, RefreshCw, Trash2, Layers, Zap, Merge, Scissors, User, FlaskConical, Beaker, Database, ArrowLeftRight, TrendingUp, Play, Loader2, BrainCircuit, Eraser } from 'lucide-react';
 
 interface ModelsProps {
   models: Model[];
@@ -120,6 +120,12 @@ export const Models: React.FC<ModelsProps> = ({ models, servers, benchmarks, onA
           onAddBenchmark(newResult);
           setIsBenchmarking(false);
       }, 2000);
+  };
+
+  const handlePruneCheckpoints = () => {
+      if (confirm("Are you sure you want to delete all intermediate checkpoints? This will keep only the best/final versions.")) {
+          alert("Pruning process initiated. Reclaiming disk space...");
+      }
   };
 
   // Derived filter options from LOCAL models to include new tags
@@ -260,7 +266,7 @@ export const Models: React.FC<ModelsProps> = ({ models, servers, benchmarks, onA
                     <select 
                         value={filterProvider}
                         onChange={(e) => setFilterProvider(e.target.value)}
-                        className="w-full bg-nebula-950 border border-nebula-800 rounded p-2 text-type-caption text-gray-300 outline-none focus:border-purple-500 cursor-pointer"
+                        className="w-full bg-nebula-900 border border-nebula-800 rounded p-2 text-type-caption text-gray-300 outline-none focus:border-purple-500 cursor-pointer"
                     >
                         {providers.map(p => <option key={p} value={p}>{p}</option>)}
                     </select>
@@ -270,7 +276,7 @@ export const Models: React.FC<ModelsProps> = ({ models, servers, benchmarks, onA
                     <select 
                         value={filterFamily}
                         onChange={(e) => setFilterFamily(e.target.value)}
-                        className="w-full bg-nebula-950 border border-nebula-800 rounded p-2 text-type-caption text-gray-300 outline-none focus:border-purple-500 cursor-pointer"
+                        className="w-full bg-nebula-900 border border-nebula-800 rounded p-2 text-type-caption text-gray-300 outline-none focus:border-purple-500 cursor-pointer"
                     >
                         {families.map(f => <option key={f} value={f}>{f}</option>)}
                     </select>
@@ -280,7 +286,7 @@ export const Models: React.FC<ModelsProps> = ({ models, servers, benchmarks, onA
                     <select 
                         value={filterTensor}
                         onChange={(e) => setFilterTensor(e.target.value)}
-                        className="w-full bg-nebula-950 border border-nebula-800 rounded p-2 text-type-caption text-gray-300 outline-none focus:border-purple-500 cursor-pointer"
+                        className="w-full bg-nebula-900 border border-nebula-800 rounded p-2 text-type-caption text-gray-300 outline-none focus:border-purple-500 cursor-pointer"
                     >
                         {tensors.map(t => <option key={t} value={t}>{t}</option>)}
                     </select>
@@ -290,7 +296,7 @@ export const Models: React.FC<ModelsProps> = ({ models, servers, benchmarks, onA
                     <select 
                         value={filterTag}
                         onChange={(e) => setFilterTag(e.target.value)}
-                        className="w-full bg-nebula-950 border border-nebula-800 rounded p-2 text-type-caption text-gray-300 outline-none focus:border-purple-500 cursor-pointer"
+                        className="w-full bg-nebula-900 border border-nebula-800 rounded p-2 text-type-caption text-gray-300 outline-none focus:border-purple-500 cursor-pointer"
                     >
                         {availableTags.map(t => <option key={t} value={t}>{t}</option>)}
                     </select>
@@ -478,6 +484,14 @@ export const Models: React.FC<ModelsProps> = ({ models, servers, benchmarks, onA
 
                         {detailTab === 'versions' && (
                             <div className="space-y-4 animate-fade-in">
+                                <div className="flex justify-end mb-2">
+                                    <button 
+                                        onClick={handlePruneCheckpoints}
+                                        className="text-[10px] bg-red-900/20 text-red-400 hover:bg-red-900/40 border border-red-500/30 px-3 py-1.5 rounded flex items-center gap-2 transition-all font-bold uppercase tracking-wider"
+                                    >
+                                        <Eraser size={12} /> Prune Intermediates
+                                    </button>
+                                </div>
                                 {selectedModel.versions.map(version => (
                                     <div key={version.id} className="bg-white/5 border border-white/5 rounded-lg p-4 flex flex-col gap-3">
                                         <div className="flex justify-between items-start">
@@ -550,16 +564,61 @@ export const Models: React.FC<ModelsProps> = ({ models, servers, benchmarks, onA
                         
                         {detailTab === 'engineering' && (
                             <div className="animate-fade-in space-y-4">
-                                <div className="bg-white/5 p-4 rounded border border-white/5">
-                                    <h4 className="font-bold text-white mb-2 flex items-center gap-2"><Server size={16}/> Server Compatibility</h4>
-                                    <div className="space-y-2">
-                                        {getCompatibleServers(selectedModel.id).map(srv => (
-                                            <div key={srv.id} className="flex justify-between items-center bg-black/20 p-2 rounded">
-                                                <span className="text-sm text-gray-300">{srv.name}</span>
-                                                <span className={`text-xs px-2 py-0.5 rounded ${srv.status === 'Online' ? 'bg-green-900/30 text-green-400' : 'bg-gray-800 text-gray-500'}`}>{srv.status}</span>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="bg-white/5 p-4 rounded border border-white/5">
+                                        <h4 className="font-bold text-white mb-3 flex items-center gap-2 text-xs uppercase tracking-wider"><Cpu size={14}/> Inference Config</h4>
+                                        <div className="space-y-3 text-sm">
+                                            <div className="flex justify-between border-b border-white/5 pb-1">
+                                                <span className="text-gray-500">Context Window</span>
+                                                <span className="text-gray-300 font-mono">8192</span>
                                             </div>
-                                        ))}
-                                        {getCompatibleServers(selectedModel.id).length === 0 && <div className="text-gray-500 italic text-sm">No compatible servers configured.</div>}
+                                            <div className="flex justify-between border-b border-white/5 pb-1">
+                                                <span className="text-gray-500">RoPE Scale</span>
+                                                <span className="text-gray-300 font-mono">1.0</span>
+                                            </div>
+                                            <div className="flex justify-between border-b border-white/5 pb-1">
+                                                <span className="text-gray-500">GQA</span>
+                                                <span className="text-gray-300 font-mono">Enabled (8kv)</span>
+                                            </div>
+                                            <div className="flex justify-between">
+                                                <span className="text-gray-500">Stop Strings</span>
+                                                <span className="text-gray-300 font-mono text-xs">["&lt;|end|&gt;", "&lt;|user|&gt;"]</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="bg-white/5 p-4 rounded border border-white/5">
+                                        <h4 className="font-bold text-white mb-3 flex items-center gap-2 text-xs uppercase tracking-wider"><Server size={14}/> Server Compatibility</h4>
+                                        <div className="space-y-2">
+                                            {getCompatibleServers(selectedModel.id).map(srv => (
+                                                <div key={srv.id} className="flex justify-between items-center bg-black/20 p-2 rounded">
+                                                    <span className="text-xs text-gray-300">{srv.name}</span>
+                                                    <span className={`text-[10px] px-1.5 py-0.5 rounded ${srv.status === 'Online' ? 'bg-green-900/30 text-green-400' : 'bg-gray-800 text-gray-500'}`}>{srv.status}</span>
+                                                </div>
+                                            ))}
+                                            {getCompatibleServers(selectedModel.id).length === 0 && <div className="text-gray-500 italic text-xs">No compatible servers configured.</div>}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="bg-white/5 p-4 rounded border border-white/5">
+                                    <h4 className="font-bold text-white mb-2 flex items-center gap-2 text-xs uppercase tracking-wider"><Terminal size={14}/> Prompt Template</h4>
+                                    <div className="bg-black/40 p-3 rounded border border-white/10 font-mono text-xs text-gray-400 whitespace-pre-wrap">
+                                        {selectedModel.family === 'Llama' ? (
+                                            `<|begin_of_text|><|start_header_id|>system<|end_header_id|>\n\n{{ system_prompt }}<|eot_id|>\n<|start_header_id|>user<|end_header_id|>\n\n{{ user_message }}<|eot_id|>\n<|start_header_id|>assistant<|end_header_id|>`
+                                        ) : selectedModel.family === 'Mistral' ? (
+                                            `<s>[INST] {{ user_message }} [/INST]`
+                                        ) : (
+                                            `User: {{ user_message }}\nAssistant:`
+                                        )}
+                                    </div>
+                                </div>
+
+                                <div className="bg-white/5 p-4 rounded border border-white/5">
+                                    <h4 className="font-bold text-white mb-2 flex items-center gap-2 text-xs uppercase tracking-wider"><FileText size={14}/> File System</h4>
+                                    <div className="flex items-center gap-2 text-xs text-gray-400 font-mono bg-black/20 p-2 rounded">
+                                        <span className="text-purple-400">/data/models/{selectedModel.provider.toLowerCase()}/{selectedModel.id}/</span>
+                                        <span className="ml-auto opacity-50">7.2 GB</span>
                                     </div>
                                 </div>
                             </div>

@@ -1,7 +1,7 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Model, Dataset } from '../types';
-import { Terminal, Play, Clock, Zap, Database, Cpu, Layers, Activity, Lock, AlertTriangle, CheckCircle, RotateCw, Wrench, Mic, GraduationCap, Users, Plus, X, ArrowRight, GitMerge, Scale, SlidersHorizontal, ThumbsUp, Rocket } from 'lucide-react';
+import { Terminal, Play, Clock, Zap, Database, Cpu, Layers, Activity, Lock, AlertTriangle, CheckCircle, RotateCw, Wrench, Mic, GraduationCap, Users, Plus, X, ArrowRight, GitMerge, Scale, SlidersHorizontal, ThumbsUp, Rocket, Calculator } from 'lucide-react';
 
 interface TrainingProps {
   models: Model[];
@@ -19,6 +19,14 @@ export const Training: React.FC<TrainingProps> = ({ models, datasets }) => {
       additive: ''
   });
   
+  // LoRA State
+  const [loraConfig, setLoraConfig] = useState({
+      r: 16,
+      alpha: 32,
+      dropout: 0.05,
+      targetModules: ['q_proj', 'v_proj'] // Default to attention only
+  });
+
   // DPO Specific State
   const [dpoConfig, setDpoConfig] = useState({
       beta: 0.1,
@@ -27,6 +35,8 @@ export const Training: React.FC<TrainingProps> = ({ models, datasets }) => {
       maxPromptLength: 512,
       referenceModelId: ''
   });
+
+  const [loraImpact, setLoraImpact] = useState({ params: 0, percent: 0 });
 
   const addStudent = () => {
       setStudentModels([...studentModels, '']);
@@ -43,6 +53,33 @@ export const Training: React.FC<TrainingProps> = ({ models, datasets }) => {
       newStudents[index] = modelId;
       setStudentModels(newStudents);
   };
+
+  const toggleLoRAModule = (mod: string) => {
+      const current = new Set(loraConfig.targetModules);
+      if (current.has(mod)) current.delete(mod);
+      else current.add(mod);
+      setLoraConfig({ ...loraConfig, targetModules: Array.from(current) });
+  };
+
+  // Recalculate LoRA Impact
+  useEffect(() => {
+      // Heuristic for 7B model: 
+      // Hidden size ~4096, Layers ~32.
+      // Params per linear adapter = 2 * d_model * r
+      // Total = Layers * Num_Modules * (2 * d_model * r)
+      const d_model = 4096;
+      const layers = 32;
+      const r = loraConfig.r;
+      const num_modules = loraConfig.targetModules.length;
+      
+      const trainableParams = layers * num_modules * (2 * d_model * r);
+      const totalParams7B = 7_000_000_000;
+      
+      setLoraImpact({
+          params: trainableParams,
+          percent: (trainableParams / totalParams7B) * 100
+      });
+  }, [loraConfig]);
 
   const isDataMixingSupported = ['lora', 'sft', 'distill'].includes(mode);
   const supportsUnsloth = ['lora', 'sft', 'dpo'].includes(mode);
@@ -284,19 +321,52 @@ export const Training: React.FC<TrainingProps> = ({ models, datasets }) => {
                                  <div className="grid grid-cols-2 gap-space-md">
                                     <div>
                                         <label className="text-type-tiny text-gray-500 font-bold uppercase">Rank (r)</label>
-                                        <input type="number" defaultValue={16} className="w-full bg-nebula-950 border border-nebula-700 rounded p-space-md text-white mt-1 text-type-body" />
+                                        <input 
+                                            type="number" 
+                                            value={loraConfig.r}
+                                            onChange={(e) => setLoraConfig({...loraConfig, r: parseInt(e.target.value)})}
+                                            className="w-full bg-nebula-950 border border-nebula-700 rounded p-space-md text-white mt-1 text-type-body outline-none focus:border-purple-500" 
+                                        />
                                     </div>
                                     <div>
                                         <label className="text-type-tiny text-gray-500 font-bold uppercase">Alpha</label>
-                                        <input type="number" defaultValue={32} className="w-full bg-nebula-950 border border-nebula-700 rounded p-space-md text-white mt-1 text-type-body" />
+                                        <input 
+                                            type="number" 
+                                            value={loraConfig.alpha}
+                                            onChange={(e) => setLoraConfig({...loraConfig, alpha: parseInt(e.target.value)})}
+                                            className="w-full bg-nebula-950 border border-nebula-700 rounded p-space-md text-white mt-1 text-type-body outline-none focus:border-purple-500" 
+                                        />
                                     </div>
                                     <div className="col-span-2">
                                          <label className="text-type-tiny text-gray-500 font-bold uppercase">Target Modules</label>
-                                         <div className="flex gap-space-sm mt-1">
-                                            {['q_proj', 'v_proj', 'k_proj', 'o_proj'].map(mod => (
-                                                <span key={mod} className="px-3 py-1 bg-nebula-800 border border-nebula-600 rounded text-type-tiny text-gray-300 cursor-pointer hover:bg-purple-900/50 hover:border-purple-500">{mod}</span>
+                                         <div className="flex gap-space-sm mt-1 flex-wrap">
+                                            {['q_proj', 'v_proj', 'k_proj', 'o_proj', 'gate_proj', 'up_proj', 'down_proj'].map(mod => (
+                                                <button 
+                                                    key={mod} 
+                                                    onClick={() => toggleLoRAModule(mod)}
+                                                    className={`px-3 py-1 rounded text-type-tiny transition-all border ${loraConfig.targetModules.includes(mod) ? 'bg-purple-900/50 border-purple-500 text-purple-200' : 'bg-nebula-900 border-nebula-700 text-gray-500 hover:text-white'}`}
+                                                >
+                                                    {mod}
+                                                </button>
                                             ))}
                                          </div>
+                                    </div>
+                                    
+                                    {/* Parameter Impact Calculator */}
+                                    <div className="col-span-2 bg-nebula-900/50 border border-nebula-700 rounded-lg p-3 flex items-center justify-between">
+                                        <div className="flex items-center gap-2">
+                                            <Calculator size={16} className="text-blue-400" />
+                                            <div>
+                                                <div className="text-[10px] text-gray-400 font-bold uppercase">Trainable Params (Est. 7B)</div>
+                                                <div className="text-type-body font-mono text-white font-bold">{loraImpact.params.toLocaleString()}</div>
+                                            </div>
+                                        </div>
+                                        <div className="text-right">
+                                            <div className="text-[10px] text-gray-400 font-bold uppercase">Impact</div>
+                                            <div className={`text-type-body font-mono font-bold ${loraImpact.percent > 2 ? 'text-red-400' : loraImpact.percent < 0.1 ? 'text-yellow-400' : 'text-green-400'}`}>
+                                                {loraImpact.percent.toFixed(2)}%
+                                            </div>
+                                        </div>
                                     </div>
                                  </div>
                             )}

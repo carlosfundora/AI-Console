@@ -233,7 +233,7 @@ export const Benchmarks: React.FC<BenchmarksProps> = ({ results, models, servers
       });
   };
 
-  // --- Drag & Drop ---
+  // --- Drag and Drop ---
 
   const handleDragStart = (e: React.DragEvent, type: BenchmarkStepType) => {
       setDraggingTag(type);
@@ -405,6 +405,30 @@ export const Benchmarks: React.FC<BenchmarksProps> = ({ results, models, servers
                               <option value="F1">F1 Score (Weighted)</option>
                               <option value="Precision">Precision</option>
                               <option value="Recall">Recall</option>
+                          </select>
+                      </div>
+                  </div>
+              </div>
+          );
+      }
+
+      if (step.type === 'Generation') {
+          return (
+              <div className="space-y-space-md pt-2">
+                  <div className="bg-nebula-900/50 p-space-sm rounded border border-nebula-800 space-y-space-sm">
+                      <div>
+                          <label className="text-type-tiny uppercase font-bold text-blue-400 block mb-1">Evaluation Metric</label>
+                          <select 
+                            value={step.config.metric || 'Throughput'} 
+                            onChange={(e) => updateConfig({ metric: e.target.value })}
+                            className="w-full bg-nebula-950 border border-nebula-700 rounded p-space-xs text-type-caption text-gray-300 focus:border-purple-500 outline-none"
+                          >
+                              <option value="Throughput">Throughput (Tokens/s)</option>
+                              <option value="Latency">Latency (TTFT)</option>
+                              <option value="ROUGE-L">ROUGE-L (Summarization)</option>
+                              <option value="BLEU">BLEU (Translation)</option>
+                              <option value="METEOR">METEOR</option>
+                              <option value="ExactMatch">Exact Match</option>
                           </select>
                       </div>
                   </div>
