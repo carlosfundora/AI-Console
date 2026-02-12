@@ -12,54 +12,52 @@
           extend: {
             colors: {
               nebula: {
-                950: '#09090b', // Zinc-950 base (more neutral)
-                900: '#121217', // Slightly lighter card bg
-                800: '#1c1c24', // Element bg
-                700: '#272730', // Subdued Border
-                500: '#7c3aed', // Violet-600 (slightly less neon than purple)
-                400: '#a78bfa', // Violet-400
-                100: '#e4e4e7', // Zinc-200 Text
+                950: '#050507', // Darker base
+                900: '#0e0e12', // Subtle card
+                800: '#18181f', // Lighter element
+                700: '#23232c', // Border (Legacy use, prefer white/5)
+                500: '#7c3aed', // Primary Violet
+                400: '#a78bfa', // Lighter Violet
+                100: '#e4e4e7', // Text
               },
               lab: {
-                900: '#051a0a', 
-                800: '#0a2f15', 
+                900: '#020c04', 
+                800: '#051a0a', 
                 500: '#22c55e', 
                 400: '#4ade80', 
               }
             },
             borderRadius: {
               'md': '4px',
-              'lg': '4px',
-              'xl': '4px',
-              '2xl': '4px',
-              '3xl': '4px',
+              'lg': '6px',
+              'xl': '8px',
+              '2xl': '12px',
+              '3xl': '16px',
             },
             fontFamily: {
               mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', "Liberation Mono", "Courier New", 'monospace'],
               sans: ['system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'],
             },
-            // Global Layout Tokens (Spacing Scale)
             spacing: {
-              'space-xs': '0.25rem', // 4px
-              'space-sm': '0.5rem',  // 8px
-              'space-base': '0.75rem', // 12px
-              'space-md': '1rem',    // 16px
-              'space-lg': '1.5rem',  // 24px
-              'space-xl': '2rem',    // 32px
-              'space-2xl': '3rem',   // 48px
-              'space-3xl': '4rem',   // 64px
-              'header': '4rem',      // 64px Fixed Header
-              'sidebar': '16rem',    // 256px Fixed Sidebar
+              'space-xs': '0.25rem',
+              'space-sm': '0.5rem',
+              'space-base': '0.75rem',
+              'space-md': '1rem',
+              'space-lg': '1.5rem',
+              'space-xl': '2rem',
+              'space-2xl': '3rem',
+              'space-3xl': '4rem',
+              'header': '4rem',
+              'sidebar': '16rem',
             },
-            // Global Typographical Scale
             fontSize: {
-              'type-tiny': ['0.625rem', { lineHeight: '1rem', letterSpacing: '0.05em', fontWeight: '500' }], // 10px
-              'type-caption': ['0.75rem', { lineHeight: '1.25rem', fontWeight: '400' }], // 12px
-              'type-body': ['0.875rem', { lineHeight: '1.5rem', fontWeight: '400' }], // 14px
-              'type-heading-sm': ['1rem', { lineHeight: '1.75rem', fontWeight: '600' }], // 16px
-              'type-heading-md': ['1.25rem', { lineHeight: '1.75rem', fontWeight: '700' }], // 20px
-              'type-heading-lg': ['1.5rem', { lineHeight: '2rem', fontWeight: '700' }], // 24px
-              'type-heading-xl': ['2rem', { lineHeight: '2.5rem', fontWeight: '800' }], // 32px
+              'type-tiny': ['0.625rem', { lineHeight: '1rem', letterSpacing: '0.05em', fontWeight: '600' }],
+              'type-caption': ['0.75rem', { lineHeight: '1.25rem', fontWeight: '500' }],
+              'type-body': ['0.875rem', { lineHeight: '1.5rem', fontWeight: '400' }],
+              'type-heading-sm': ['1rem', { lineHeight: '1.75rem', fontWeight: '600' }],
+              'type-heading-md': ['1.25rem', { lineHeight: '1.75rem', fontWeight: '700' }],
+              'type-heading-lg': ['1.5rem', { lineHeight: '2rem', fontWeight: '700' }],
+              'type-heading-xl': ['2rem', { lineHeight: '2.5rem', fontWeight: '800' }],
             },
             animation: {
               'pulse-glow': 'pulse-glow 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
@@ -86,13 +84,13 @@
     </script>
     <style>
       body {
-        background-color: #09090b;
+        background-color: #050507;
         color: #e4e4e7;
         position: relative;
         overflow: hidden;
       }
       
-      /* CRT/Scanline Premium Overlay */
+      /* Subtle scanline */
       body::before {
         content: "";
         position: fixed;
@@ -100,35 +98,43 @@
         left: 0;
         width: 100%;
         height: 100%;
-        background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.02), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.02));
-        background-size: 100% 4px, 3px 100%;
-        z-index: 1000;
+        background: linear-gradient(to bottom, rgba(255,255,255,0.01) 50%, rgba(0,0,0,0.02) 50%);
+        background-size: 100% 3px;
+        z-index: 9999;
         pointer-events: none;
-        opacity: 0.3;
       }
 
-      /* Custom scrollbar for dark theme */
+      /* Selection */
+      ::selection {
+        background: rgba(124, 58, 237, 0.3);
+        color: white;
+      }
+
+      /* Scrollbar */
       ::-webkit-scrollbar {
-        width: 8px;
-        height: 8px;
+        width: 6px;
+        height: 6px;
       }
       ::-webkit-scrollbar-track {
-        background: #121217; 
+        background: transparent; 
       }
       ::-webkit-scrollbar-thumb {
-        background: #272730; 
-        border-radius: 4px;
+        background: #23232c; 
+        border-radius: 3px;
       }
       ::-webkit-scrollbar-thumb:hover {
-        background: #7c3aed; 
+        background: #3f3f4e; 
       }
 
-      .glow-border {
-        box-shadow: 0 0 15px rgba(124, 58, 237, 0.1);
+      .active-glow {
+        box-shadow: inset 0 0 15px rgba(124, 58, 237, 0.15);
+        border-color: rgba(124, 58, 237, 0.3) !important;
       }
       
-      .active-glow {
-        box-shadow: inset 0 0 10px rgba(124, 58, 237, 0.2), 0 0 5px rgba(124, 58, 237, 0.1);
+      .glass-panel {
+        background: rgba(14, 14, 18, 0.6);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.05);
       }
     </style>
   <script type="importmap">

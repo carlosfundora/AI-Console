@@ -540,13 +540,13 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-nebula-950 text-nebula-100 font-sans overflow-hidden text-type-body">
+    <div className="flex flex-col h-screen bg-nebula-950 text-nebula-100 font-sans overflow-hidden text-type-body selection:bg-purple-500/30">
       {/* Streamlined Top Header with Glassmorphism */}
-      <header className="h-header bg-nebula-950/70 backdrop-blur-md border-b border-white/5 flex items-center justify-between px-space-lg z-30 shrink-0 relative shadow-lg">
+      <header className="h-header bg-nebula-950/80 backdrop-blur-md border-b border-white/5 flex items-center justify-between px-space-lg z-30 shrink-0 relative shadow-sm">
           <div className="absolute inset-0 bg-gradient-to-r from-purple-500/5 to-transparent pointer-events-none"></div>
           <div className="flex items-center gap-space-lg relative z-10">
                {/* Logo */}
-              <div className="text-type-heading-md font-black tracking-widest text-nebula-100 border-2 border-nebula-100 px-2 py-0.5 rounded shadow-[0_0_10px_rgba(255,255,255,0.1)]">
+              <div className="text-type-heading-md font-black tracking-widest text-white border-2 border-white/20 px-2 py-0.5 rounded shadow-[0_0_10px_rgba(255,255,255,0.05)] bg-white/5">
                   R-AI
               </div>
               
@@ -555,15 +555,15 @@ const App: React.FC = () => {
 
               {/* Breadcrumb / Title */}
               <div className="flex items-center gap-space-md">
-                  <h1 className="text-type-heading-sm font-semibold text-white capitalize tracking-wide">{getPageTitle(activeTab)}</h1>
-                  {activeTab === 'training' && <span className="text-type-tiny bg-purple-900/50 text-purple-300 px-2 py-1 rounded border border-purple-500/20 animate-pulse">Active Job: Llama-SFT-v1</span>}
+                  <h1 className="text-type-heading-sm font-semibold text-white capitalize tracking-wide drop-shadow-sm">{getPageTitle(activeTab)}</h1>
+                  {activeTab === 'training' && <span className="text-type-tiny bg-purple-500/10 text-purple-300 px-2 py-1 rounded border border-purple-500/20 animate-pulse font-bold">Active Job: Llama-SFT-v1</span>}
               </div>
           </div>
           
           <div className="flex items-center gap-space-lg relative z-10">
               <div className="text-right hidden sm:block">
-                  <p className="text-type-caption text-gray-400">Environment</p>
-                  <p className="text-type-body font-mono text-purple-300">{SERVER_CONFIG.gpuType} • {SERVER_CONFIG.vramTotal}GB</p>
+                  <p className="text-type-caption text-gray-500 font-bold uppercase tracking-wider">Environment</p>
+                  <p className="text-type-body font-mono text-purple-300 text-xs">{SERVER_CONFIG.gpuType} • {SERVER_CONFIG.vramTotal}GB</p>
               </div>
               
               {/* Settings Button */}
@@ -572,28 +572,28 @@ const App: React.FC = () => {
                   className={`w-10 h-10 rounded-full border flex items-center justify-center transition-all ${activeTab === 'settings' ? 'bg-purple-600 border-purple-500 text-white shadow-lg active-glow' : 'bg-white/5 border-white/10 text-gray-400 hover:text-white hover:border-white/20 hover:bg-white/10'}`}
                   title="Settings"
               >
-                  <SettingsIcon size={20} />
+                  <SettingsIcon size={18} />
               </button>
           </div>
       </header>
 
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar */}
-        <aside className="w-sidebar bg-nebula-950 border-r border-nebula-800 flex flex-col z-20">
-          <nav className="flex-1 p-space-md space-y-space-xs">
+        <aside className="w-sidebar bg-nebula-950/90 backdrop-blur-sm border-r border-white/5 flex flex-col z-20">
+          <nav className="flex-1 p-space-md space-y-1">
             {navItems.map(item => (
               <button
                 key={item.id}
                 onClick={() => setActiveTab(item.id as ViewState)}
-                className={`w-full flex items-center gap-space-md px-4 py-3 rounded text-type-body font-medium transition-all duration-200 relative group ${
+                className={`w-full flex items-center gap-space-md px-4 py-3 rounded-lg text-type-body font-medium transition-all duration-200 relative group ${
                   activeTab === item.id 
-                    ? 'bg-nebula-900 text-purple-400 border border-nebula-700 active-glow' 
-                    : 'text-gray-400 hover:text-white hover:bg-nebula-900/50'
+                    ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20 active-glow' 
+                    : 'text-gray-400 hover:text-white hover:bg-white/5 border border-transparent'
                 }`}
               >
                 {item.icon}
                 {item.label}
-                {activeTab === item.id && <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-1/2 bg-purple-500 rounded-l shadow-[0_0_8px_#7c3aed]"></div>}
+                {activeTab === item.id && <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-3/4 bg-purple-500 rounded-l shadow-[0_0_10px_#7c3aed]"></div>}
               </button>
             ))}
           </nav>
@@ -621,10 +621,10 @@ const App: React.FC = () => {
       </div>
 
        {/* Full Width Footer with Glassmorphism */}
-      <footer className="h-8 bg-nebula-950/70 backdrop-blur-md border-t border-white/5 flex items-center justify-between px-4 text-type-caption text-gray-500 select-none z-40 relative shadow-[0_-5px_15px_rgba(0,0,0,0.2)] w-full font-mono uppercase tracking-tighter">
+      <footer className="h-8 bg-nebula-950/80 backdrop-blur-md border-t border-white/5 flex items-center justify-between px-4 text-type-caption text-gray-500 select-none z-40 relative shadow-[0_-5px_15px_rgba(0,0,0,0.2)] w-full font-mono uppercase tracking-tighter">
             <div className="flex gap-space-md items-center">
                 <span className="flex items-center gap-space-xs">
-                    <span className="w-2 h-2 rounded-full bg-green-500 animate-heartbeat"></span> 
+                    <span className="w-2 h-2 rounded-full bg-green-500 animate-heartbeat shadow-[0_0_5px_#22c55e]"></span> 
                     <span className="opacity-70">System Online</span>
                 </span>
                 {SERVER_CONFIG.rocmEnabled && (
@@ -638,13 +638,13 @@ const App: React.FC = () => {
             </div>
             
              {/* Global Loading Indicator */}
-            <div className="flex items-center gap-space-sm text-purple-400">
+            <div className="flex items-center gap-space-sm text-purple-400 font-bold">
                 <Loader2 size={12} className="animate-spin" />
                 <span className="animate-pulse">Task Sync Active</span>
             </div>
 
-            <div className="opacity-40">
-                v2.2.0-Lab // REPLICATOR-AI
+            <div className="opacity-40 font-bold">
+                v2.3.0-Nightly // REPLICATOR-AI
             </div>
       </footer>
     </div>
