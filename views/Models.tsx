@@ -987,6 +987,7 @@ export const Models: React.FC<ModelsProps> = ({ models, servers, benchmarks, onA
                  </div>
             </div>
         )}
+      </div>
     </div>
   );
 };

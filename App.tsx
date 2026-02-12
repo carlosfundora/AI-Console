@@ -1,17 +1,17 @@
 
 import React, { useState } from 'react';
 import { LayoutDashboard, Database, BrainCircuit, Activity, Settings as SettingsIcon, Server, Terminal, FlaskConical, Loader2, MessageSquare, Briefcase, GraduationCap, Bot, BookOpen, Eye } from 'lucide-react';
-import { Dashboard } from './views/Dashboard';
-import { Benchmarks } from './views/Benchmarks';
-import { Datasets } from './views/Datasets';
-import { Models } from './views/Models';
-import { Training } from './views/Training';
-import { Laboratory } from './views/Laboratory';
-import { Servers } from './views/Servers';
-import { Settings } from './views/Settings';
-import { Chat } from './views/Chat';
-import { Agents } from './views/Agents';
-import { Notebooks } from './views/Notebooks';
+const Dashboard = React.lazy(() => import('./views/Dashboard').then(module => ({ default: module.Dashboard })));
+const Benchmarks = React.lazy(() => import('./views/Benchmarks').then(module => ({ default: module.Benchmarks })));
+const Datasets = React.lazy(() => import('./views/Datasets').then(module => ({ default: module.Datasets })));
+const Models = React.lazy(() => import('./views/Models').then(module => ({ default: module.Models })));
+const Training = React.lazy(() => import('./views/Training').then(module => ({ default: module.Training })));
+const Laboratory = React.lazy(() => import('./views/Laboratory').then(module => ({ default: module.Laboratory })));
+const Servers = React.lazy(() => import('./views/Servers').then(module => ({ default: module.Servers })));
+const Settings = React.lazy(() => import('./views/Settings').then(module => ({ default: module.Settings })));
+const Chat = React.lazy(() => import('./views/Chat').then(module => ({ default: module.Chat })));
+const Agents = React.lazy(() => import('./views/Agents').then(module => ({ default: module.Agents })));
+const Notebooks = React.lazy(() => import('./views/Notebooks').then(module => ({ default: module.Notebooks })));
 import { ViewState, Model, BenchmarkResult, Dataset, ServerConfig, ModelStatus, ServerProfile, AgentConfig } from './types';
 
 // --- Custom Icons matching the requested style ---
@@ -614,17 +614,19 @@ const App: React.FC = () => {
           
           <div className="flex-1 overflow-hidden flex flex-col">
             <div className="w-full h-full flex flex-col">
-              {activeTab === 'dashboard' && <Dashboard serverConfig={SERVER_CONFIG} />}
-              {activeTab === 'benchmarks' && <Benchmarks results={benchmarks} models={MOCK_MODELS} servers={servers} />}
-              {activeTab === 'datasets' && <Datasets datasets={MOCK_DATASETS} />}
-              {activeTab === 'training' && <Training models={MOCK_MODELS} datasets={MOCK_DATASETS} />}
-              {activeTab === 'notebooks' && <Notebooks />}
-              {activeTab === 'laboratory' && <Laboratory models={MOCK_MODELS} />}
-              {activeTab === 'servers' && <Servers servers={servers} models={MOCK_MODELS} onUpdateServer={handleUpdateServer} onDeleteServer={handleDeleteServer} onAddServer={handleAddServer} />}
-              {activeTab === 'models' && <Models models={MOCK_MODELS} servers={servers} benchmarks={benchmarks} onAddBenchmark={handleAddBenchmark} />}
-              {activeTab === 'agents' && <Agents agents={agents} onSaveAgent={handleSaveAgent} onDeleteAgent={handleDeleteAgent} />}
-              {activeTab === 'settings' && <Settings />}
-              {activeTab === 'chat' && <Chat models={MOCK_MODELS} servers={servers} agents={agents} onUpdateServer={handleUpdateServer} />}
+              <React.Suspense fallback={<div className="h-full w-full flex items-center justify-center"><Loader2 size={32} className="animate-spin text-purple-500" /></div>}>
+                {activeTab === 'dashboard' && <Dashboard serverConfig={SERVER_CONFIG} />}
+                {activeTab === 'benchmarks' && <Benchmarks results={benchmarks} models={MOCK_MODELS} servers={servers} />}
+                {activeTab === 'datasets' && <Datasets datasets={MOCK_DATASETS} />}
+                {activeTab === 'training' && <Training models={MOCK_MODELS} datasets={MOCK_DATASETS} />}
+                {activeTab === 'notebooks' && <Notebooks />}
+                {activeTab === 'laboratory' && <Laboratory models={MOCK_MODELS} />}
+                {activeTab === 'servers' && <Servers servers={servers} models={MOCK_MODELS} onUpdateServer={handleUpdateServer} onDeleteServer={handleDeleteServer} onAddServer={handleAddServer} />}
+                {activeTab === 'models' && <Models models={MOCK_MODELS} servers={servers} benchmarks={benchmarks} onAddBenchmark={handleAddBenchmark} />}
+                {activeTab === 'agents' && <Agents agents={agents} onSaveAgent={handleSaveAgent} onDeleteAgent={handleDeleteAgent} />}
+                {activeTab === 'settings' && <Settings />}
+                {activeTab === 'chat' && <Chat models={MOCK_MODELS} servers={servers} agents={agents} onUpdateServer={handleUpdateServer} />}
+              </React.Suspense>
             </div>
           </div>
         </main>
