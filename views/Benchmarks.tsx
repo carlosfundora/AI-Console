@@ -579,16 +579,16 @@ export const Benchmarks: React.FC<BenchmarksProps> = ({ results, models, servers
                 <ChevronRight size={24} />
             </button>
 
-            {/* Slide 0: Model Comparison */}
+            {/* Slide 0: Model Comparison (Styled) */}
             {slideIndex === 0 && (
-                <div className="h-full bg-nebula-900/50 border border-nebula-700 rounded-xl p-space-xl flex flex-col animate-fade-in">
+                <div className="h-full bg-gradient-to-b from-nebula-900 to-nebula-950 border border-white/5 rounded-xl p-space-xl flex flex-col animate-fade-in shadow-[0_0_15px_rgba(234,179,8,0.1)]">
                     <h3 className="text-type-heading-md font-bold mb-space-lg flex items-center gap-space-sm text-white">
                         <Zap size={20} className="text-yellow-500" /> Model Performance Comparison
                     </h3>
                     <div className="flex-1 min-h-0">
                         <ResponsiveContainer width="100%" height="100%">
                             <BarChart data={modelAggregatedStats}>
-                                <CartesianGrid strokeDasharray="3 3" stroke="#272730" vertical={false} />
+                                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" vertical={false} />
                                 <XAxis dataKey="name" stroke="#6b7280" fontSize={12} tickLine={false} axisLine={false} />
                                 <YAxis yAxisId="left" stroke="#8b5cf6" fontSize={12} orientation="left" tickLine={false} axisLine={false} />
                                 <YAxis yAxisId="right" stroke="#10b981" fontSize={12} orientation="right" tickLine={false} axisLine={false} />
@@ -602,9 +602,9 @@ export const Benchmarks: React.FC<BenchmarksProps> = ({ results, models, servers
                 </div>
             )}
 
-            {/* Slide 1: Historical Trends */}
+            {/* Slide 1: Historical Trends (Styled) */}
             {slideIndex === 1 && (
-                <div className="h-full bg-nebula-900/50 border border-nebula-700 rounded-xl p-space-xl flex flex-col animate-fade-in relative">
+                <div className="h-full bg-gradient-to-b from-nebula-900 to-nebula-950 border border-white/5 rounded-xl p-space-xl flex flex-col animate-fade-in relative shadow-[0_0_15px_rgba(59,130,246,0.1)]">
                     <div className="flex justify-between items-center mb-space-lg">
                         <h3 className="text-type-heading-md font-bold flex items-center gap-space-sm text-white">
                             <Clock size={20} className="text-blue-500" /> Latency Trends Over Time
@@ -630,7 +630,7 @@ export const Benchmarks: React.FC<BenchmarksProps> = ({ results, models, servers
                     <div className="flex-1 min-h-0">
                         <ResponsiveContainer width="100%" height="100%">
                             <LineChart data={processedTrendData}>
-                                <CartesianGrid strokeDasharray="3 3" stroke="#272730" vertical={false} />
+                                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" vertical={false} />
                                 <XAxis dataKey="date" stroke="#6b7280" fontSize={12} tickLine={false} axisLine={false} />
                                 <YAxis stroke="#6b7280" fontSize={12} tickLine={false} axisLine={false} />
                                 <Tooltip contentStyle={{ backgroundColor: '#121217', borderColor: '#272730' }} />
@@ -654,16 +654,16 @@ export const Benchmarks: React.FC<BenchmarksProps> = ({ results, models, servers
                 </div>
             )}
 
-            {/* Slide 2: Category Analysis */}
+            {/* Slide 2: Category Analysis (Styled) */}
             {slideIndex === 2 && (
-                <div className="h-full bg-nebula-900/50 border border-nebula-700 rounded-xl p-space-xl flex flex-col animate-fade-in">
+                <div className="h-full bg-gradient-to-b from-nebula-900 to-nebula-950 border border-white/5 rounded-xl p-space-xl flex flex-col animate-fade-in shadow-[0_0_15px_rgba(16,185,129,0.1)]">
                     <h3 className="text-type-heading-md font-bold mb-space-lg flex items-center gap-space-sm text-white">
                         <ScanSearch size={20} className="text-green-500" /> Quality by Category
                     </h3>
                     <div className="flex-1 min-h-0 flex justify-center items-center">
                         <ResponsiveContainer width="100%" height="100%">
                             <RadarChart cx="50%" cy="50%" outerRadius="80%" data={categoryStats}>
-                                <PolarGrid stroke="#272730" />
+                                <PolarGrid stroke="rgba(255,255,255,0.1)" />
                                 <PolarAngleAxis dataKey="subject" tick={{ fill: '#9ca3af', fontSize: 12, fontWeight: 600 }} />
                                 <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
                                 <Radar

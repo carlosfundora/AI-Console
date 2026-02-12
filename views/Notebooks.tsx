@@ -122,10 +122,10 @@ export const Notebooks: React.FC = () => {
                         <button
                             key={cat}
                             onClick={() => setSelectedCategory(cat)}
-                            className={`px-4 py-2 rounded-lg text-type-caption font-bold transition-all whitespace-nowrap ${
+                            className={`px-3 py-1 rounded text-xs font-black uppercase tracking-wider transition-all whitespace-nowrap shadow-md ${
                                 selectedCategory === cat
-                                ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg'
-                                : 'bg-nebula-900 text-gray-400 border border-nebula-700 hover:text-white hover:border-purple-500/50'
+                                ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-orange-500/20'
+                                : 'bg-nebula-900 text-gray-400 border border-nebula-700 hover:text-white hover:border-orange-500/50'
                             }`}
                         >
                             {cat}

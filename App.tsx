@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { LayoutDashboard, Database, BrainCircuit, Activity, Settings as SettingsIcon, Server, Terminal, FlaskConical, Loader2, MessageSquare, Briefcase, GraduationCap, Bot, BookOpen, Eye, Command } from 'lucide-react';
+import { LayoutDashboard, Database, BrainCircuit, Activity, Settings as SettingsIcon, Server, Terminal, FlaskConical, Loader2, MessageSquare, Briefcase, GraduationCap, Bot, BookOpen, Eye, Command, X } from 'lucide-react';
 import { Dashboard } from './views/Dashboard';
 import { Benchmarks } from './views/Benchmarks';
 import { Datasets } from './views/Datasets';
@@ -481,6 +481,7 @@ const MOCK_SERVERS: ServerProfile[] = [
 
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<ViewState>('dashboard');
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [servers, setServers] = useState<ServerProfile[]>(MOCK_SERVERS);
   const [agents, setAgents] = useState<AgentConfig[]>(MOCK_AGENTS);
   const [benchmarks, setBenchmarks] = useState<BenchmarkResult[]>(MOCK_BENCHMARKS);
@@ -489,7 +490,7 @@ const App: React.FC = () => {
   const [isPaletteOpen, setIsPaletteOpen] = useState(false);
 
   // Live Telemetry State
-  const [telemetry, setTelemetry] = useState({ gpu: 12, vram: 8.2, temp: 45, power: 120 });
+  const [telemetry, setTelemetry] = useState({ gpu: 12, vram: 8.2, temp: 45, cpu: 12 });
   const [systemLog, setSystemLog] = useState("System initialized. Monitoring active.");
 
   useEffect(() => {
@@ -511,7 +512,7 @@ const App: React.FC = () => {
             gpu: Math.min(100, Math.max(0, prev.gpu + (Math.random() - 0.5) * 15)),
             vram: Math.min(12, Math.max(0, prev.vram + (Math.random() - 0.5) * 0.2)),
             temp: Math.min(90, Math.max(30, prev.temp + (Math.random() - 0.5) * 3)),
-            power: Math.min(230, Math.max(50, prev.power + (Math.random() - 0.5) * 15)),
+            cpu: Math.min(100, Math.max(0, prev.cpu + (Math.random() - 0.5) * 10)),
         }));
         
         // Random system logs
@@ -580,58 +581,34 @@ const App: React.FC = () => {
       return tab;
   };
 
+  const handleNavigation = (view: ViewState) => {
+      if (view === 'settings') {
+          setIsSettingsOpen(true);
+      } else {
+          setActiveTab(view);
+      }
+  };
+
   return (
-    <div className="flex flex-col h-screen bg-nebula-950 text-nebula-100 font-sans overflow-hidden text-type-body selection:bg-purple-500/30">
+    <div className="flex h-screen bg-nebula-950 text-nebula-100 font-sans overflow-hidden text-type-body selection:bg-purple-500/30">
       
       {/* Command Palette Overlay */}
       <CommandPalette 
         isOpen={isPaletteOpen} 
         onClose={() => setIsPaletteOpen(false)} 
-        onNavigate={setActiveTab} 
+        onNavigate={handleNavigation} 
       />
 
-      {/* Streamlined Top Header with Vertical Glassmorphism */}
-      <header className="h-header bg-nebula-950/80 backdrop-blur-md border-b border-white/5 flex items-center justify-between px-space-lg z-30 shrink-0 relative shadow-md">
-          {/* Subtle gradient overlay, top-down only */}
-          <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent pointer-events-none opacity-20"></div>
-          
-          <div className="flex items-center gap-space-lg relative z-10">
-               {/* Logo */}
+      {/* Main Layout: Sidebar Left (Full Height) */}
+      <aside className="w-sidebar bg-nebula-950/90 backdrop-blur-md border-r border-white/5 flex flex-col z-20 h-full">
+          {/* Logo Header in Sidebar */}
+          <div className="h-header flex items-center px-6 border-b border-white/5 shrink-0">
               <div className="text-type-heading-md font-black tracking-widest text-white border-2 border-white/10 px-2 py-0.5 rounded shadow-[0_0_10px_rgba(255,255,255,0.05)] bg-white/5">
-                  R-AI
-              </div>
-              
-              {/* Divider */}
-              <div className="h-6 w-px bg-white/10 mx-2"></div>
-
-              {/* Breadcrumb / Title */}
-              <div className="flex items-center gap-space-md">
-                  <h1 className="text-type-heading-sm font-semibold text-white capitalize tracking-wide drop-shadow-sm">{getPageTitle(activeTab)}</h1>
-                  {activeTab === 'training' && <span className="text-type-tiny bg-purple-500/10 text-purple-300 px-2 py-1 rounded border border-purple-500/20 animate-pulse font-bold">Active Job: Llama-SFT-v1</span>}
+                  AI CONSOLE
               </div>
           </div>
-          
-          <div className="flex items-center gap-space-lg relative z-10">
-              <div className="text-right hidden sm:block">
-                  <p className="text-type-caption text-gray-500 font-bold uppercase tracking-wider">Environment</p>
-                  <p className="text-type-body font-mono text-purple-300 text-xs">{SERVER_CONFIG.gpuType} • {SERVER_CONFIG.vramTotal}GB</p>
-              </div>
-              
-              {/* Settings Button */}
-              <button 
-                  onClick={() => setActiveTab('settings')}
-                  className={`w-10 h-10 rounded-full border flex items-center justify-center transition-all ${activeTab === 'settings' ? 'bg-purple-600/20 border-purple-500 text-purple-300 shadow-[0_0_10px_rgba(124,58,237,0.3)] active-glow' : 'bg-white/5 border-white/10 text-gray-400 hover:text-white hover:border-white/20 hover:bg-white/10'}`}
-                  title="Settings"
-              >
-                  <SettingsIcon size={18} />
-              </button>
-          </div>
-      </header>
 
-      <div className="flex flex-1 overflow-hidden">
-        {/* Sidebar with subtle verticality */}
-        <aside className="w-sidebar bg-nebula-950/90 backdrop-blur-md border-r border-white/5 flex flex-col z-20">
-          <nav className="flex-1 p-space-md space-y-1">
+          <nav className="flex-1 p-space-md space-y-1 overflow-y-auto custom-scrollbar">
             {navItems.map(item => (
               <button
                 key={item.id}
@@ -642,9 +619,7 @@ const App: React.FC = () => {
                     : 'text-gray-400 hover:text-white hover:bg-white/5 border-l-2 border-transparent'
                 }`}
               >
-                {/* Remove horizontal gradient, use soft glow instead */}
                 <div className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity bg-white/5 ${activeTab === item.id ? 'opacity-100' : ''}`}></div>
-                
                 <span className="relative z-10 flex items-center gap-space-md">
                     {item.icon}
                     {item.label}
@@ -653,8 +628,16 @@ const App: React.FC = () => {
             ))}
           </nav>
           
-          {/* Quick Command Trigger in Sidebar */}
-          <div className="p-4 border-t border-white/5">
+          {/* Sidebar Footer: Commands & Settings */}
+          <div className="p-4 border-t border-white/5 flex flex-col gap-2">
+             <button 
+                onClick={() => setIsSettingsOpen(true)}
+                className="w-full flex items-center justify-between px-3 py-2 rounded bg-nebula-900 border border-nebula-800 text-xs text-gray-400 hover:text-white hover:border-purple-500/50 transition-all group mb-1"
+             >
+                 <span className="flex items-center gap-2"><SettingsIcon size={14}/> Settings</span>
+                 <span className="bg-nebula-950 px-1.5 rounded text-[10px] opacity-50 group-hover:opacity-100 transition-opacity">S</span>
+             </button>
+
              <button 
                 onClick={() => setIsPaletteOpen(true)}
                 className="w-full flex items-center justify-between px-3 py-2 rounded bg-nebula-900 border border-nebula-800 text-xs text-gray-400 hover:text-white hover:border-purple-500/50 transition-all group"
@@ -663,14 +646,25 @@ const App: React.FC = () => {
                  <span className="bg-nebula-950 px-1.5 rounded text-[10px] opacity-50 group-hover:opacity-100 transition-opacity">⌘K</span>
              </button>
           </div>
-        </aside>
+      </aside>
 
-        {/* Main Content */}
-        <main className="flex-1 flex flex-col min-w-0 bg-nebula-950 overflow-hidden relative">
-          {/* Subtle top shadow inset for depth */}
-          <div className="absolute top-0 left-0 right-0 h-4 bg-gradient-to-b from-black/20 to-transparent pointer-events-none z-10"></div>
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col min-w-0 bg-nebula-950 relative">
           
-          <div className="flex-1 overflow-hidden flex flex-col">
+          {/* Header (Breadcrumbs Only) */}
+          <header className="h-header bg-nebula-950/80 backdrop-blur-md border-b border-white/5 flex items-center justify-between px-space-lg z-30 shrink-0 relative shadow-sm">
+              <div className="flex items-center gap-space-lg relative z-10">
+                  <div className="flex items-center gap-space-md">
+                      <h1 className="text-type-heading-sm font-semibold text-white capitalize tracking-wide drop-shadow-sm">{getPageTitle(activeTab)}</h1>
+                      {activeTab === 'training' && <span className="text-type-tiny bg-purple-500/10 text-purple-300 px-2 py-1 rounded border border-purple-500/20 animate-pulse font-bold">Active Job: Llama-SFT-v1</span>}
+                  </div>
+              </div>
+          </header>
+
+          <main className="flex-1 overflow-hidden relative">
+            {/* Subtle top shadow inset for depth */}
+            <div className="absolute top-0 left-0 right-0 h-4 bg-gradient-to-b from-black/20 to-transparent pointer-events-none z-10"></div>
+            
             <div className="w-full h-full flex flex-col">
               {activeTab === 'dashboard' && <Dashboard serverConfig={SERVER_CONFIG} />}
               {activeTab === 'benchmarks' && <Benchmarks results={benchmarks} models={MOCK_MODELS} servers={servers} />}
@@ -681,68 +675,57 @@ const App: React.FC = () => {
               {activeTab === 'servers' && <Servers servers={servers} models={MOCK_MODELS} onUpdateServer={handleUpdateServer} onDeleteServer={handleDeleteServer} onAddServer={handleAddServer} />}
               {activeTab === 'models' && <Models models={MOCK_MODELS} servers={servers} benchmarks={benchmarks} onAddBenchmark={handleAddBenchmark} />}
               {activeTab === 'agents' && <Agents agents={agents} onSaveAgent={handleSaveAgent} onDeleteAgent={handleDeleteAgent} />}
-              {activeTab === 'settings' && <Settings />}
               {activeTab === 'chat' && <Chat models={MOCK_MODELS} servers={servers} agents={agents} onUpdateServer={handleUpdateServer} />}
             </div>
-          </div>
-        </main>
+          </main>
+
+          {/* Full Width Footer with Live Telemetry */}
+          <footer className="h-8 bg-nebula-950/90 backdrop-blur-md border-t border-white/5 flex items-center justify-between px-4 text-type-caption text-gray-500 select-none z-40 relative shadow-[0_-5px_15px_rgba(0,0,0,0.3)] w-full font-mono uppercase tracking-tighter shrink-0">
+                {/* Left: Status - No wrapping, allowing it to take necessary width */}
+                <div className="flex gap-space-md items-center whitespace-nowrap shrink-0">
+                    <div className="flex items-center gap-3 text-[10px] font-bold text-gray-500 tracking-wider">
+                        <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_#22c55e] animate-pulse"></div>
+                            <span className="text-gray-400">CONNECTED</span>
+                        </div>
+                        <div className="w-1 h-1 rounded-full bg-gray-700"></div>
+                        <span>{SERVER_CONFIG.gpuType}</span>
+                        <div className="w-1 h-1 rounded-full bg-gray-700"></div>
+                        <span>{SERVER_CONFIG.vramTotal}GB</span>
+                        <div className="w-1 h-1 rounded-full bg-gray-700"></div>
+                        <span>ROCm</span>
+                        <span className="text-gray-700">|</span>
+                        <span>v2.3.0-NIGHTLY</span>
+                    </div>
+                </div>
+                
+                 {/* Center: Spacer */}
+                <div className="flex-1"></div>
+
+                {/* Right: Live Telemetry */}
+                <div className="flex items-center gap-4 text-[10px] font-bold font-mono">
+                    <span className="text-gray-600">GPU <span className="text-white ml-1">{telemetry.gpu.toFixed(0)}%</span></span>
+                    <span className="text-gray-600">VRAM <span className="text-blue-400 ml-1">{telemetry.vram.toFixed(1)}GB</span></span>
+                    <span className="text-gray-600">TEMP <span className="text-green-400 ml-1">{telemetry.temp.toFixed(0)}°C</span></span>
+                    <span className="text-gray-600">CPU <span className="text-yellow-500 ml-1">{telemetry.cpu.toFixed(0)}%</span></span>
+                </div>
+          </footer>
       </div>
 
-       {/* Full Width Footer with Live Telemetry */}
-      <footer className="h-8 bg-nebula-950/90 backdrop-blur-md border-t border-white/5 flex items-center justify-between px-4 text-type-caption text-gray-500 select-none z-40 relative shadow-[0_-5px_15px_rgba(0,0,0,0.3)] w-full font-mono uppercase tracking-tighter">
-            {/* Left: Status - No wrapping, allowing it to take necessary width */}
-            <div className="flex gap-space-md items-center whitespace-nowrap shrink-0">
-                <span className="flex items-center gap-space-xs text-gray-500 font-bold">
-                    <span className="w-2 h-2 rounded-full bg-green-500 animate-heartbeat shadow-[0_0_8px_#22c55e]"></span> 
-                    <span className="opacity-90">Connected</span>
-                </span>
-                
-                <span className="flex items-center gap-space-xs">
-                    <span className={`w-2 h-2 rounded-full transition-all duration-300 ${SERVER_CONFIG.rocmEnabled ? 'bg-green-500 shadow-[0_0_8px_#22c55e]' : 'bg-red-500 shadow-[0_0_8px_#ef4444]'}`}></span>
-                    <span className="font-bold text-gray-500">ROCm</span>
-                </span>
-                
-                <span className="text-gray-600">|</span>
-                <span className="text-gray-500 whitespace-nowrap">v2.3.0-Nightly</span>
+      {/* Settings Modal Overlay */}
+      {isSettingsOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-8 animate-fade-in" onClick={() => setIsSettingsOpen(false)}>
+            <div 
+                className="bg-nebula-900 border border-nebula-700 rounded-2xl w-full max-w-4xl h-[80vh] shadow-2xl relative overflow-hidden flex flex-col" 
+                onClick={e => e.stopPropagation()}
+            >
+                <div className="absolute top-4 right-4 z-10">
+                    <button onClick={() => setIsSettingsOpen(false)} className="p-2 text-gray-500 hover:text-white bg-nebula-950/50 rounded-full hover:bg-nebula-800 transition-all"><X size={20}/></button>
+                </div>
+                <Settings /> 
             </div>
-            
-             {/* Center: System Log Ticker */}
-            <div className="flex-1 flex justify-center items-center overflow-hidden px-4">
-                <div className="flex items-center gap-space-sm text-gray-400 animate-fade-in key={systemLog}">
-                    <Activity size={12} className="text-purple-500" />
-                    <span className="truncate max-w-lg">{systemLog}</span>
-                </div>
-            </div>
-
-            {/* Right: Live Telemetry */}
-            <div className="flex items-center gap-4 w-auto shrink-0 text-[10px] font-bold">
-                <div className="flex items-center gap-2">
-                    <span className="text-gray-600">GPU</span>
-                    <div className="w-16 h-2 bg-nebula-900 rounded-full overflow-hidden border border-white/5">
-                        <div className="h-full bg-purple-500 transition-all duration-700 ease-out" style={{ width: `${telemetry.gpu}%` }}></div>
-                    </div>
-                    <span className="text-purple-300 w-8 text-right">{telemetry.gpu.toFixed(0)}%</span>
-                </div>
-
-                <div className="flex items-center gap-2">
-                    <span className="text-gray-600">VRAM</span>
-                    <div className="w-16 h-2 bg-nebula-900 rounded-full overflow-hidden border border-white/5">
-                        <div className={`h-full transition-all duration-700 ease-out ${telemetry.vram > 10 ? 'bg-red-500' : 'bg-blue-500'}`} style={{ width: `${(telemetry.vram / 12) * 100}%` }}></div>
-                    </div>
-                    <span className="text-blue-300 w-12 text-right">{telemetry.vram.toFixed(1)}GB</span>
-                </div>
-
-                <div className="flex items-center gap-2 pl-2 border-l border-white/5">
-                    <span className="text-gray-600">TEMP</span>
-                    <span className={`${telemetry.temp > 80 ? 'text-red-400' : 'text-green-400'}`}>{telemetry.temp.toFixed(0)}°C</span>
-                </div>
-
-                <div className="flex items-center gap-2">
-                    <span className="text-gray-600">PWR</span>
-                    <span className="text-yellow-500">{telemetry.power.toFixed(0)}W</span>
-                </div>
-            </div>
-      </footer>
+        </div>
+      )}
     </div>
   );
 };

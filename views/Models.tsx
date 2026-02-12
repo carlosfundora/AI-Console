@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Model, ModelVersion, ServerProfile, BenchmarkResult } from '../types';
-import { GitBranch, Box, FileCode, Tag, ExternalLink, Cpu, Terminal, Scale, X, BarChart2, Filter, Check, Server, FileText, Activity, Plus, RefreshCw, Trash2, Layers, Zap, Merge, Scissors, User, FlaskConical, Beaker, Database, ArrowLeftRight, TrendingUp, Play, Loader2, BrainCircuit, Eraser, HardDrive, LayoutTemplate, ScanLine, ArrowUp, ArrowDown, Minus, Settings, Search, AlignLeft, Table as TableIcon } from 'lucide-react';
+import { GitBranch, Box, FileCode, Tag, ExternalLink, Cpu, Terminal, Scale, X, BarChart2, Filter, Check, Server, FileText, Activity, Plus, RefreshCw, Trash2, Layers, Zap, Merge, Scissors, User, FlaskConical, Beaker, Database, ArrowLeftRight, TrendingUp, Play, Loader2, BrainCircuit, Eraser, HardDrive, LayoutTemplate, ScanLine, ArrowUp, ArrowDown, Minus, Settings, Search, AlignLeft, Table as TableIcon, Download } from 'lucide-react';
 
 interface ModelsProps {
   models: Model[];
@@ -13,7 +13,6 @@ interface ModelsProps {
 type ModelCategory = 'All' | 'Base' | 'Fine-Tuned' | 'Distilled' | 'Merged' | 'Custom';
 
 export const Models: React.FC<ModelsProps> = ({ models, servers, benchmarks, onAddBenchmark }) => {
-  // Local state for models allows us to add tags dynamically in the UI
   const [localModels, setLocalModels] = useState<Model[]>(models);
   const [selectedModel, setSelectedModel] = useState<Model | null>(null);
   const [selectedVersionIds, setSelectedVersionIds] = useState<Set<string>>(new Set());
@@ -56,7 +55,6 @@ export const Models: React.FC<ModelsProps> = ({ models, servers, benchmarks, onA
       if (!newTag.trim() || !selectedModel) return;
       const tag = newTag.trim();
       
-      // Update local models state
       const updatedModels = localModels.map(m => 
           m.id === selectedModel.id 
           ? { ...m, tags: [...m.tags, tag] } 
@@ -64,7 +62,6 @@ export const Models: React.FC<ModelsProps> = ({ models, servers, benchmarks, onA
       );
       setLocalModels(updatedModels);
       
-      // Update currently selected model to reflect change immediately
       setSelectedModel({
           ...selectedModel,
           tags: [...selectedModel.tags, tag]
@@ -99,17 +96,15 @@ export const Models: React.FC<ModelsProps> = ({ models, servers, benchmarks, onA
   const handleRunBenchmark = () => {
       if (!selectedModel) return;
       setIsBenchmarking(true);
-      
-      // Simulate benchmark run
       setTimeout(() => {
           const newResult: BenchmarkResult = {
               id: `b-${Date.now()}`,
               modelId: selectedModel.id,
               versionId: selectedModel.versions[0]?.id || 'unknown',
               dataset: 'Standard-1K',
-              score: Math.floor(Math.random() * 20) + 80, // 80-99
-              latency: Math.floor(Math.random() * 50) + 20, // 20-70ms
-              tokensPerSecond: Math.random() * 50 + 40, // 40-90 t/s
+              score: Math.floor(Math.random() * 20) + 80,
+              latency: Math.floor(Math.random() * 50) + 20,
+              tokensPerSecond: Math.random() * 50 + 40,
               hardware: 'GPU',
               hardwareName: 'Simulated GPU',
               date: new Date().toISOString().split('T')[0],
@@ -128,24 +123,21 @@ export const Models: React.FC<ModelsProps> = ({ models, servers, benchmarks, onA
       }
   };
 
-  // Derived filter options from LOCAL models to include new tags
+  // Derived filter options
   const providers = ['All', ...Array.from(new Set(localModels.map(m => m.provider)))];
   const families = ['All', ...Array.from(new Set(localModels.map(m => m.family)))];
   const tensors = ['All', ...Array.from(new Set(localModels.map(m => m.tensorType)))];
   const availableTags = ['All', ...Array.from(new Set(localModels.flatMap(m => m.tags)))];
 
   const filteredModels = localModels.filter(m => {
-      // 1. Category Filter
       let categoryMatch = true;
       if (viewCategory === 'Base') categoryMatch = m.tags.includes('Base');
       else if (viewCategory === 'Fine-Tuned') categoryMatch = m.tags.some(t => ['Fine-Tuned', 'SFT', 'LoRA'].includes(t));
       else if (viewCategory === 'Distilled') categoryMatch = m.tags.some(t => ['Distilled', 'Distill'].includes(t));
       else if (viewCategory === 'Merged') categoryMatch = m.tags.some(t => ['Merged', 'Fusion'].includes(t));
       else if (viewCategory === 'Custom') categoryMatch = m.tags.includes('Custom');
-      
       if (!categoryMatch) return false;
 
-      // 2. Standard Filters
       if (searchQuery && !m.name.toLowerCase().includes(searchQuery.toLowerCase())) return false;
       if (filterProvider !== 'All' && m.provider !== filterProvider) return false;
       if (filterFamily !== 'All' && m.family !== filterFamily) return false;
@@ -154,13 +146,8 @@ export const Models: React.FC<ModelsProps> = ({ models, servers, benchmarks, onA
       return true;
   });
 
-  const getCompatibleServers = (modelId: string) => {
-      return servers.filter(s => s.compatibleModels.includes(modelId));
-  };
-
-  const getModelBenchmarks = (modelId: string) => {
-      return benchmarks.filter(b => b.modelId === modelId);
-  };
+  const getCompatibleServers = (modelId: string) => servers.filter(s => s.compatibleModels.includes(modelId));
+  const getModelBenchmarks = (modelId: string) => benchmarks.filter(b => b.modelId === modelId);
 
   const getCategoryIcon = (cat: ModelCategory) => {
       switch(cat) {
@@ -173,7 +160,6 @@ export const Models: React.FC<ModelsProps> = ({ models, servers, benchmarks, onA
       }
   };
 
-  // Helper for Architecture display
   const getArchitecture = (family: string) => {
       if (family === 'Llama') return 'LlamaForCausalLM';
       if (family === 'Mistral') return 'MistralForCausalLM';
@@ -182,7 +168,6 @@ export const Models: React.FC<ModelsProps> = ({ models, servers, benchmarks, onA
       return 'Transformer (Decoder-Only)';
   };
 
-  // Helper to estimate GPU layers based on params (heuristic)
   const estimateGpuLayers = (params: string) => {
       if (params.includes('70B')) return 80;
       if (params.includes('7B')) return 32;
@@ -191,7 +176,6 @@ export const Models: React.FC<ModelsProps> = ({ models, servers, benchmarks, onA
       return 'N/A';
   };
 
-  // --- Drag and Drop Logic ---
   const onDragStart = (e: React.DragEvent, modelId: string) => {
     setDraggingModelId(modelId);
     e.dataTransfer.effectAllowed = 'move';
@@ -209,22 +193,16 @@ export const Models: React.FC<ModelsProps> = ({ models, servers, benchmarks, onA
     setDraggingModelId(null);
   };
 
-  const onDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-  };
+  const onDragOver = (e: React.DragEvent) => e.preventDefault();
 
-  // --- Comparison Helper ---
   const ComparisonMetric = ({ label, value, otherValue, unit, lowerIsBetter = false }: { label: string, value?: number, otherValue?: number, unit: string, lowerIsBetter?: boolean }) => {
       if (value === undefined) return <div><span className="text-gray-500 block">{label}</span><span className="text-gray-500">-</span></div>;
-      
       let colorClass = 'text-white';
       let Icon = null;
-
       if (otherValue !== undefined) {
           const diff = value - otherValue;
           const isBetter = lowerIsBetter ? diff < 0 : diff > 0;
           const isTie = diff === 0;
-
           if (isTie) {
               colorClass = 'text-yellow-400';
               Icon = <Minus size={12} />;
@@ -236,7 +214,6 @@ export const Models: React.FC<ModelsProps> = ({ models, servers, benchmarks, onA
               Icon = lowerIsBetter ? <ArrowUp size={12} /> : <ArrowDown size={12} />;
           }
       }
-
       return (
           <div>
               <span className="text-gray-500 block">{label}</span>
@@ -250,28 +227,22 @@ export const Models: React.FC<ModelsProps> = ({ models, servers, benchmarks, onA
 
   return (
     <div className="h-full flex flex-col relative animate-fade-in p-space-lg">
-      <div className="flex flex-col gap-space-md mb-space-md shrink-0">
+      <div className="flex flex-col space-y-space-md min-w-0 mb-space-md shrink-0">
+        {/* Updated Header Structure matching Datasets */}
         <div className="flex justify-between items-center shrink-0">
             <div>
-                <h2 className="text-type-heading-lg font-bold text-white flex items-center gap-space-sm">
+                <h2 className="text-type-heading-lg font-bold flex items-center gap-space-sm text-white">
                     <BrainCircuit className="text-purple-500" /> Model Registry
                 </h2>
-                <div className="flex items-center gap-2 mt-1 text-type-body text-gray-400">
-                    <span className="text-xs bg-white/5 px-2 py-0.5 rounded border border-white/5">
-                        Showing {filteredModels.length} of {localModels.length}
-                    </span>
-                    <span className="text-xs italic hidden lg:block opacity-60">
-                        Drag a model onto another to compare metrics side-by-side
-                    </span>
-                </div>
+                <p className="text-type-body text-gray-400 mt-1">Manage and organize your local model checkpoints and weights.</p>
             </div>
             
-            <button className="text-type-tiny bg-nebula-900 hover:bg-nebula-800 text-purple-300 hover:text-white border border-nebula-700 hover:border-purple-500/50 px-3 py-2 rounded flex items-center gap-2 transition-all shadow-sm ml-auto font-bold uppercase tracking-wider">
-                <Plus size={14} /> Import HF
+            <button className="text-type-tiny bg-nebula-900 hover:bg-nebula-800 px-3 py-2 rounded text-purple-300 hover:text-white transition-all flex items-center gap-2 border border-nebula-700 hover:border-purple-500/50 shadow-sm font-bold uppercase tracking-wider">
+                <Download size={14} /> Import HF
             </button>
         </div>
 
-        {/* Filter Bar (Unified Style) */}
+        {/* Filter Bar (Unified with Datasets style) */}
         <div className="flex gap-space-md items-center bg-nebula-900 p-1.5 rounded-lg border border-nebula-700 shrink-0">
             {/* View Category Tabs */}
             <div className="flex bg-nebula-950/50 rounded-md p-1 border border-nebula-800 overflow-x-auto">
@@ -293,7 +264,7 @@ export const Models: React.FC<ModelsProps> = ({ models, servers, benchmarks, onA
             
             <div className="h-4 w-px bg-nebula-700 mx-1"></div>
 
-            {/* Search & Filter Bar */}
+            {/* Search */}
             <div className="relative flex-1">
                 <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
                 <input 

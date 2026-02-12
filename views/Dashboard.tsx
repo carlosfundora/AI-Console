@@ -8,6 +8,7 @@ interface DashboardProps {
   serverConfig: ServerConfig;
 }
 
+// Activity data for GPU Load History
 const activityData = [
   { time: '10:00', load: 20 },
   { time: '11:00', load: 45 },
@@ -54,9 +55,9 @@ const sftComparisonData = [
 
 // Mock Data for Slides
 const activeTasks = [
-    { id: 1, name: 'Llama-3-8b SFT (Epoch 2/3)', progress: 65, status: 'Training', color: 'bg-purple-600', glow: 'shadow-[0_0_15px_#9333ea]' },
-    { id: 2, name: 'Legal Corpus Indexing', progress: 32, status: 'Indexing', color: 'bg-blue-600', glow: 'shadow-[0_0_15px_#2563eb]' },
-    { id: 3, name: 'Evaluation: TruthfulQA', progress: 88, status: 'Benchmarking', color: 'bg-green-600', glow: 'shadow-[0_0_15px_#16a34a]' },
+    { id: 1, name: 'Llama-3-8b SFT (Epoch 2/3)', progress: 65, status: 'Training', color: 'bg-purple-600' },
+    { id: 2, name: 'Legal Corpus Indexing', progress: 32, status: 'Indexing', color: 'bg-blue-600' },
+    { id: 3, name: 'Evaluation: TruthfulQA', progress: 88, status: 'Benchmarking', color: 'bg-green-600' },
 ];
 
 const highScores = [
@@ -75,7 +76,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ serverConfig }) => {
 
   return (
     <div className="h-full overflow-y-auto space-y-6 animate-fade-in p-8 custom-scrollbar">
-      {/* Alerts Container - Vertical Gradient + Glass */}
+      {/* Alerts Container */}
       <div className="bg-gradient-to-b from-nebula-900 to-nebula-950 border border-white/5 rounded-xl p-6 shadow-[0_0_30px_rgba(0,0,0,0.5)] relative overflow-hidden group">
         <div className="absolute top-0 right-0 p-8 opacity-[0.03] pointer-events-none group-hover:opacity-[0.06] transition-opacity duration-700">
             <Bell size={140} />
@@ -143,26 +144,26 @@ export const Dashboard: React.FC<DashboardProps> = ({ serverConfig }) => {
                 <ChevronRight size={24} />
             </button>
 
-            {/* Slide 0: GPU Load History (Widescreen) */}
+            {/* Slide 0: GPU Load History (Styled) */}
             {slideIndex === 0 && (
                 <div className="h-[450px] animate-fade-in">
-                    <div className="bg-gradient-to-b from-nebula-900 to-nebula-950 border border-white/5 rounded-xl p-6 h-full shadow-lg flex flex-col">
-                        <div className="flex items-center gap-3 mb-6">
+                    <div className="bg-gradient-to-b from-nebula-900 to-nebula-950 border border-white/5 rounded-xl p-6 h-full shadow-[0_0_15px_rgba(124,58,237,0.1)] flex flex-col relative overflow-hidden">
+                        <div className="flex items-center gap-3 mb-6 relative z-10">
                              <span className="p-2 bg-purple-500/10 rounded-lg text-purple-400 border border-purple-500/10 shadow-[0_0_10px_rgba(124,58,237,0.1)]">⚡</span>
                              <h3 className="text-lg font-bold text-white">GPU Load History</h3>
                         </div>
-                        <div className="flex-1 w-full min-h-0">
+                        <div className="flex-1 w-full min-h-0 relative z-10">
                             <ResponsiveContainer width="100%" height="100%">
-                            <AreaChart data={activityData} margin={{ left: -20, right: 10 }}>
+                            <AreaChart data={activityData} margin={{ left: 0, right: 10 }}>
                                 <defs>
                                 <linearGradient id="colorLoad" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.6}/>
+                                    <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3}/> 
                                     <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0}/>
                                 </linearGradient>
                                 </defs>
-                                <CartesianGrid strokeDasharray="3 3" stroke="#1c1c24" vertical={false} />
+                                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" vertical={false} />
                                 <XAxis dataKey="time" stroke="#4b5563" tickLine={false} axisLine={false} tick={{fontSize: 10}} dy={10} />
-                                <YAxis stroke="#4b5563" tickLine={false} axisLine={false} tick={{fontSize: 10}} />
+                                <YAxis stroke="#4b5563" tickLine={false} axisLine={false} tick={{fontSize: 10}} width={30} />
                                 <Tooltip 
                                 contentStyle={{ backgroundColor: '#0a0a0e', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '4px' }}
                                 />
@@ -174,9 +175,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ serverConfig }) => {
                 </div>
             )}
 
-            {/* Slide 1: Active Tasks */}
+            {/* Slide 1: Active Tasks (Styled) */}
             {slideIndex === 1 && (
-                <div className="bg-gradient-to-b from-nebula-900 to-nebula-950 border border-white/5 rounded-xl p-6 h-[450px] animate-fade-in flex flex-col shadow-lg">
+                <div className="bg-gradient-to-b from-nebula-900 to-nebula-950 border border-white/5 rounded-xl p-6 h-[450px] animate-fade-in flex flex-col shadow-[0_0_15px_rgba(59,130,246,0.1)]">
                     <div className="flex justify-between items-center mb-6">
                         <h3 className="text-lg font-bold flex items-center gap-3 text-white">
                             <span className="p-2 bg-blue-500/10 rounded-lg text-blue-400 border border-blue-500/10 shadow-[0_0_10px_rgba(59,130,246,0.1)]">
@@ -195,9 +196,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ serverConfig }) => {
                                     </div>
                                     <span className="text-white font-mono bg-nebula-900 px-2.5 py-1 rounded-md border border-white/5 shadow-inner">{task.progress}%</span>
                                 </div>
-                                <div className="w-full bg-nebula-950/50 h-1.5 rounded-full overflow-hidden border border-white/5">
+                                <div className="w-full bg-nebula-950 h-1.5 rounded-full overflow-hidden border border-white/5">
                                     <div 
-                                        className={`h-full ${task.color} ${task.glow} relative transition-all duration-1000 ease-out`} 
+                                        className={`h-full ${task.color} relative transition-all duration-1000 ease-out shadow-[0_0_15px_currentColor]`} 
                                         style={{ width: `${task.progress}%` }}
                                     >
                                         <div className="absolute inset-0 bg-white/20 animate-pulse"></div>
@@ -209,9 +210,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ serverConfig }) => {
                 </div>
             )}
 
-            {/* Slide 2: Model Benchmarks */}
+            {/* Slide 2: Model Benchmarks (Renamed & Styled) */}
             {slideIndex === 2 && (
-                <div className="bg-gradient-to-b from-nebula-900 to-nebula-950 border border-white/5 rounded-xl p-6 h-[450px] animate-fade-in flex flex-col shadow-lg relative overflow-hidden">
+                <div className="bg-gradient-to-b from-nebula-900 to-nebula-950 border border-white/5 rounded-xl p-6 h-[450px] animate-fade-in flex flex-col shadow-[0_0_15px_rgba(234,179,8,0.1)] relative overflow-hidden">
                     <div className="absolute top-0 right-0 p-8 opacity-[0.02] pointer-events-none">
                         <Trophy size={200} />
                     </div>
@@ -257,16 +258,17 @@ export const Dashboard: React.FC<DashboardProps> = ({ serverConfig }) => {
                 </div>
             )}
 
-            {/* Slide 3: Health & Throughput */}
+            {/* Slide 3: Health & Throughput (Styled) */}
             {slideIndex === 3 && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 h-[450px] animate-fade-in">
-                    <div className="bg-gradient-to-b from-nebula-900 to-nebula-950 border border-white/5 rounded-xl p-6 flex flex-col shadow-lg">
+                    {/* Health Matrix */}
+                    <div className="bg-gradient-to-b from-nebula-900 to-nebula-950 border border-white/5 rounded-xl p-6 flex flex-col shadow-[0_0_15px_rgba(16,185,129,0.1)]">
                         <h3 className="text-lg font-semibold mb-2 text-white">🛡️ System Health Matrix</h3>
                         <p className="text-xs text-gray-500 mb-4 font-bold uppercase tracking-wider">Real-time telemetry distribution</p>
                         <div className="flex-1 min-h-0">
                             <ResponsiveContainer width="100%" height="100%">
                                 <RadarChart cx="50%" cy="50%" outerRadius="70%" data={healthData}>
-                                    <PolarGrid stroke="#1c1c24" />
+                                    <PolarGrid stroke="rgba(255,255,255,0.1)" />
                                     <PolarAngleAxis dataKey="subject" tick={{ fill: '#6b7280', fontSize: 11, fontWeight: 600 }} />
                                     <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
                                     <Radar
@@ -283,13 +285,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ serverConfig }) => {
                         </div>
                     </div>
 
-                    <div className="bg-gradient-to-b from-nebula-900 to-nebula-950 border border-white/5 rounded-xl p-6 flex flex-col shadow-lg">
+                    {/* Throughput */}
+                    <div className="bg-gradient-to-b from-nebula-900 to-nebula-950 border border-white/5 rounded-xl p-6 flex flex-col shadow-[0_0_15px_rgba(124,58,237,0.1)] relative">
                         <h3 className="text-lg font-semibold mb-2 text-white">📊 Daily Token Throughput</h3>
                         <p className="text-xs text-gray-500 mb-4 font-bold uppercase tracking-wider">Output volume per model family</p>
-                        <div className="flex-1 min-h-0">
+                        <div className="flex-1 min-h-0 relative z-10">
                             <ResponsiveContainer width="100%" height="100%">
                                 <BarChart data={throughputData} layout="vertical" margin={{ left: 0, right: 30 }}>
-                                    <CartesianGrid strokeDasharray="3 3" stroke="#1c1c24" horizontal={false} />
+                                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" horizontal={false} />
                                     <XAxis type="number" stroke="#4b5563" tick={{fontSize: 10}} hide />
                                     <YAxis dataKey="name" type="category" width={80} stroke="#9ca3af" tick={{fontSize: 12, fontWeight: 700}} axisLine={false} tickLine={false} />
                                     <Tooltip cursor={{fill: 'rgba(255,255,255,0.02)'}} contentStyle={{ backgroundColor: '#0a0a0e', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '4px' }} />
@@ -305,11 +308,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ serverConfig }) => {
                 </div>
             )}
 
-            {/* Slide 4: SFT Analytics */}
+            {/* Slide 4: SFT Analytics (Styled) */}
             {slideIndex === 4 && (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-[450px] animate-fade-in">
                     {/* Left: Loss Curve */}
-                    <div className="bg-gradient-to-b from-nebula-900 to-nebula-950 border border-white/5 rounded-xl p-6 flex flex-col shadow-lg relative overflow-hidden">
+                    <div className="bg-gradient-to-b from-nebula-900 to-nebula-950 border border-white/5 rounded-xl p-6 flex flex-col shadow-[0_0_15px_rgba(139,92,246,0.1)] relative overflow-hidden">
                         <div className="flex justify-between items-start mb-6 relative z-10">
                             <div>
                                 <h3 className="text-lg font-bold text-white flex items-center gap-2">
@@ -324,10 +327,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ serverConfig }) => {
                         
                         <div className="flex-1 min-h-0 relative z-10">
                             <ResponsiveContainer width="100%" height="100%">
-                                <LineChart data={sftLossData} margin={{ left: -20, right: 10 }}>
-                                    <CartesianGrid strokeDasharray="3 3" stroke="#1c1c24" vertical={false} />
+                                <LineChart data={sftLossData} margin={{ left: 0, right: 10 }}>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" vertical={false} />
                                     <XAxis dataKey="step" stroke="#4b5563" tick={{fontSize: 10}} tickLine={false} axisLine={false} />
-                                    <YAxis stroke="#4b5563" tick={{fontSize: 10}} tickLine={false} axisLine={false} />
+                                    <YAxis stroke="#4b5563" tick={{fontSize: 10}} tickLine={false} axisLine={false} width={30} />
                                     <Tooltip contentStyle={{ backgroundColor: '#0a0a0e', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '4px' }} />
                                     <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }} />
                                     <Line type="monotone" dataKey="current" name="Current Run" stroke="#8b5cf6" strokeWidth={3} dot={false} activeDot={{ r: 6 }} />
@@ -335,12 +338,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ serverConfig }) => {
                                 </LineChart>
                             </ResponsiveContainer>
                         </div>
-                        {/* Background Decor */}
-                        <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-purple-600/5 rounded-full blur-3xl pointer-events-none"></div>
                     </div>
 
                     {/* Right: Impact Analysis */}
-                    <div className="bg-gradient-to-b from-nebula-900 to-nebula-950 border border-white/5 rounded-xl p-6 flex flex-col shadow-lg relative overflow-hidden">
+                    <div className="bg-gradient-to-b from-nebula-900 to-nebula-950 border border-white/5 rounded-xl p-6 flex flex-col shadow-[0_0_15px_rgba(16,185,129,0.1)] relative overflow-hidden">
                         <div className="flex justify-between items-start mb-6 relative z-10">
                             <div>
                                 <h3 className="text-lg font-bold text-white flex items-center gap-2">
@@ -352,10 +353,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ serverConfig }) => {
 
                         <div className="flex-1 min-h-0 relative z-10">
                             <ResponsiveContainer width="100%" height="100%">
-                                <BarChart data={sftComparisonData} barGap={4} margin={{ left: -20, right: 10 }}>
-                                    <CartesianGrid strokeDasharray="3 3" stroke="#1c1c24" vertical={false} />
+                                <BarChart data={sftComparisonData} barGap={4} margin={{ left: 0, right: 10 }}>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" vertical={false} />
                                     <XAxis dataKey="metric" stroke="#6b7280" tick={{fontSize: 10, fontWeight: 600}} tickLine={false} axisLine={false} />
-                                    <YAxis stroke="#4b5563" tick={{fontSize: 10}} tickLine={false} axisLine={false} domain={[0, 100]} />
+                                    <YAxis stroke="#4b5563" tick={{fontSize: 10}} tickLine={false} axisLine={false} domain={[0, 100]} width={30} />
                                     <Tooltip 
                                         cursor={{fill: 'rgba(255,255,255,0.02)'}}
                                         contentStyle={{ backgroundColor: '#0a0a0e', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '4px' }} 
