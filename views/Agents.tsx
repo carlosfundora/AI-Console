@@ -1,7 +1,7 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { AgentConfig } from '../types';
-import { Briefcase, Code, Plus, Save, Trash2, Key, FolderOpen, Bot, FileJson, X, Globe, Database, CheckCircle, Clock, Copy } from 'lucide-react';
+import { Briefcase, Code, Plus, Save, Trash2, Key, FolderOpen, Bot, FileJson, X, Globe, Database, CheckCircle, Clock, Copy, AlertTriangle, Wand2, Play } from 'lucide-react';
 
 interface AgentsProps {
     agents: AgentConfig[];
@@ -80,15 +80,66 @@ const TOOL_TEMPLATES = {
 ]`
 };
 
+// --- JSON Editor Component ---
+const JsonEditor = ({ value, onChange, height = 'h-56' }: { value: string, onChange: (val: string) => void, height?: string }) => {
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
+    const preRef = useRef<HTMLPreElement>(null);
+    const [highlightedCode, setHighlightedCode] = useState('');
+
+    useEffect(() => {
+        // Syntax Highlighting using Prism (loaded globally via index.html)
+        if ((window as any).Prism) {
+            const prism = (window as any).Prism;
+            const html = prism.highlight(value || '', prism.languages.json, 'json');
+            setHighlightedCode(html + '<br/>'); // br ensures last line visibility
+        } else {
+            setHighlightedCode(value);
+        }
+    }, [value]);
+
+    const handleScroll = (e: React.UIEvent<HTMLTextAreaElement>) => {
+        if (preRef.current) {
+            preRef.current.scrollTop = e.currentTarget.scrollTop;
+            preRef.current.scrollLeft = e.currentTarget.scrollLeft;
+        }
+    };
+
+    return (
+        <div className={`relative w-full ${height} bg-nebula-950 border border-nebula-800 rounded-xl overflow-hidden font-mono text-xs shadow-inner group focus-within:border-purple-500/50 transition-colors`}>
+            {/* Syntax Highlighted Layer */}
+            <pre
+                ref={preRef}
+                className="absolute inset-0 p-4 m-0 pointer-events-none whitespace-pre overflow-hidden text-gray-400 leading-relaxed z-0 custom-scrollbar"
+                dangerouslySetInnerHTML={{ __html: highlightedCode }}
+            />
+            
+            {/* Editing Layer */}
+            <textarea
+                ref={textareaRef}
+                value={value}
+                onChange={(e) => onChange(e.target.value)}
+                onScroll={handleScroll}
+                spellCheck={false}
+                className="absolute inset-0 w-full h-full p-4 m-0 bg-transparent text-transparent caret-white border-none outline-none resize-none whitespace-pre overflow-auto leading-relaxed z-10 custom-scrollbar"
+                style={{ color: 'transparent' }} // Ensure text is transparent so code shows through
+            />
+        </div>
+    );
+};
+
 export const Agents: React.FC<AgentsProps> = ({ agents, onSaveAgent, onDeleteAgent }) => {
     const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
     const [currentAgent, setCurrentAgent] = useState<AgentConfig>(EMPTY_AGENT);
     const [saveStatus, setSaveStatus] = useState<'idle' | 'saved'>('idle');
+    const [validationStatus, setValidationStatus] = useState<'idle' | 'valid' | 'invalid'>('idle');
+    const [validationMsg, setValidationMsg] = useState('');
 
     const handleSelectAgent = (agent: AgentConfig) => {
         setSelectedAgentId(agent.id);
         setCurrentAgent({ ...agent });
         setSaveStatus('idle');
+        setValidationStatus('idle');
+        setValidationMsg('');
     };
 
     const handleCreateNew = () => {
@@ -96,10 +147,10 @@ export const Agents: React.FC<AgentsProps> = ({ agents, onSaveAgent, onDeleteAge
         setCurrentAgent(newAgent);
         setSelectedAgentId(newAgent.id);
         setSaveStatus('idle');
+        setValidationStatus('idle');
     };
 
     const handleSave = () => {
-        // Precise timestamp update
         const now = new Date();
         const timestamp = `${now.toLocaleDateString()} ${now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
         
@@ -111,7 +162,6 @@ export const Agents: React.FC<AgentsProps> = ({ agents, onSaveAgent, onDeleteAge
         setCurrentAgent(updatedAgent);
         onSaveAgent(updatedAgent);
         
-        // Visual feedback
         setSaveStatus('saved');
         setTimeout(() => setSaveStatus('idle'), 2500);
     };
@@ -169,6 +219,27 @@ export const Agents: React.FC<AgentsProps> = ({ agents, onSaveAgent, onDeleteAge
             if (!confirm('This will overwrite the current tool definitions. Continue?')) return;
         }
         setCurrentAgent({ ...currentAgent, toolsSchema: TOOL_TEMPLATES[type] });
+        setValidationStatus('idle');
+    };
+
+    // --- Validation Logic ---
+    const handleValidateJson = () => {
+        try {
+            const parsed = JSON.parse(currentAgent.toolsSchema);
+            // Basic schema check: should be array
+            if (!Array.isArray(parsed)) {
+                throw new Error("Root must be an Array of tool definitions.");
+            }
+            // Pretty print
+            const formatted = JSON.stringify(parsed, null, 2);
+            setCurrentAgent({ ...currentAgent, toolsSchema: formatted });
+            setValidationStatus('valid');
+            setValidationMsg("Valid JSON • Formatted");
+            setTimeout(() => setValidationStatus('idle'), 3000);
+        } catch (e: any) {
+            setValidationStatus('invalid');
+            setValidationMsg(e.message || "Invalid JSON syntax");
+        }
     };
 
     return (
@@ -244,7 +315,7 @@ export const Agents: React.FC<AgentsProps> = ({ agents, onSaveAgent, onDeleteAge
                             <div className="flex gap-space-sm items-center">
                                 {saveStatus === 'saved' && (
                                     <span className="text-green-400 text-xs font-bold flex items-center gap-1 animate-fade-in">
-                                        <CheckCircle size={14}/> Changes Saved
+                                        <CheckCircle size={14}/> Saved
                                     </span>
                                 )}
                                 <button 
@@ -291,12 +362,29 @@ export const Agents: React.FC<AgentsProps> = ({ agents, onSaveAgent, onDeleteAge
                                 />
                             </div>
 
-                            {/* Tools Schema */}
+                            {/* Tools Schema with Enhanced Editor */}
                             <div className="space-y-space-xs">
                                 <div className="flex justify-between items-end mb-space-xs">
-                                    <label className="text-type-tiny uppercase text-purple-400 font-bold flex items-center gap-space-sm tracking-widest">
-                                        <FileJson size={14} /> Tools Payload (JSON)
-                                    </label>
+                                    <div className="flex items-center gap-4">
+                                        <label className="text-type-tiny uppercase text-purple-400 font-bold flex items-center gap-space-sm tracking-widest">
+                                            <FileJson size={14} /> Tools Payload (JSON)
+                                        </label>
+                                        <button 
+                                            onClick={handleValidateJson}
+                                            className={`text-[10px] font-bold px-2 py-0.5 rounded border flex items-center gap-1 transition-all ${
+                                                validationStatus === 'valid' ? 'bg-green-900/30 border-green-500 text-green-400' :
+                                                validationStatus === 'invalid' ? 'bg-red-900/30 border-red-500 text-red-400' :
+                                                'bg-nebula-950 border-nebula-800 text-gray-400 hover:text-white hover:border-gray-500'
+                                            }`}
+                                        >
+                                            {validationStatus === 'valid' ? <CheckCircle size={10} /> : validationStatus === 'invalid' ? <AlertTriangle size={10} /> : <Wand2 size={10} />}
+                                            {validationStatus === 'idle' ? 'Validate & Format' : validationStatus === 'valid' ? 'Valid JSON' : 'Invalid JSON'}
+                                        </button>
+                                        {validationMsg && validationStatus === 'invalid' && (
+                                            <span className="text-[10px] text-red-400 truncate max-w-[200px]" title={validationMsg}>{validationMsg}</span>
+                                        )}
+                                    </div>
+
                                     <div className="flex items-center gap-space-sm">
                                         <span className="text-type-tiny text-gray-500 uppercase font-black tracking-widest opacity-50">Templates:</span>
                                         <div className="flex gap-1">
@@ -306,15 +394,16 @@ export const Agents: React.FC<AgentsProps> = ({ agents, onSaveAgent, onDeleteAge
                                         </div>
                                     </div>
                                 </div>
-                                <div className="relative group/json">
-                                    <textarea 
-                                        value={currentAgent.toolsSchema}
-                                        onChange={(e) => setCurrentAgent({...currentAgent, toolsSchema: e.target.value})}
-                                        className="w-full h-56 bg-nebula-950 border border-nebula-800 rounded-xl p-space-md text-xs text-green-400/80 focus:border-purple-500/50 outline-none font-mono resize-none shadow-inner"
-                                        spellCheck={false}
-                                    />
-                                    <div className="absolute top-2 right-2 text-[10px] text-gray-600 bg-nebula-900 border border-nebula-800 px-2 py-1 rounded font-bold uppercase pointer-events-none group-hover/json:text-purple-400 transition-colors">JSON Schema</div>
-                                </div>
+                                
+                                {/* Custom JSON Editor */}
+                                <JsonEditor 
+                                    value={currentAgent.toolsSchema} 
+                                    onChange={(val) => {
+                                        setCurrentAgent({...currentAgent, toolsSchema: val});
+                                        if (validationStatus !== 'idle') setValidationStatus('idle'); // reset status on edit
+                                    }}
+                                    height="h-64" 
+                                />
                             </div>
 
                             <div className="grid grid-cols-1 xl:grid-cols-2 gap-space-lg">

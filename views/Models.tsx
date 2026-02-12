@@ -215,7 +215,7 @@ export const Models: React.FC<ModelsProps> = ({ models, servers, benchmarks, onA
                         onClick={() => setViewCategory(cat)}
                         className={`flex items-center gap-2 px-4 py-2 rounded-md text-type-caption font-medium transition-all whitespace-nowrap h-9 ${
                             viewCategory === cat 
-                            ? 'bg-purple-600 text-white shadow-md' 
+                            ? 'bg-purple-600/20 text-purple-300 border border-purple-500/30 shadow-inner' 
                             : 'text-gray-400 hover:text-white hover:bg-white/5'
                         }`}
                     >
@@ -252,7 +252,7 @@ export const Models: React.FC<ModelsProps> = ({ models, servers, benchmarks, onA
         
         {/* Filter Panel */}
         {showFilters && (
-            <div className="bg-nebula-900 border border-nebula-700 rounded-xl p-4 grid grid-cols-4 gap-4 animate-fade-in relative">
+            <div className="bg-nebula-900 border border-nebula-700 rounded-xl p-4 grid grid-cols-4 gap-4 animate-fade-in relative shadow-lg">
                 <div>
                     <label className="text-type-tiny text-gray-500 uppercase font-bold block mb-1">Provider</label>
                     <select 
@@ -320,7 +320,7 @@ export const Models: React.FC<ModelsProps> = ({ models, servers, benchmarks, onA
                         onDragOver={onDragOver}
                         onDrop={(e) => onDrop(e, model.id)}
                         onClick={() => { setSelectedModel(model); setSelectedVersionIds(new Set()); setShowComparison(false); setDetailTab('overview'); }}
-                        className={`bg-gradient-to-br from-nebula-900 to-nebula-950 border ${draggingModelId === model.id ? 'border-purple-500 opacity-50 scale-95' : 'border-white/5'} rounded-xl p-space-md hover:border-purple-500/40 transition-all cursor-grab active:cursor-grabbing group relative overflow-hidden flex flex-col shadow-lg hover:shadow-purple-500/10`}
+                        className={`bg-gradient-to-b from-nebula-900 to-nebula-950 border ${draggingModelId === model.id ? 'border-purple-500 opacity-50 scale-95' : 'border-white/5'} rounded-xl p-space-md hover:border-purple-500/40 transition-all cursor-grab active:cursor-grabbing group relative overflow-hidden flex flex-col shadow-lg hover:shadow-[0_0_15px_rgba(124,58,237,0.05)] h-full`}
                     >
                         {/* New Header Layout: Provider Badge + Name on one line */}
                         <div className="flex items-center gap-space-sm mb-2">
@@ -331,7 +331,7 @@ export const Models: React.FC<ModelsProps> = ({ models, servers, benchmarks, onA
                         
                         <p className="text-type-tiny text-gray-400 mb-3 line-clamp-2 leading-relaxed">{model.description}</p>
                         
-                        <div className="flex flex-wrap gap-1 mb-3">
+                        <div className="flex flex-wrap gap-1 mb-3 mt-auto">
                             {model.tags.slice(0, 4).map(tag => (
                                 <span key={tag} className="text-[9px] px-1.5 py-0.5 rounded-full bg-nebula-950 border border-white/5 text-gray-500">
                                     {tag}
@@ -361,7 +361,7 @@ export const Models: React.FC<ModelsProps> = ({ models, servers, benchmarks, onA
                 ))}
                 
                  {/* Add New Placeholder */}
-                <div className="border-2 border-dashed border-white/5 rounded-xl p-3 flex flex-col items-center justify-center text-gray-600 hover:text-purple-400 hover:border-purple-500/30 transition-all cursor-pointer min-h-[160px]">
+                <div className="border-2 border-dashed border-white/5 rounded-xl p-3 flex flex-col items-center justify-center text-gray-600 hover:text-purple-400 hover:border-purple-500/30 transition-all cursor-pointer min-h-[160px] bg-white/5 hover:bg-white/10">
                     <span className="text-2xl mb-1">+</span>
                     <span className="font-medium text-xs">Connect Repo</span>
                 </div>
@@ -370,7 +370,7 @@ export const Models: React.FC<ModelsProps> = ({ models, servers, benchmarks, onA
 
         {/* Model Detail Modal Overlay */}
         {selectedModel && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-nebula-950/80 backdrop-blur-sm p-space-lg animate-fade-in" onClick={() => setSelectedModel(null)}>
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-nebula-950/80 backdrop-blur-md p-space-lg animate-fade-in" onClick={() => setSelectedModel(null)}>
                 <div 
                     className="w-full max-w-6xl h-[90vh] bg-nebula-900 border border-nebula-700 rounded-xl flex flex-col overflow-hidden shadow-2xl relative"
                     onClick={(e) => e.stopPropagation()}
@@ -583,29 +583,143 @@ export const Models: React.FC<ModelsProps> = ({ models, servers, benchmarks, onA
 
         {/* Drag & Drop Comparison Modal */}
         {comparisonPair && (
-            <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-sm p-8 animate-fade-in">
-                 <div className="bg-nebula-900 border border-nebula-700 rounded-xl w-full max-w-5xl h-[80vh] flex flex-col shadow-2xl overflow-hidden">
-                    <div className="p-6 border-b border-white/5 flex justify-between items-center bg-nebula-950">
-                        <h2 className="text-xl font-bold text-white flex items-center gap-2"><Scale className="text-purple-500"/> Model Comparison</h2>
-                        <button onClick={() => setComparisonPair(null)}><X className="text-gray-400 hover:text-white" /></button>
+            <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-fade-in" onClick={() => setComparisonPair(null)}>
+                 <div 
+                    className="bg-gradient-to-b from-nebula-900 to-nebula-950 border border-nebula-700 rounded-2xl w-full max-w-5xl h-[85vh] flex flex-col shadow-2xl relative overflow-hidden"
+                    onClick={(e) => e.stopPropagation()}
+                >
+                    {/* Header */}
+                    <div className="p-6 border-b border-white/5 flex justify-between items-center bg-white/5 backdrop-blur-sm">
+                        <div>
+                            <h2 className="text-type-heading-md font-bold text-white flex items-center gap-2">
+                                <Scale className="text-purple-500" /> Model Comparison
+                            </h2>
+                            <p className="text-type-tiny text-gray-400 mt-1 uppercase tracking-widest">Head-to-Head Analysis</p>
+                        </div>
+                        <button 
+                            onClick={() => setComparisonPair(null)}
+                            className="p-2 bg-nebula-900 hover:bg-nebula-800 border border-nebula-700 hover:border-nebula-600 rounded-lg text-gray-400 hover:text-white transition-all"
+                        >
+                            <X size={20} />
+                        </button>
                     </div>
-                    <div className="grid grid-cols-2 h-full divide-x divide-white/5">
-                        <div className="p-6 overflow-y-auto">
-                            <h3 className="text-lg font-bold text-purple-400 mb-4">{comparisonPair[0].name}</h3>
-                             <div className="space-y-4">
-                                <div className="bg-white/5 p-4 rounded border border-white/5">
-                                    <div className="text-xs text-gray-500 uppercase font-bold">Params</div>
-                                    <div className="text-xl font-mono text-white">{comparisonPair[0].params}</div>
+
+                    {/* VS Badge */}
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 flex flex-col items-center justify-center pointer-events-none">
+                        <div className="w-12 h-12 rounded-full bg-nebula-950 border-2 border-purple-500 flex items-center justify-center text-purple-500 font-black text-xl shadow-[0_0_30px_rgba(124,58,237,0.4)]">
+                            VS
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 h-full divide-x divide-white/5 relative">
+                        {/* Model A */}
+                        <div className="p-8 overflow-y-auto custom-scrollbar bg-gradient-to-b from-transparent to-purple-900/5">
+                            <div className="flex items-start justify-between mb-8">
+                                <div>
+                                    <div className="text-type-tiny text-purple-400 font-bold uppercase tracking-wider mb-1">Challenger A</div>
+                                    <h3 className="text-2xl font-black text-white">{comparisonPair[0].name}</h3>
+                                    <div className="flex items-center gap-2 mt-2">
+                                        <span className="text-xs bg-nebula-800 px-2 py-1 rounded border border-nebula-700 text-gray-300">{comparisonPair[0].provider}</span>
+                                        <span className="text-xs bg-nebula-800 px-2 py-1 rounded border border-nebula-700 text-gray-300">{comparisonPair[0].family}</span>
+                                    </div>
                                 </div>
-                                {/* Add more metrics comparison here */}
+                            </div>
+
+                             <div className="space-y-6">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="bg-nebula-900/50 p-4 rounded-xl border border-white/5">
+                                        <div className="text-[10px] text-gray-500 uppercase font-bold mb-1">Parameters</div>
+                                        <div className="text-lg font-mono text-white font-bold">{comparisonPair[0].params}</div>
+                                    </div>
+                                    <div className="bg-nebula-900/50 p-4 rounded-xl border border-white/5">
+                                        <div className="text-[10px] text-gray-500 uppercase font-bold mb-1">Tensor Type</div>
+                                        <div className="text-lg font-mono text-white font-bold">{comparisonPair[0].tensorType}</div>
+                                    </div>
+                                </div>
+
+                                <div className="bg-nebula-900/50 p-6 rounded-xl border border-white/5">
+                                    <div className="text-xs text-gray-400 font-bold uppercase mb-4 flex justify-between">
+                                        <span>Performance Score</span>
+                                        <span className="text-white">88/100</span>
+                                    </div>
+                                    <div className="w-full bg-nebula-950 h-2 rounded-full overflow-hidden">
+                                        <div className="h-full bg-purple-500 w-[88%] shadow-[0_0_10px_#8b5cf6]"></div>
+                                    </div>
+                                    <div className="mt-4 grid grid-cols-2 gap-4 text-xs">
+                                        <div>
+                                            <span className="text-gray-500 block">Latency</span>
+                                            <span className="text-white font-mono">{comparisonPair[0].metrics?.latencyMs || '45'}ms</span>
+                                        </div>
+                                        <div>
+                                            <span className="text-gray-500 block">Throughput</span>
+                                            <span className="text-white font-mono">{comparisonPair[0].metrics?.tokensPerSecond || '120'} t/s</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <h4 className="text-sm font-bold text-white mb-2">Capabilities</h4>
+                                    <div className="flex flex-wrap gap-2">
+                                        {comparisonPair[0].tags.map(tag => (
+                                            <span key={tag} className="text-xs px-2 py-1 rounded bg-nebula-800 border border-nebula-700 text-gray-300">{tag}</span>
+                                        ))}
+                                    </div>
+                                </div>
                              </div>
                         </div>
-                        <div className="p-6 overflow-y-auto">
-                            <h3 className="text-lg font-bold text-blue-400 mb-4">{comparisonPair[1].name}</h3>
-                            <div className="space-y-4">
-                                <div className="bg-white/5 p-4 rounded border border-white/5">
-                                    <div className="text-xs text-gray-500 uppercase font-bold">Params</div>
-                                    <div className="text-xl font-mono text-white">{comparisonPair[1].params}</div>
+
+                        {/* Model B */}
+                        <div className="p-8 overflow-y-auto custom-scrollbar bg-gradient-to-b from-transparent to-blue-900/5">
+                            <div className="flex items-start justify-between mb-8">
+                                <div>
+                                    <div className="text-type-tiny text-blue-400 font-bold uppercase tracking-wider mb-1">Challenger B</div>
+                                    <h3 className="text-2xl font-black text-white">{comparisonPair[1].name}</h3>
+                                    <div className="flex items-center gap-2 mt-2">
+                                        <span className="text-xs bg-nebula-800 px-2 py-1 rounded border border-nebula-700 text-gray-300">{comparisonPair[1].provider}</span>
+                                        <span className="text-xs bg-nebula-800 px-2 py-1 rounded border border-nebula-700 text-gray-300">{comparisonPair[1].family}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="space-y-6">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="bg-nebula-900/50 p-4 rounded-xl border border-white/5">
+                                        <div className="text-[10px] text-gray-500 uppercase font-bold mb-1">Parameters</div>
+                                        <div className="text-lg font-mono text-white font-bold">{comparisonPair[1].params}</div>
+                                    </div>
+                                    <div className="bg-nebula-900/50 p-4 rounded-xl border border-white/5">
+                                        <div className="text-[10px] text-gray-500 uppercase font-bold mb-1">Tensor Type</div>
+                                        <div className="text-lg font-mono text-white font-bold">{comparisonPair[1].tensorType}</div>
+                                    </div>
+                                </div>
+
+                                <div className="bg-nebula-900/50 p-6 rounded-xl border border-white/5">
+                                    <div className="text-xs text-gray-400 font-bold uppercase mb-4 flex justify-between">
+                                        <span>Performance Score</span>
+                                        <span className="text-white">92/100</span>
+                                    </div>
+                                    <div className="w-full bg-nebula-950 h-2 rounded-full overflow-hidden">
+                                        <div className="h-full bg-blue-500 w-[92%] shadow-[0_0_10px_#3b82f6]"></div>
+                                    </div>
+                                    <div className="mt-4 grid grid-cols-2 gap-4 text-xs">
+                                        <div>
+                                            <span className="text-gray-500 block">Latency</span>
+                                            <span className="text-white font-mono">{comparisonPair[1].metrics?.latencyMs || '38'}ms</span>
+                                        </div>
+                                        <div>
+                                            <span className="text-gray-500 block">Throughput</span>
+                                            <span className="text-white font-mono">{comparisonPair[1].metrics?.tokensPerSecond || '145'} t/s</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <h4 className="text-sm font-bold text-white mb-2">Capabilities</h4>
+                                    <div className="flex flex-wrap gap-2">
+                                        {comparisonPair[1].tags.map(tag => (
+                                            <span key={tag} className="text-xs px-2 py-1 rounded bg-nebula-800 border border-nebula-700 text-gray-300">{tag}</span>
+                                        ))}
+                                    </div>
                                 </div>
                              </div>
                         </div>

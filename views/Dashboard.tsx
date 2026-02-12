@@ -10,7 +10,7 @@ interface DashboardProps {
 
 const vramData = [
   { name: 'Used', value: 24, color: '#7c3aed' }, // Purple-600
-  { name: 'Free', value: 56, color: '#272730' }, // Nebula-700
+  { name: 'Free', value: 56, color: '#1c1c24' }, // Darker placeholder
 ];
 
 const activityData = [
@@ -59,15 +59,15 @@ export const Dashboard: React.FC<DashboardProps> = ({ serverConfig }) => {
 
   return (
     <div className="h-full overflow-y-auto space-y-6 animate-fade-in p-8 custom-scrollbar">
-      {/* Alerts Container */}
-      <div className="bg-gradient-to-br from-nebula-900 to-nebula-950 border border-white/5 rounded-xl p-6 shadow-xl relative overflow-hidden group">
+      {/* Alerts Container - Vertical Gradient + Glass */}
+      <div className="bg-gradient-to-b from-nebula-900 to-nebula-950 border border-white/5 rounded-xl p-6 shadow-[0_0_30px_rgba(0,0,0,0.5)] relative overflow-hidden group">
         <div className="absolute top-0 right-0 p-8 opacity-[0.03] pointer-events-none group-hover:opacity-[0.06] transition-opacity duration-700">
             <Bell size={140} />
         </div>
         
         <div className="flex justify-between items-center mb-6 relative z-10">
             <h3 className="text-lg font-bold flex items-center gap-3 text-white">
-                <span className="p-2 bg-purple-500/10 rounded-lg text-purple-400 border border-purple-500/10">🚀</span>
+                <span className="p-2 bg-purple-500/10 rounded-lg text-purple-400 border border-purple-500/10 shadow-[0_0_10px_rgba(124,58,237,0.1)]">🚀</span>
                 Recent System Alerts
             </h3>
             <div className="flex items-center gap-4">
@@ -82,8 +82,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ serverConfig }) => {
         </div>
 
         <div className="space-y-3 relative z-10">
-          <div className="flex items-center gap-4 p-4 bg-white/5 rounded-xl border border-white/5 hover:border-white/10 transition-colors group cursor-default backdrop-blur-sm">
-            <div className="p-2.5 bg-green-500/10 rounded-lg shrink-0 border border-green-500/10">
+          <div className="flex items-center gap-4 p-4 bg-white/5 rounded-xl border border-white/5 hover:border-purple-500/20 transition-colors group cursor-default backdrop-blur-sm">
+            <div className="p-2.5 bg-green-500/10 rounded-lg shrink-0 border border-green-500/10 shadow-[0_0_10px_rgba(34,197,94,0.1)]">
                 <CheckCircle size={20} className="text-green-400" />
             </div>
             <div className="flex-1 min-w-0">
@@ -96,8 +96,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ serverConfig }) => {
             </div>
           </div>
           
-          <div className="flex items-center gap-4 p-4 bg-white/5 rounded-xl border border-white/5 hover:border-white/10 transition-colors group cursor-default backdrop-blur-sm">
-            <div className="p-2.5 bg-yellow-500/10 rounded-lg shrink-0 border border-yellow-500/10">
+          <div className="flex items-center gap-4 p-4 bg-white/5 rounded-xl border border-white/5 hover:border-yellow-500/20 transition-colors group cursor-default backdrop-blur-sm">
+            <div className="p-2.5 bg-yellow-500/10 rounded-lg shrink-0 border border-yellow-500/10 shadow-[0_0_10px_rgba(234,179,8,0.1)]">
                 <AlertTriangle size={20} className="text-yellow-400" />
             </div>
             <div className="flex-1 min-w-0">
@@ -116,13 +116,13 @@ export const Dashboard: React.FC<DashboardProps> = ({ serverConfig }) => {
       <div className="relative group">
             <button 
                 onClick={prevSlide}
-                className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-3 z-20 p-2 bg-nebula-800 border border-white/10 rounded-full text-gray-400 hover:text-white hover:bg-nebula-700 shadow-lg transition-all opacity-0 group-hover:opacity-100 hover:scale-110"
+                className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-3 z-20 p-2 bg-nebula-900/80 border border-white/10 rounded-full text-gray-400 hover:text-white hover:bg-nebula-800 shadow-lg transition-all opacity-0 group-hover:opacity-100 hover:scale-110"
             >
                 <ChevronLeft size={24} />
             </button>
             <button 
                 onClick={nextSlide}
-                className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-3 z-20 p-2 bg-nebula-800 border border-white/10 rounded-full text-gray-400 hover:text-white hover:bg-nebula-700 shadow-lg transition-all opacity-0 group-hover:opacity-100 hover:scale-110"
+                className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-3 z-20 p-2 bg-nebula-900/80 border border-white/10 rounded-full text-gray-400 hover:text-white hover:bg-nebula-800 shadow-lg transition-all opacity-0 group-hover:opacity-100 hover:scale-110"
             >
                 <ChevronRight size={24} />
             </button>
@@ -130,39 +130,39 @@ export const Dashboard: React.FC<DashboardProps> = ({ serverConfig }) => {
             {/* Slide 0: VRAM & Load */}
             {slideIndex === 0 && (
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-fade-in h-[450px]">
-                    <div className="bg-gradient-to-b from-nebula-900 to-nebula-950 border border-white/5 rounded-xl p-6 lg:col-span-1 flex flex-col items-center justify-center relative overflow-hidden shadow-lg">
-                    <div className="absolute top-0 right-0 p-4 opacity-5">
-                        <span className="text-6xl">💾</span>
-                    </div>
-                    <h3 className="text-lg font-semibold mb-4 w-full text-left flex items-center gap-2 text-white">VRAM Distribution</h3>
-                    <div className="h-56 w-full">
-                        <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                            <Pie
-                            data={vramData}
-                            cx="50%"
-                            cy="50%"
-                            innerRadius={60}
-                            outerRadius={80}
-                            paddingAngle={5}
-                            dataKey="value"
-                            stroke="none"
-                            >
-                            {vramData.map((entry, index) => (
-                                <Cell key={`cell-${index}`} fill={entry.color} />
-                            ))}
-                            </Pie>
-                            <Tooltip 
-                            contentStyle={{ backgroundColor: '#0a0a12', border: '1px solid #1c1c2e', borderRadius: '8px' }}
-                            itemStyle={{ color: '#fff' }}
-                            />
-                        </PieChart>
-                        </ResponsiveContainer>
-                    </div>
-                    <div className="flex justify-between w-full px-8 text-sm text-gray-400 font-medium">
-                        <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-purple-600 shadow-[0_0_8px_rgba(139,92,246,0.5)]"></div> Used (24GB)</div>
-                        <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-nebula-700"></div> Free (56GB)</div>
-                    </div>
+                    <div className="bg-gradient-to-b from-nebula-900 to-nebula-950 border border-white/5 rounded-xl p-6 lg:col-span-1 flex flex-col items-center justify-center relative overflow-hidden shadow-lg hover:shadow-[0_0_20px_rgba(124,58,237,0.05)] transition-shadow">
+                        <div className="absolute top-0 right-0 p-4 opacity-5">
+                            <span className="text-6xl">💾</span>
+                        </div>
+                        <h3 className="text-lg font-semibold mb-4 w-full text-left flex items-center gap-2 text-white">VRAM Distribution</h3>
+                        <div className="h-56 w-full">
+                            <ResponsiveContainer width="100%" height="100%">
+                            <PieChart>
+                                <Pie
+                                data={vramData}
+                                cx="50%"
+                                cy="50%"
+                                innerRadius={60}
+                                outerRadius={80}
+                                paddingAngle={5}
+                                dataKey="value"
+                                stroke="none"
+                                >
+                                {vramData.map((entry, index) => (
+                                    <Cell key={`cell-${index}`} fill={entry.color} />
+                                ))}
+                                </Pie>
+                                <Tooltip 
+                                contentStyle={{ backgroundColor: '#0a0a0e', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '4px' }}
+                                itemStyle={{ color: '#fff' }}
+                                />
+                            </PieChart>
+                            </ResponsiveContainer>
+                        </div>
+                        <div className="flex justify-between w-full px-8 text-sm text-gray-400 font-medium">
+                            <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-purple-600 shadow-[0_0_8px_rgba(139,92,246,0.5)]"></div> Used (24GB)</div>
+                            <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-nebula-700"></div> Free (56GB)</div>
+                        </div>
                     </div>
 
                     <div className="bg-gradient-to-b from-nebula-900 to-nebula-950 border border-white/5 rounded-xl p-6 lg:col-span-2 shadow-lg">
@@ -176,11 +176,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ serverConfig }) => {
                                 <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0}/>
                             </linearGradient>
                             </defs>
-                            <CartesianGrid strokeDasharray="3 3" stroke="#272730" vertical={false} />
+                            <CartesianGrid strokeDasharray="3 3" stroke="#1c1c24" vertical={false} />
                             <XAxis dataKey="time" stroke="#4b5563" tickLine={false} axisLine={false} />
                             <YAxis stroke="#4b5563" tickLine={false} axisLine={false} />
                             <Tooltip 
-                            contentStyle={{ backgroundColor: '#0a0a12', border: '1px solid #1c1c2e', borderRadius: '8px' }}
+                            contentStyle={{ backgroundColor: '#0a0a0e', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '4px' }}
                             />
                             <Area type="monotone" dataKey="load" stroke="#8b5cf6" fillOpacity={1} fill="url(#colorLoad)" />
                         </AreaChart>
@@ -204,7 +204,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ serverConfig }) => {
                                         <span className="font-bold text-gray-200">{task.name}</span>
                                         <span className="text-[10px] text-gray-500 mt-1 uppercase tracking-widest">{task.status}</span>
                                     </div>
-                                    <span className="text-white font-mono bg-nebula-900 px-2.5 py-1 rounded-md border border-white/5">{task.progress}%</span>
+                                    <span className="text-white font-mono bg-nebula-900 px-2.5 py-1 rounded-md border border-white/5 shadow-inner">{task.progress}%</span>
                                 </div>
                                 <div className="w-full bg-nebula-950 h-2.5 rounded-full overflow-hidden border border-white/5">
                                     <div className={`h-full ${task.color} relative transition-all duration-1000 ease-out`} style={{ width: `${task.progress}%` }}>
@@ -235,12 +235,12 @@ export const Dashboard: React.FC<DashboardProps> = ({ serverConfig }) => {
 
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 flex-1 relative z-10">
                         {highScores.map((score, i) => (
-                            <div key={i} className="bg-nebula-950/50 border border-white/5 p-6 rounded-2xl flex flex-col justify-between items-center text-center hover:border-yellow-500/30 transition-all group relative overflow-hidden shadow-sm">
+                            <div key={i} className="bg-nebula-950/50 border border-white/5 p-6 rounded-2xl flex flex-col justify-between items-center text-center hover:border-yellow-500/30 transition-all group relative overflow-hidden shadow-md">
                                 {score.rank === 1 && <Star size={16} className="absolute top-3 right-3 text-yellow-500 animate-pulse" />}
                                 
                                 <div className="space-y-4">
                                     <div className="text-[10px] text-gray-500 uppercase font-black tracking-[0.2em]">{score.metric}</div>
-                                    <div className="text-4xl font-black text-white group-hover:scale-110 transition-transform duration-500 drop-shadow-md">{score.value}</div>
+                                    <div className="text-4xl font-black text-white group-hover:scale-110 transition-transform duration-500 drop-shadow-[0_0_10px_rgba(255,255,255,0.1)]">{score.value}</div>
                                 </div>
 
                                 <div className="w-full mt-6 space-y-3">
@@ -271,8 +271,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ serverConfig }) => {
                         <div className="flex-1 min-h-0">
                             <ResponsiveContainer width="100%" height="100%">
                                 <RadarChart cx="50%" cy="50%" outerRadius="70%" data={healthData}>
-                                    <PolarGrid stroke="#272730" />
-                                    <PolarAngleAxis dataKey="subject" tick={{ fill: '#9ca3af', fontSize: 11, fontWeight: 600 }} />
+                                    <PolarGrid stroke="#1c1c24" />
+                                    <PolarAngleAxis dataKey="subject" tick={{ fill: '#6b7280', fontSize: 11, fontWeight: 600 }} />
                                     <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
                                     <Radar
                                         name="Status"
@@ -282,7 +282,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ serverConfig }) => {
                                         fill="#10b981"
                                         fillOpacity={0.25}
                                     />
-                                    <Tooltip contentStyle={{ backgroundColor: '#0a0a12', border: '1px solid #1c1c2e', borderRadius: '8px' }} />
+                                    <Tooltip contentStyle={{ backgroundColor: '#0a0a0e', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '4px' }} />
                                 </RadarChart>
                             </ResponsiveContainer>
                         </div>
@@ -294,11 +294,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ serverConfig }) => {
                         <div className="flex-1 min-h-0">
                             <ResponsiveContainer width="100%" height="100%">
                                 <BarChart data={throughputData} layout="vertical" margin={{ left: 0, right: 30 }}>
-                                    <CartesianGrid strokeDasharray="3 3" stroke="#1c1c2e" horizontal={false} />
+                                    <CartesianGrid strokeDasharray="3 3" stroke="#1c1c24" horizontal={false} />
                                     <XAxis type="number" stroke="#4b5563" tick={{fontSize: 10}} hide />
                                     <YAxis dataKey="name" type="category" width={80} stroke="#9ca3af" tick={{fontSize: 12, fontWeight: 700}} axisLine={false} tickLine={false} />
-                                    <Tooltip cursor={{fill: 'rgba(255,255,255,0.02)'}} contentStyle={{ backgroundColor: '#0a0a12', border: '1px solid #1c1c2e', borderRadius: '8px' }} />
-                                    <Bar dataKey="tokens" fill="#7c3aed" radius={[0, 6, 6, 0]} barSize={24}>
+                                    <Tooltip cursor={{fill: 'rgba(255,255,255,0.02)'}} contentStyle={{ backgroundColor: '#0a0a0e', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '4px' }} />
+                                    <Bar dataKey="tokens" fill="#7c3aed" radius={[0, 4, 4, 0]} barSize={24}>
                                         {throughputData.map((entry, index) => (
                                             <Cell key={`cell-${index}`} fill={entry.color} />
                                         ))}
@@ -315,7 +315,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ serverConfig }) => {
                     <button 
                         key={i} 
                         onClick={() => setSlideIndex(i)}
-                        className={`w-2 h-2 rounded-full transition-all duration-300 ${slideIndex === i ? 'bg-purple-600 w-8 shadow-[0_0_10px_#8b5cf6]' : 'bg-gray-700 hover:bg-gray-600'}`}
+                        className={`h-2 rounded-full transition-all duration-300 ${slideIndex === i ? 'bg-purple-600 w-8 shadow-[0_0_10px_#8b5cf6]' : 'bg-gray-700 w-2 hover:bg-gray-600'}`}
                     ></button>
                 ))}
             </div>

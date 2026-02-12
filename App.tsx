@@ -519,17 +519,16 @@ const App: React.FC = () => {
       setBenchmarks(prev => [result, ...prev]);
   };
   
-  // Updated Nav Items with new icons and swaps
   const navItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: <Terminal size={20} /> },
-    { id: 'benchmarks', label: 'Benchmarks', icon: <Activity size={20} /> },
-    { id: 'datasets', label: 'Datasets', icon: <ClipboardDataIcon size={20} /> },
-    { id: 'training', label: 'Training', icon: <DraftingCompassIcon size={20} /> }, 
-    { id: 'laboratory', label: 'Laboratory', icon: <FlaskConical size={20} /> },
-    { id: 'servers', label: 'Servers', icon: <PythonIcon size={20} /> },
-    { id: 'models', label: 'Model Registry', icon: <BrainCircuit size={20} /> },
-    { id: 'agents', label: 'Agentic Prompts', icon: <Bot size={20} /> },
-    { id: 'chat', label: 'Chat', icon: <MessageSquare size={20} /> },
+    { id: 'dashboard', label: 'Dashboard', icon: <Terminal size={18} /> },
+    { id: 'benchmarks', label: 'Benchmarks', icon: <Activity size={18} /> },
+    { id: 'datasets', label: 'Datasets', icon: <ClipboardDataIcon size={18} /> },
+    { id: 'training', label: 'Training', icon: <DraftingCompassIcon size={18} /> }, 
+    { id: 'laboratory', label: 'Laboratory', icon: <FlaskConical size={18} /> },
+    { id: 'servers', label: 'Servers', icon: <PythonIcon size={18} /> },
+    { id: 'models', label: 'Model Registry', icon: <BrainCircuit size={18} /> },
+    { id: 'agents', label: 'Agentic Prompts', icon: <Bot size={18} /> },
+    { id: 'chat', label: 'Chat', icon: <MessageSquare size={18} /> },
   ];
 
   const getPageTitle = (tab: ViewState) => {
@@ -541,12 +540,14 @@ const App: React.FC = () => {
 
   return (
     <div className="flex flex-col h-screen bg-nebula-950 text-nebula-100 font-sans overflow-hidden text-type-body selection:bg-purple-500/30">
-      {/* Streamlined Top Header with Glassmorphism */}
-      <header className="h-header bg-nebula-950/80 backdrop-blur-md border-b border-white/5 flex items-center justify-between px-space-lg z-30 shrink-0 relative shadow-sm">
-          <div className="absolute inset-0 bg-gradient-to-r from-purple-500/5 to-transparent pointer-events-none"></div>
+      {/* Streamlined Top Header with Vertical Glassmorphism */}
+      <header className="h-header bg-nebula-950/80 backdrop-blur-md border-b border-white/5 flex items-center justify-between px-space-lg z-30 shrink-0 relative shadow-md">
+          {/* Subtle gradient overlay, top-down only */}
+          <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent pointer-events-none opacity-20"></div>
+          
           <div className="flex items-center gap-space-lg relative z-10">
                {/* Logo */}
-              <div className="text-type-heading-md font-black tracking-widest text-white border-2 border-white/20 px-2 py-0.5 rounded shadow-[0_0_10px_rgba(255,255,255,0.05)] bg-white/5">
+              <div className="text-type-heading-md font-black tracking-widest text-white border-2 border-white/10 px-2 py-0.5 rounded shadow-[0_0_10px_rgba(255,255,255,0.05)] bg-white/5">
                   R-AI
               </div>
               
@@ -569,7 +570,7 @@ const App: React.FC = () => {
               {/* Settings Button */}
               <button 
                   onClick={() => setActiveTab('settings')}
-                  className={`w-10 h-10 rounded-full border flex items-center justify-center transition-all ${activeTab === 'settings' ? 'bg-purple-600 border-purple-500 text-white shadow-lg active-glow' : 'bg-white/5 border-white/10 text-gray-400 hover:text-white hover:border-white/20 hover:bg-white/10'}`}
+                  className={`w-10 h-10 rounded-full border flex items-center justify-center transition-all ${activeTab === 'settings' ? 'bg-purple-600/20 border-purple-500 text-purple-300 shadow-[0_0_10px_rgba(124,58,237,0.3)] active-glow' : 'bg-white/5 border-white/10 text-gray-400 hover:text-white hover:border-white/20 hover:bg-white/10'}`}
                   title="Settings"
               >
                   <SettingsIcon size={18} />
@@ -578,31 +579,36 @@ const App: React.FC = () => {
       </header>
 
       <div className="flex flex-1 overflow-hidden">
-        {/* Sidebar */}
-        <aside className="w-sidebar bg-nebula-950/90 backdrop-blur-sm border-r border-white/5 flex flex-col z-20">
+        {/* Sidebar with subtle verticality */}
+        <aside className="w-sidebar bg-nebula-950/90 backdrop-blur-md border-r border-white/5 flex flex-col z-20">
           <nav className="flex-1 p-space-md space-y-1">
             {navItems.map(item => (
               <button
                 key={item.id}
                 onClick={() => setActiveTab(item.id as ViewState)}
-                className={`w-full flex items-center gap-space-md px-4 py-3 rounded-lg text-type-body font-medium transition-all duration-200 relative group ${
+                className={`w-full flex items-center gap-space-md px-4 py-3 rounded text-type-body font-medium transition-all duration-200 relative group overflow-hidden ${
                   activeTab === item.id 
-                    ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20 active-glow' 
-                    : 'text-gray-400 hover:text-white hover:bg-white/5 border border-transparent'
+                    ? 'bg-white/5 text-purple-300 border-l-2 border-purple-500 active-glow' 
+                    : 'text-gray-400 hover:text-white hover:bg-white/5 border-l-2 border-transparent'
                 }`}
               >
-                {item.icon}
-                {item.label}
-                {activeTab === item.id && <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-3/4 bg-purple-500 rounded-l shadow-[0_0_10px_#7c3aed]"></div>}
+                {/* Remove horizontal gradient, use soft glow instead */}
+                <div className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity bg-white/5 ${activeTab === item.id ? 'opacity-100' : ''}`}></div>
+                
+                <span className="relative z-10 flex items-center gap-space-md">
+                    {item.icon}
+                    {item.label}
+                </span>
               </button>
             ))}
           </nav>
         </aside>
 
-        {/* Main Content - FIXED overflow-hidden to allow children to handle scroll */}
+        {/* Main Content */}
         <main className="flex-1 flex flex-col min-w-0 bg-nebula-950 overflow-hidden relative">
+          {/* Subtle top shadow inset for depth */}
+          <div className="absolute top-0 left-0 right-0 h-4 bg-gradient-to-b from-black/20 to-transparent pointer-events-none z-10"></div>
           
-          {/* View Content */}
           <div className="flex-1 overflow-hidden flex flex-col">
             <div className="w-full h-full flex flex-col">
               {activeTab === 'dashboard' && <Dashboard serverConfig={SERVER_CONFIG} />}
@@ -621,10 +627,10 @@ const App: React.FC = () => {
       </div>
 
        {/* Full Width Footer with Glassmorphism */}
-      <footer className="h-8 bg-nebula-950/80 backdrop-blur-md border-t border-white/5 flex items-center justify-between px-4 text-type-caption text-gray-500 select-none z-40 relative shadow-[0_-5px_15px_rgba(0,0,0,0.2)] w-full font-mono uppercase tracking-tighter">
+      <footer className="h-8 bg-nebula-950/80 backdrop-blur-md border-t border-white/5 flex items-center justify-between px-4 text-type-caption text-gray-500 select-none z-40 relative shadow-[0_-5px_15px_rgba(0,0,0,0.3)] w-full font-mono uppercase tracking-tighter">
             <div className="flex gap-space-md items-center">
                 <span className="flex items-center gap-space-xs">
-                    <span className="w-2 h-2 rounded-full bg-green-500 animate-heartbeat shadow-[0_0_5px_#22c55e]"></span> 
+                    <span className="w-2 h-2 rounded-full bg-green-500 animate-heartbeat shadow-[0_0_8px_#22c55e]"></span> 
                     <span className="opacity-70">System Online</span>
                 </span>
                 {SERVER_CONFIG.rocmEnabled && (

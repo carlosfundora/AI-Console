@@ -6,19 +6,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Replicator AI</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- PrismJS for Syntax Highlighting -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
     <script>
       tailwind.config = {
         theme: {
           extend: {
             colors: {
               nebula: {
-                950: '#050507', // Darker base
-                900: '#0e0e12', // Subtle card
-                800: '#18181f', // Lighter element
-                700: '#23232c', // Border (Legacy use, prefer white/5)
+                950: '#030304', // Deepest Void
+                900: '#0a0a0e', // Card Base
+                800: '#13131a', // Element Base
+                700: '#1c1c24', // Border/Divider
+                600: '#2a2a35', // Highlight
                 500: '#7c3aed', // Primary Violet
                 400: '#a78bfa', // Lighter Violet
-                100: '#e4e4e7', // Text
+                100: '#e4e4e7', // Text Body
               },
               lab: {
                 900: '#020c04', 
@@ -27,12 +32,17 @@
                 400: '#4ade80', 
               }
             },
+            // Enforcing the 4px max radius constraint globally
             borderRadius: {
+              'none': '0',
+              'sm': '2px',
+              DEFAULT: '4px',
               'md': '4px',
-              'lg': '6px',
-              'xl': '8px',
-              '2xl': '12px',
-              '3xl': '16px',
+              'lg': '4px',
+              'xl': '4px',
+              '2xl': '4px',
+              '3xl': '4px',
+              'full': '9999px',
             },
             fontFamily: {
               mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', "Liberation Mono", "Courier New", 'monospace'],
@@ -51,7 +61,7 @@
               'sidebar': '16rem',
             },
             fontSize: {
-              'type-tiny': ['0.625rem', { lineHeight: '1rem', letterSpacing: '0.05em', fontWeight: '600' }],
+              'type-tiny': ['0.65rem', { lineHeight: '1rem', letterSpacing: '0.05em', fontWeight: '600' }],
               'type-caption': ['0.75rem', { lineHeight: '1.25rem', fontWeight: '500' }],
               'type-body': ['0.875rem', { lineHeight: '1.5rem', fontWeight: '400' }],
               'type-heading-sm': ['1rem', { lineHeight: '1.75rem', fontWeight: '600' }],
@@ -61,21 +71,26 @@
             },
             animation: {
               'pulse-glow': 'pulse-glow 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-              'fade-in': 'fadeIn 0.3s ease-in-out',
+              'fade-in': 'fadeIn 0.4s ease-out',
               'heartbeat': 'heartbeat 2s ease-in-out infinite',
+              'scanline': 'scanline 8s linear infinite',
             },
             keyframes: {
               'pulse-glow': {
-                '0%, 100%': { opacity: '1', boxShadow: '0 0 10px #7c3aed' },
-                '50%': { opacity: '.8', boxShadow: '0 0 20px #a78bfa' },
+                '0%, 100%': { opacity: '1', boxShadow: '0 0 15px rgba(124, 58, 237, 0.1)' },
+                '50%': { opacity: '.9', boxShadow: '0 0 25px rgba(124, 58, 237, 0.2)' },
               },
               fadeIn: {
-                '0%': { opacity: '0' },
-                '100%': { opacity: '1' },
+                '0%': { opacity: '0', transform: 'translateY(5px)' },
+                '100%': { opacity: '1', transform: 'translateY(0)' },
               },
               heartbeat: {
                 '0%, 100%': { transform: 'scale(1)', opacity: '1' },
-                '50%': { transform: 'scale(1.2)', opacity: '0.7' },
+                '50%': { transform: 'scale(1.1)', opacity: '0.8' },
+              },
+              scanline: {
+                '0%': { backgroundPosition: '0% 0%' },
+                '100%': { backgroundPosition: '0% 100%' },
               }
             }
           }
@@ -84,13 +99,13 @@
     </script>
     <style>
       body {
-        background-color: #050507;
+        background-color: #030304;
         color: #e4e4e7;
         position: relative;
         overflow: hidden;
       }
       
-      /* Subtle scanline */
+      /* CRT Scanline Effect - Subtle */
       body::before {
         content: "";
         position: fixed;
@@ -98,44 +113,75 @@
         left: 0;
         width: 100%;
         height: 100%;
-        background: linear-gradient(to bottom, rgba(255,255,255,0.01) 50%, rgba(0,0,0,0.02) 50%);
-        background-size: 100% 3px;
+        background: linear-gradient(to bottom, rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.05) 50%);
+        background-size: 100% 4px;
         z-index: 9999;
         pointer-events: none;
+        opacity: 0.3;
       }
 
-      /* Selection */
+      /* Text Selection */
       ::selection {
         background: rgba(124, 58, 237, 0.3);
-        color: white;
+        color: #fff;
       }
 
-      /* Scrollbar */
+      /* Refined Scrollbar */
       ::-webkit-scrollbar {
-        width: 6px;
-        height: 6px;
+        width: 5px;
+        height: 5px;
       }
       ::-webkit-scrollbar-track {
-        background: transparent; 
+        background: rgba(255, 255, 255, 0.02); 
       }
       ::-webkit-scrollbar-thumb {
-        background: #23232c; 
-        border-radius: 3px;
+        background: #2a2a35; 
+        border-radius: 4px;
+        transition: background 0.2s;
       }
       ::-webkit-scrollbar-thumb:hover {
-        background: #3f3f4e; 
+        background: #7c3aed; 
       }
 
       .active-glow {
-        box-shadow: inset 0 0 15px rgba(124, 58, 237, 0.15);
-        border-color: rgba(124, 58, 237, 0.3) !important;
+        box-shadow: 0 0 20px rgba(124, 58, 237, 0.15);
+        border-color: rgba(124, 58, 237, 0.4) !important;
       }
       
       .glass-panel {
-        background: rgba(14, 14, 18, 0.6);
-        backdrop-filter: blur(12px);
-        border: 1px solid rgba(255, 255, 255, 0.05);
+        background: rgba(10, 10, 14, 0.7);
+        backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.06);
       }
+
+      /* Custom PrismJS Overrides for Nebula Theme */
+      pre[class*="language-"] {
+        background: transparent !important;
+        text-shadow: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+      }
+      code[class*="language-"], pre[class*="language-"] {
+        color: #d1d5db !important; /* gray-300 default */
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important;
+        font-size: 0.75rem !important; /* text-xs */
+        line-height: 1.625 !important; /* relaxed */
+        direction: ltr;
+        text-align: left;
+        white-space: pre;
+        word-spacing: normal;
+        word-break: normal;
+        tab-size: 2;
+        hyphens: none;
+      }
+      /* Nebula Token Colors */
+      .token.property { color: #a78bfa !important; } /* purple-400 */
+      .token.string { color: #4ade80 !important; } /* green-400 */
+      .token.number { color: #fb923c !important; } /* orange-400 */
+      .token.boolean { color: #3b82f6 !important; font-weight: bold; } /* blue-500 */
+      .token.punctuation { color: #71717a !important; } /* zinc-500 */
+      .token.operator { color: #71717a !important; }
+      .token.null { color: #ef4444 !important; }
     </style>
   <script type="importmap">
 {
