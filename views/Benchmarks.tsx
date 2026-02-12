@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend, CartesianGrid, PieChart, Pie, Cell } from 'recharts';
 import { BenchmarkResult, Model, AdvancedBenchmarkConfig, BenchmarkStep, BenchmarkStepType, MockDataSource, ServerProfile } from '../types';
-import { Play, Settings2, MessageSquare, Database, Binary, FileText, Wrench, Search, ChevronDown, ChevronRight, X, ArrowRight, Loader2, File, Code, Table, Plus, Trash2, Expand, Clock, Info, Layers, GripVertical, Save, FolderOpen, Flame, Box, Server, Edit2 } from 'lucide-react';
+import { Play, Settings2, MessageSquare, Database, Binary, FileText, Wrench, Search, ChevronDown, ChevronRight, X, ArrowRight, Loader2, File, Code, Table, Plus, Trash2, Expand, Clock, Info, Layers, GripVertical, Save, FolderOpen, Flame, Box, Server, Edit2, GitFork, ScanSearch, Filter, Tag, ListChecks } from 'lucide-react';
 
 interface BenchmarksProps {
   results: BenchmarkResult[];
@@ -41,9 +41,10 @@ const MOCK_SAVED_CONFIGS: AdvancedBenchmarkConfig[] = [
         parameters: { contextSize: 8192, temperature: 0.1, flashAttention: true, memoryLock: true, gpuLayers: 99, continuousBatching: false, warmup: true },
         steps: [
             { id: 's1', type: 'Custom', name: 'Ingest PDF', enabled: true, config: { docType: 'PDF', chunkSize: 512 } },
-            { id: 's2', type: 'Embedding', name: 'Vectorize (Arctic)', enabled: true, modelId: 'snowflake-arctic', config: {} },
+            { id: 's2', type: 'Embedding', name: 'Vectorize (Arctic)', enabled: true, modelId: 'snowflake-arctic', config: { embeddingStrategy: 'Single', primaryDims: 768, primaryRole: 'Dense' } },
             { id: 's3', type: 'Retrieval', name: 'Vector Search', enabled: true, config: { rerankTopK: 10 } },
-            { id: 's4', type: 'Generation', name: 'Answer Query', enabled: true, config: { metric: 'Throughput' } }
+            { id: 's4', type: 'ColBERT', name: 'Re-Rank', enabled: true, config: {} },
+            { id: 's5', type: 'Generation', name: 'Answer Query', enabled: true, config: { metric: 'Throughput' } }
         ]
     }
 ];
@@ -117,7 +118,7 @@ export const Benchmarks: React.FC<BenchmarksProps> = ({ results, models, servers
           type,
           name: `${type} Step`,
           enabled: true,
-          config: {}
+          config: { embeddingStrategy: 'Single' }
       };
 
       handleUpdateConfig(configId, { steps: [...config.steps, newStep] });
@@ -134,6 +135,14 @@ export const Benchmarks: React.FC<BenchmarksProps> = ({ results, models, servers
       if (!config) return;
       handleUpdateConfig(configId, {
           steps: config.steps.map(s => s.id === stepId ? { ...s, ...updates } : s)
+      });
+  };
+  
+  const updateStepConfigInConfig = (configId: string, stepId: string, configUpdates: any) => {
+      const config = savedConfigs.find(c => c.id === configId);
+      if (!config) return;
+      handleUpdateConfig(configId, {
+          steps: config.steps.map(s => s.id === stepId ? { ...s, config: { ...s.config, ...configUpdates } } : s)
       });
   };
 
@@ -182,7 +191,106 @@ export const Benchmarks: React.FC<BenchmarksProps> = ({ results, models, servers
           case 'Embedding': return <Binary size={16} className="text-green-400"/>;
           case 'Custom': return <FileText size={16} className="text-yellow-400"/>;
           case 'Tool Calling': return <Wrench size={16} className="text-orange-400"/>;
+          case 'ColBERT': return <ScanSearch size={16} className="text-pink-400"/>;
+          case 'Extraction': return <Filter size={16} className="text-teal-400"/>;
+          case 'Routing': return <GitFork size={16} className="text-cyan-400"/>;
+          case 'Classification': return <ListChecks size={16} className="text-indigo-400"/>;
+          default: return <Box size={16} />;
       }
+  };
+
+  const renderStepConfigFields = (step: BenchmarkStep, configId: string) => {
+      const updateConfig = (updates: any) => updateStepConfigInConfig(configId, step.id, updates);
+
+      if (step.type === 'Embedding') {
+          return (
+              <div className="space-y-4 pt-2">
+                  <div className="flex gap-4">
+                      <div className="flex items-center gap-2">
+                          <input 
+                              type="radio" 
+                              id={`single-${step.id}`}
+                              checked={step.config.embeddingStrategy !== 'Dual'} 
+                              onChange={() => updateConfig({ embeddingStrategy: 'Single' })}
+                              className="accent-purple-500 cursor-pointer"
+                          />
+                          <label htmlFor={`single-${step.id}`} className="text-xs text-gray-300 cursor-pointer">Single</label>
+                      </div>
+                      <div className="flex items-center gap-2">
+                          <input 
+                              type="radio" 
+                              id={`dual-${step.id}`}
+                              checked={step.config.embeddingStrategy === 'Dual'} 
+                              onChange={() => updateConfig({ embeddingStrategy: 'Dual' })}
+                              className="accent-purple-500 cursor-pointer"
+                          />
+                          <label htmlFor={`dual-${step.id}`} className="text-xs text-gray-300 cursor-pointer">Dual (Hybrid)</label>
+                      </div>
+                  </div>
+
+                  {/* Primary Model */}
+                  <div className="bg-nebula-900/50 p-3 rounded border border-nebula-800 grid grid-cols-2 gap-3">
+                      <div className="col-span-2 text-[10px] uppercase font-bold text-blue-400">Primary Model</div>
+                      <div className="col-span-2">
+                          <select 
+                            value={step.config.primaryModelId || ''} 
+                            onChange={(e) => updateConfig({ primaryModelId: e.target.value })}
+                            className="w-full bg-nebula-950 border border-nebula-700 rounded p-1.5 text-xs text-gray-300 focus:border-purple-500 outline-none"
+                          >
+                              <option value="">Select Model...</option>
+                              {models.filter(m => m.tags.includes('Embedding') || m.family === 'Bert').map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
+                          </select>
+                      </div>
+                      <input 
+                        type="number" 
+                        placeholder="Dims (e.g. 768)" 
+                        value={step.config.primaryDims || ''}
+                        onChange={(e) => updateConfig({ primaryDims: parseInt(e.target.value) })}
+                        className="bg-nebula-950 border border-nebula-700 rounded p-1.5 text-xs text-white outline-none"
+                      />
+                      <input 
+                        type="text" 
+                        placeholder="Role (e.g. Dense)" 
+                        value={step.config.primaryRole || ''}
+                        onChange={(e) => updateConfig({ primaryRole: e.target.value })}
+                        className="bg-nebula-950 border border-nebula-700 rounded p-1.5 text-xs text-white outline-none"
+                      />
+                  </div>
+
+                  {/* Secondary Model (Only if Dual) */}
+                  {step.config.embeddingStrategy === 'Dual' && (
+                      <div className="bg-nebula-900/50 p-3 rounded border border-nebula-800 grid grid-cols-2 gap-3">
+                          <div className="col-span-2 text-[10px] uppercase font-bold text-orange-400">Secondary Model</div>
+                          <div className="col-span-2">
+                              <select 
+                                value={step.config.secondaryModelId || ''} 
+                                onChange={(e) => updateConfig({ secondaryModelId: e.target.value })}
+                                className="w-full bg-nebula-950 border border-nebula-700 rounded p-1.5 text-xs text-gray-300 focus:border-purple-500 outline-none"
+                              >
+                                  <option value="">Select Model...</option>
+                                  {models.filter(m => m.tags.includes('Embedding') || m.family === 'Bert').map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
+                              </select>
+                          </div>
+                          <input 
+                            type="number" 
+                            placeholder="Dims (e.g. 384)" 
+                            value={step.config.secondaryDims || ''}
+                            onChange={(e) => updateConfig({ secondaryDims: parseInt(e.target.value) })}
+                            className="bg-nebula-950 border border-nebula-700 rounded p-1.5 text-xs text-white outline-none"
+                          />
+                          <input 
+                            type="text" 
+                            placeholder="Role (e.g. Sparse)" 
+                            value={step.config.secondaryRole || ''}
+                            onChange={(e) => updateConfig({ secondaryRole: e.target.value })}
+                            className="bg-nebula-950 border border-nebula-700 rounded p-1.5 text-xs text-white outline-none"
+                          />
+                      </div>
+                  )}
+              </div>
+          );
+      }
+      return null;
   };
 
   const renderDataView = () => (
@@ -439,13 +547,13 @@ export const Benchmarks: React.FC<BenchmarksProps> = ({ results, models, servers
       )}
 
       {activeView === 'config' && (
-          <div className="flex h-full gap-6 animate-fade-in overflow-hidden">
+          <div className="flex flex-1 min-h-0 gap-6 animate-fade-in overflow-hidden">
               {/* Left Sidebar: Tag Palette */}
               <div className="w-64 flex flex-col gap-4">
                   <div className="p-4 bg-nebula-900 border border-nebula-700 rounded-xl">
                       <h3 className="text-sm font-bold text-gray-300 mb-4 uppercase tracking-wider">Components</h3>
-                      <div className="space-y-2">
-                          {(['Custom', 'Retrieval', 'Embedding', 'Tool Calling', 'Generation'] as BenchmarkStepType[]).map(tag => (
+                      <div className="space-y-2 max-h-[calc(100vh-350px)] overflow-y-auto pr-2">
+                          {(['Custom', 'Retrieval', 'Embedding', 'Tool Calling', 'Generation', 'ColBERT', 'Extraction', 'Routing', 'Classification'] as BenchmarkStepType[]).map(tag => (
                               <div
                                   key={tag}
                                   draggable
@@ -600,46 +708,51 @@ export const Benchmarks: React.FC<BenchmarksProps> = ({ results, models, servers
                                               <div key={step.id} className="relative group">
                                                   {idx > 0 && <div className="absolute -top-4 left-6 w-0.5 h-4 bg-nebula-800 z-0"></div>}
                                                   
-                                                  <div className="relative z-10 bg-nebula-950 border border-nebula-800 rounded-lg p-3 flex items-start gap-3 hover:border-purple-500/30 transition-all">
-                                                      <div className="mt-1 p-2 bg-nebula-900 rounded border border-nebula-800 text-gray-400">
-                                                          {getStepIcon(step.type)}
-                                                      </div>
-                                                      <div className="flex-1 space-y-2">
-                                                          <div className="flex justify-between">
-                                                              <input 
-                                                                  value={step.name} 
-                                                                  onChange={(e) => updateStepInConfig(config.id, step.id, { name: e.target.value })}
-                                                                  className="bg-transparent text-sm font-bold text-white outline-none w-full"
-                                                              />
-                                                              <div className="flex gap-2">
-                                                                  <span className="text-[10px] px-2 py-0.5 bg-nebula-900 rounded text-gray-500 border border-nebula-800">{step.type}</span>
-                                                                  <button onClick={() => removeStepFromConfig(config.id, step.id)} className="text-gray-600 hover:text-red-400"><X size={14}/></button>
+                                                  <div className="relative z-10 bg-nebula-950 border border-nebula-800 rounded-lg p-3 hover:border-purple-500/30 transition-all">
+                                                      <div className="flex items-start gap-3">
+                                                          <div className="mt-1 p-2 bg-nebula-900 rounded border border-nebula-800 text-gray-400">
+                                                              {getStepIcon(step.type)}
+                                                          </div>
+                                                          <div className="flex-1 space-y-2">
+                                                              <div className="flex justify-between">
+                                                                  <input 
+                                                                      value={step.name} 
+                                                                      onChange={(e) => updateStepInConfig(config.id, step.id, { name: e.target.value })}
+                                                                      className="bg-transparent text-sm font-bold text-white outline-none w-full"
+                                                                  />
+                                                                  <div className="flex gap-2">
+                                                                      <span className="text-[10px] px-2 py-0.5 bg-nebula-900 rounded text-gray-500 border border-nebula-800">{step.type}</span>
+                                                                      <button onClick={() => removeStepFromConfig(config.id, step.id)} className="text-gray-600 hover:text-red-400"><X size={14}/></button>
+                                                                  </div>
+                                                              </div>
+                                                              
+                                                              <div className="flex gap-4">
+                                                                  <div className="flex-1">
+                                                                      <select 
+                                                                          value={step.serverId || ''} 
+                                                                          onChange={(e) => updateStepInConfig(config.id, step.id, { serverId: e.target.value })}
+                                                                          className="w-full bg-nebula-900 border border-nebula-800 rounded p-1.5 text-xs text-gray-400 focus:border-purple-500 outline-none"
+                                                                      >
+                                                                          <option value="">Server: Default</option>
+                                                                          {servers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                                                                      </select>
+                                                                  </div>
+                                                                  <div className="flex-1">
+                                                                      <select 
+                                                                          value={step.modelId || ''} 
+                                                                          onChange={(e) => updateStepInConfig(config.id, step.id, { modelId: e.target.value })}
+                                                                          className="w-full bg-nebula-900 border border-nebula-800 rounded p-1.5 text-xs text-gray-400 focus:border-purple-500 outline-none"
+                                                                      >
+                                                                          <option value="">Model: Default</option>
+                                                                          {models.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
+                                                                      </select>
+                                                                  </div>
                                                               </div>
                                                           </div>
-                                                          
-                                                          <div className="flex gap-4">
-                                                              <div className="flex-1">
-                                                                  <select 
-                                                                      value={step.serverId || ''} 
-                                                                      onChange={(e) => updateStepInConfig(config.id, step.id, { serverId: e.target.value })}
-                                                                      className="w-full bg-nebula-900 border border-nebula-800 rounded p-1.5 text-xs text-gray-400 focus:border-purple-500 outline-none"
-                                                                  >
-                                                                      <option value="">Server: Default</option>
-                                                                      {servers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-                                                                  </select>
-                                                              </div>
-                                                              <div className="flex-1">
-                                                                  <select 
-                                                                      value={step.modelId || ''} 
-                                                                      onChange={(e) => updateStepInConfig(config.id, step.id, { modelId: e.target.value })}
-                                                                      className="w-full bg-nebula-900 border border-nebula-800 rounded p-1.5 text-xs text-gray-400 focus:border-purple-500 outline-none"
-                                                                  >
-                                                                      <option value="">Model: Default</option>
-                                                                      {models.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
-                                                                  </select>
-                                                              </div>
-                                                          </div>
                                                       </div>
+                                                      
+                                                      {/* Specific Step Configs */}
+                                                      {renderStepConfigFields(step, config.id)}
                                                   </div>
                                               </div>
                                           ))}

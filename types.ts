@@ -72,7 +72,7 @@ export interface RAGConfig {
 }
 
 // Updated Tags based on requirements
-export type BenchmarkStepType = 'Custom' | 'Retrieval' | 'Embedding' | 'Tool Calling' | 'Generation';
+export type BenchmarkStepType = 'Custom' | 'Retrieval' | 'Embedding' | 'Tool Calling' | 'Generation' | 'ColBERT' | 'Extraction' | 'Routing' | 'Classification';
 
 export interface BenchmarkStep {
     id: string;
@@ -93,6 +93,14 @@ export interface BenchmarkStep {
         metric?: 'ExactMatch' | 'Semantic' | 'FunctionCallValidity' | 'Throughput';
         sourcePath?: string;
         docType?: 'PDF' | 'Markdown' | 'HTML';
+        // Embedding Specific
+        embeddingStrategy?: 'Single' | 'Dual';
+        primaryModelId?: string;
+        secondaryModelId?: string;
+        primaryDims?: number;
+        secondaryDims?: number;
+        primaryRole?: string;
+        secondaryRole?: string;
     };
 }
 
