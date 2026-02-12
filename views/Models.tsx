@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Model, ModelVersion, ServerProfile, BenchmarkResult } from '../types';
-import { GitBranch, Box, FileCode, Tag, ExternalLink, Cpu, Terminal, Scale, X, BarChart2, Filter, Check, Server, FileText, Activity, Plus, RefreshCw, Trash2, Layers, Zap, Merge, Scissors, User, FlaskConical, Beaker, Database, ArrowLeftRight, TrendingUp, Play, Loader2, BrainCircuit, Eraser } from 'lucide-react';
+import { GitBranch, Box, FileCode, Tag, ExternalLink, Cpu, Terminal, Scale, X, BarChart2, Filter, Check, Server, FileText, Activity, Plus, RefreshCw, Trash2, Layers, Zap, Merge, Scissors, User, FlaskConical, Beaker, Database, ArrowLeftRight, TrendingUp, Play, Loader2, BrainCircuit, Eraser, HardDrive, LayoutTemplate, ScanLine } from 'lucide-react';
 
 interface ModelsProps {
   models: Model[];
@@ -171,6 +171,15 @@ export const Models: React.FC<ModelsProps> = ({ models, servers, benchmarks, onA
           case 'Custom': return <User size={14} />;
           default: return <Layers size={14} />;
       }
+  };
+
+  // Helper for Architecture display
+  const getArchitecture = (family: string) => {
+      if (family === 'Llama') return 'LlamaForCausalLM';
+      if (family === 'Mistral') return 'MistralForCausalLM';
+      if (family === 'Gemma') return 'GemmaForCausalLM';
+      if (family === 'Bert') return 'BertModel';
+      return 'Transformer (Decoder-Only)';
   };
 
   // --- Drag and Drop Logic ---
@@ -431,10 +440,35 @@ export const Models: React.FC<ModelsProps> = ({ models, servers, benchmarks, onA
                     <div className="flex-1 overflow-y-auto p-space-lg pb-20 bg-nebula-900 custom-scrollbar">
                         {detailTab === 'overview' && (
                             <div className="space-y-6 animate-fade-in">
-                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-type-body text-gray-300">
+                                 {/* Detailed Metadata Grid */}
+                                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-type-body text-gray-300">
                                     <div className="flex flex-col bg-white/5 p-3 rounded border border-white/5">
-                                        <span className="text-type-tiny text-gray-500 uppercase font-bold">Params</span>
-                                        <span className="font-mono font-bold text-white">{selectedModel.params}</span>
+                                        <span className="text-type-tiny text-gray-500 uppercase font-bold flex items-center gap-1"><Layers size={10}/> Family</span>
+                                        <span className="font-mono font-bold text-white">{selectedModel.family}</span>
+                                    </div>
+                                    <div className="flex flex-col bg-white/5 p-3 rounded border border-white/5">
+                                        <span className="text-type-tiny text-gray-500 uppercase font-bold flex items-center gap-1"><BrainCircuit size={10}/> Architecture</span>
+                                        <span className="font-mono font-bold text-white truncate" title={getArchitecture(selectedModel.family)}>{getArchitecture(selectedModel.family)}</span>
+                                    </div>
+                                    <div className="flex flex-col bg-white/5 p-3 rounded border border-white/5">
+                                        <span className="text-type-tiny text-gray-500 uppercase font-bold flex items-center gap-1"><Cpu size={10}/> Est. VRAM</span>
+                                        <span className="font-mono font-bold text-white">
+                                            {selectedModel.versions.length > 0 
+                                             ? `${Math.min(...selectedModel.versions.map(v => v.metrics?.vramGB || 0).filter(v => v > 0))} - ${Math.max(...selectedModel.versions.map(v => v.metrics?.vramGB || 0))}`
+                                             : '-'} GB
+                                        </span>
+                                    </div>
+                                    <div className="flex flex-col bg-white/5 p-3 rounded border border-white/5">
+                                        <span className="text-type-tiny text-gray-500 uppercase font-bold flex items-center gap-1"><HardDrive size={10}/> Disk Size</span>
+                                        <span className="font-mono font-bold text-white">
+                                            {selectedModel.versions.length > 0 
+                                             ? selectedModel.versions[0].size 
+                                             : '-'}
+                                        </span>
+                                    </div>
+                                    <div className="flex flex-col bg-white/5 p-3 rounded border border-white/5">
+                                        <span className="text-type-tiny text-gray-500 uppercase font-bold flex items-center gap-1"><Scale size={10}/> Model Size</span>
+                                        <span className="font-mono font-bold text-white">{selectedModel.params} Params</span>
                                     </div>
                                     <div className="flex flex-col bg-white/5 p-3 rounded border border-white/5">
                                         <span className="text-type-tiny text-gray-500 uppercase font-bold">Tensor</span>
@@ -452,13 +486,31 @@ export const Models: React.FC<ModelsProps> = ({ models, servers, benchmarks, onA
                                     </div>
                                 </div>
                                 
-                                <div className="bg-white/5 p-4 rounded border border-white/5">
-                                    <h4 className="font-bold text-white mb-2">Description</h4>
-                                    <p className="text-gray-300 leading-relaxed">{selectedModel.description}</p>
+                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                    <div className="space-y-6">
+                                        <div className="bg-white/5 p-4 rounded border border-white/5 h-full">
+                                            <h4 className="font-bold text-white mb-2 flex items-center gap-2"><LayoutTemplate size={16} /> Description</h4>
+                                            <p className="text-gray-300 leading-relaxed text-sm">{selectedModel.description}</p>
+                                        </div>
+                                    </div>
+                                    <div className="space-y-6">
+                                        <div className="bg-white/5 p-4 rounded border border-white/5 h-full">
+                                            <h4 className="font-bold text-white mb-3 flex items-center gap-2"><Box size={16} /> Available Registry Formats</h4>
+                                            <div className="flex flex-wrap gap-2">
+                                                {Array.from(new Set(selectedModel.versions.map(v => v.format))).map(fmt => (
+                                                    <div key={fmt} className="px-3 py-1.5 bg-nebula-950 border border-white/10 rounded-lg text-xs text-gray-300 flex items-center gap-2 font-mono">
+                                                        <span className={`w-2 h-2 rounded-full ${fmt === 'GGUF' ? 'bg-orange-500' : fmt === 'Ollama' ? 'bg-white' : 'bg-blue-500'}`}></span>
+                                                        {fmt}
+                                                    </div>
+                                                ))}
+                                                {selectedModel.versions.length === 0 && <span className="text-sm text-gray-500 italic">No versions indexed.</span>}
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <div className="bg-white/5 p-4 rounded border border-white/5">
-                                    <h4 className="font-bold text-white mb-2">Tags</h4>
+                                    <h4 className="font-bold text-white mb-2 flex items-center gap-2"><Tag size={16} /> Tags</h4>
                                     <div className="flex flex-wrap gap-2">
                                         {selectedModel.tags.map(tag => (
                                             <span key={tag} className="px-2 py-1 bg-nebula-950 border border-white/10 rounded text-xs text-gray-400 flex items-center gap-1">
@@ -564,7 +616,29 @@ export const Models: React.FC<ModelsProps> = ({ models, servers, benchmarks, onA
                         
                         {detailTab === 'engineering' && (
                             <div className="animate-fade-in space-y-4">
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {/* Active Operations Card */}
+                                    <div className="bg-white/5 p-4 rounded border border-white/5 md:col-span-2">
+                                        <h4 className="font-bold text-white mb-3 flex items-center gap-2 text-xs uppercase tracking-wider"><Activity size={14}/> Active Operations</h4>
+                                        <div className="space-y-2">
+                                            {/* Mock Active Operation */}
+                                            <div className="flex items-center justify-between bg-black/20 p-3 rounded border border-white/5">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse shadow-[0_0_8px_#22c55e]"></div>
+                                                    <div>
+                                                        <div className="text-sm font-bold text-white">SFT-Llama3-Reasoning-v2</div>
+                                                        <div className="text-xs text-gray-500">Fine-Tuning • Step 450/1000</div>
+                                                    </div>
+                                                </div>
+                                                <div className="text-right">
+                                                    <div className="text-xs font-mono text-purple-400">45%</div>
+                                                    <div className="text-[10px] text-gray-600">ETA: 4h 20m</div>
+                                                </div>
+                                            </div>
+                                            <div className="text-[10px] text-gray-500 text-center pt-1 italic">No other active experiments found.</div>
+                                        </div>
+                                    </div>
+
                                     <div className="bg-white/5 p-4 rounded border border-white/5">
                                         <h4 className="font-bold text-white mb-3 flex items-center gap-2 text-xs uppercase tracking-wider"><Cpu size={14}/> Inference Config</h4>
                                         <div className="space-y-3 text-sm">
@@ -598,6 +672,28 @@ export const Models: React.FC<ModelsProps> = ({ models, servers, benchmarks, onA
                                             ))}
                                             {getCompatibleServers(selectedModel.id).length === 0 && <div className="text-gray-500 italic text-xs">No compatible servers configured.</div>}
                                         </div>
+                                    </div>
+                                </div>
+
+                                {/* Tokenizer Section */}
+                                <div className="bg-white/5 p-4 rounded border border-white/5">
+                                    <div className="flex justify-between items-center mb-3">
+                                        <h4 className="font-bold text-white flex items-center gap-2 text-xs uppercase tracking-wider"><ScanLine size={14}/> Tokenizer Artifacts</h4>
+                                        <span className="text-[10px] bg-nebula-950 px-2 py-0.5 rounded text-gray-400 border border-white/10">Base Config</span>
+                                    </div>
+                                    <div className="flex items-center justify-between bg-black/20 p-3 rounded border border-white/5">
+                                        <div className="flex items-center gap-3">
+                                            <div className="p-2 bg-nebula-950 rounded border border-white/5 text-gray-400">
+                                                <Scissors size={16} />
+                                            </div>
+                                            <div>
+                                                <div className="text-sm font-bold text-gray-300">Standard {selectedModel.family} Tokenizer</div>
+                                                <div className="text-[10px] text-gray-500">Vocab Size: 32000 • Not Harvested</div>
+                                            </div>
+                                        </div>
+                                        <button className="px-3 py-1.5 bg-purple-900/20 hover:bg-purple-600 text-purple-300 hover:text-white border border-purple-500/30 rounded text-xs font-bold transition-all uppercase tracking-wider">
+                                            Harvest in Lab
+                                        </button>
                                     </div>
                                 </div>
 
