@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Model, LabArtifact } from '../types';
-import { FlaskConical, Dna, Merge, Scissors, Zap, Box, Save, Plus, Trash2, CheckCircle, Loader2, BarChart2, TrendingDown, Activity, Settings, X, FileText, Info } from 'lucide-react';
+import { FlaskConical, Dna, Merge, Scissors, Zap, Box, Save, Plus, Trash2, CheckCircle, Loader2, BarChart2, TrendingDown, Activity, Settings, X, FileText, Info, Cpu, Layers, GitBranch } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 
 interface LaboratoryProps {
@@ -9,7 +9,8 @@ interface LaboratoryProps {
 }
 
 type LabMode = 'merge' | 'extract' | 'medusa';
-type MergeMethod = 'arcee_fusion' | 'passthrough' | 'task_arithmetic' | 'dare_linear' | 'dare_ties';
+type MergeMethod = 'linear' | 'slerp' | 'task_arithmetic' | 'ties' | 'dare_linear' | 'dare_ties' | 'passthrough' | 'model_stock';
+type MergeBackend = 'mergekit' | 'mergekit-pytorch';
 
 // Mock Inventory Data
 const MOCK_INVENTORY: LabArtifact[] = [
@@ -54,7 +55,8 @@ const MOCK_LOSS_DATA = [
 
 export const Laboratory: React.FC<LaboratoryProps> = ({ models }) => {
   const [mode, setMode] = useState<LabMode>('merge');
-  const [mergeMethod, setMergeMethod] = useState<MergeMethod>('arcee_fusion');
+  const [mergeMethod, setMergeMethod] = useState<MergeMethod>('linear');
+  const [backend, setBackend] = useState<MergeBackend>('mergekit');
   const [inventory, setInventory] = useState<LabArtifact[]>(MOCK_INVENTORY);
   const [selectedArtifact, setSelectedArtifact] = useState<LabArtifact | null>(null);
   const [inputModels, setInputModels] = useState<{id: number, modelId: string, weight: number}[]>([
@@ -67,7 +69,9 @@ export const Laboratory: React.FC<LaboratoryProps> = ({ models }) => {
       normalize: true,
       int8_mask: false,
       density: 0.5,
-      epsilon: 0.01
+      t: 0.5, // For SLERP
+      epsilon: 0.01,
+      vocabRepair: false // mergekit-tokensurgeon
   });
 
   // Medusa State
@@ -124,11 +128,14 @@ export const Laboratory: React.FC<LaboratoryProps> = ({ models }) => {
 
   const getMergeMethodInfo = (m: MergeMethod) => {
       switch(m) {
-          case 'arcee_fusion': return { label: 'Arcee Fusion', desc: 'Dynamic thresholding for fusing important changes.', base: 'Required' };
+          case 'linear': return { label: 'Linear', desc: 'Weighted average of model parameters. Simple and effective for similar models.', base: 'Optional' };
+          case 'slerp': return { label: 'SLERP', desc: 'Spherical Linear Interpolation. Better for preserving geometric properties in high-dim space.', base: 'N/A' };
+          case 'task_arithmetic': return { label: 'Task Arithmetic', desc: 'Linearly combine task vectors (FineTune - Base).', base: 'Required' };
+          case 'ties': return { label: 'TIES', desc: 'Trim, Elect Sign, & Merge. Reduces interference between models.', base: 'Required' };
+          case 'dare_linear': return { label: 'DARE Linear', desc: 'Drop And REscale with Linear interpolation.', base: 'Required' };
+          case 'dare_ties': return { label: 'DARE TIES', desc: 'Drop And REscale with TIES merging.', base: 'Required' };
+          case 'model_stock': return { label: 'Model Stock', desc: 'Approximates the geometric center of models. Tuning-free.', base: 'Required' };
           case 'passthrough': return { label: 'Passthrough', desc: 'Directly copies tensors from input models (Frankenmerging).', base: 'N/A' };
-          case 'task_arithmetic': return { label: 'Task Arithmetic', desc: 'Linearly combine task vectors from a base.', base: 'Required' };
-          case 'dare_linear': return { label: 'DARE Linear', desc: 'Pruning & Rescaling with Linear interpolation.', base: 'Required' };
-          case 'dare_ties': return { label: 'DARE Ties', desc: 'Pruning & Rescaling with TIES merging.', base: 'Required' };
       }
   };
 
@@ -179,8 +186,8 @@ export const Laboratory: React.FC<LaboratoryProps> = ({ models }) => {
                         <div className="grid grid-cols-2 gap-space-xl">
                             <div className="space-y-space-md">
                                 <label className="text-purple-400 text-type-body font-bold uppercase block mb-2">Synthesis Method</label>
-                                <div className="grid grid-cols-1 gap-space-sm">
-                                    {(['arcee_fusion', 'passthrough', 'task_arithmetic', 'dare_linear', 'dare_ties'] as MergeMethod[]).map(m => (
+                                <div className="grid grid-cols-1 gap-space-sm max-h-[350px] overflow-y-auto pr-2 custom-scrollbar border border-nebula-800/50 rounded-lg p-1">
+                                    {(['linear', 'slerp', 'task_arithmetic', 'ties', 'dare_linear', 'dare_ties', 'model_stock', 'passthrough'] as MergeMethod[]).map(m => (
                                         <button 
                                             key={m}
                                             onClick={() => setMergeMethod(m)}
@@ -202,16 +209,31 @@ export const Laboratory: React.FC<LaboratoryProps> = ({ models }) => {
                                     </h4>
                                     
                                     <div className="space-y-space-md">
-                                        {(mergeMethod === 'dare_linear' || mergeMethod === 'dare_ties') && (
+                                        {(mergeMethod === 'dare_linear' || mergeMethod === 'dare_ties' || mergeMethod === 'ties') && (
                                             <div>
                                                 <div className="flex justify-between text-type-caption text-gray-400 mb-1">
-                                                    <span>Density</span>
+                                                    <span>Density (Pruning)</span>
                                                     <span>{mergeConfig.density}</span>
                                                 </div>
                                                 <input 
                                                     type="range" min="0" max="1" step="0.05"
                                                     value={mergeConfig.density}
                                                     onChange={(e) => setMergeConfig({...mergeConfig, density: parseFloat(e.target.value)})}
+                                                    className="w-full accent-purple-500"
+                                                />
+                                            </div>
+                                        )}
+
+                                        {mergeMethod === 'slerp' && (
+                                            <div>
+                                                <div className="flex justify-between text-type-caption text-gray-400 mb-1">
+                                                    <span>Interpolation Factor (t)</span>
+                                                    <span>{mergeConfig.t}</span>
+                                                </div>
+                                                <input 
+                                                    type="range" min="0" max="1" step="0.05"
+                                                    value={mergeConfig.t}
+                                                    onChange={(e) => setMergeConfig({...mergeConfig, t: parseFloat(e.target.value)})}
                                                     className="w-full accent-purple-500"
                                                 />
                                             </div>
@@ -238,13 +260,37 @@ export const Laboratory: React.FC<LaboratoryProps> = ({ models }) => {
                                             />
                                             <label htmlFor="int8_mask" className="text-type-body text-gray-300">Int8 Mask (Memory Efficient)</label>
                                         </div>
+
+                                        <div className="flex items-center gap-space-sm">
+                                            <input 
+                                                type="checkbox" 
+                                                id="vocabRepair"
+                                                checked={mergeConfig.vocabRepair}
+                                                onChange={(e) => setMergeConfig({...mergeConfig, vocabRepair: e.target.checked})}
+                                                className="accent-blue-500"
+                                            />
+                                            <label htmlFor="vocabRepair" className="text-type-body text-blue-300 font-medium flex items-center gap-2">
+                                                <Scissors size={12} /> Run Token Surgeon (Vocab Alignment)
+                                            </label>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
 
                             <div className="space-y-space-lg">
+                                
                                 <div className="space-y-space-sm">
-                                    <label className="text-purple-400 text-type-body font-bold uppercase">Target Output Path</label>
+                                    <div className="flex justify-between items-center">
+                                        <label className="text-purple-400 text-type-body font-bold uppercase">Target Output Path</label>
+                                        <select 
+                                            value={backend}
+                                            onChange={(e) => setBackend(e.target.value as MergeBackend)}
+                                            className="bg-nebula-900 border border-nebula-700 rounded px-2 py-1 text-type-tiny text-gray-300 outline-none focus:border-purple-500"
+                                        >
+                                            <option value="mergekit">Backend: MergeKit (Standard)</option>
+                                            <option value="mergekit-pytorch">Backend: PyTorch (Legacy)</option>
+                                        </select>
+                                    </div>
                                     <input type="text" className="w-full bg-nebula-950 border border-nebula-700 rounded p-3 text-gray-200 font-mono focus:border-purple-500 outline-none text-type-body" placeholder="./models/merged/chimera-v1" />
                                 </div>
 
