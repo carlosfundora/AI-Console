@@ -136,7 +136,7 @@ export const Models: React.FC<ModelsProps> = ({ models, servers, benchmarks }) =
   };
 
   return (
-    <div className="h-full flex flex-col relative animate-fade-in">
+    <div className="h-full flex flex-col relative animate-fade-in p-8">
       <div className="flex flex-col gap-4 mb-4 shrink-0">
         <div className="flex items-center gap-3">
             <h2 className="text-2xl font-bold">🤖 Model Registry</h2>
@@ -144,20 +144,20 @@ export const Models: React.FC<ModelsProps> = ({ models, servers, benchmarks }) =
                 Showing {filteredModels.length} of {localModels.length}
             </span>
             {/* Import HF Button - Subtler */}
-            <button className="text-xs bg-nebula-900 hover:bg-nebula-800 text-purple-400 border border-nebula-700 hover:border-purple-500/50 px-3 py-1 rounded flex items-center gap-1 transition-all shadow-sm">
+            <button className="text-xs bg-nebula-900 hover:bg-nebula-800 text-purple-400 border border-nebula-700 hover:border-purple-500/50 px-3 py-1 rounded flex items-center gap-1 transition-all shadow-sm ml-auto">
                 <Plus size={12} /> Import HF
             </button>
         </div>
 
         {/* Combined Row: Tabs + Search */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div className="flex flex-wrap items-center gap-4 border-b border-nebula-800 pb-4">
             {/* View Category Tabs */}
-            <div className="flex gap-1 bg-nebula-900 p-1 rounded-lg border border-nebula-700 overflow-x-auto max-w-full">
+            <div className="flex gap-1 bg-nebula-900 p-1 rounded-lg border border-nebula-700 overflow-x-auto">
                 {(['All', 'Base', 'Fine-Tuned', 'Distilled', 'Merged', 'Custom'] as ModelCategory[]).map(cat => (
                     <button
                         key={cat}
                         onClick={() => setViewCategory(cat)}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all whitespace-nowrap ${
+                        className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all whitespace-nowrap h-9 ${
                             viewCategory === cat 
                             ? 'bg-purple-600 text-white shadow-md' 
                             : 'text-gray-400 hover:text-white hover:bg-nebula-800'
@@ -170,24 +170,24 @@ export const Models: React.FC<ModelsProps> = ({ models, servers, benchmarks }) =
             </div>
             
             {/* Search & Filter Bar */}
-            <div className="flex gap-2 w-full md:w-auto">
-                <div className="relative flex-1 md:w-64">
+            <div className="flex gap-2 ml-auto flex-1 md:flex-none md:w-auto min-w-[200px]">
+                <div className="relative flex-1">
                     <input 
                         type="text" 
                         placeholder={`Search ${viewCategory === 'All' ? '' : viewCategory} models...`}
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full bg-nebula-900 border border-nebula-700 rounded-lg pl-4 pr-10 py-2 text-sm outline-none text-white focus:border-purple-500" 
+                        className="w-full h-11 bg-nebula-900 border border-nebula-700 rounded-lg pl-4 pr-10 text-sm outline-none text-white focus:border-purple-500" 
                     />
                     {searchQuery && (
-                        <button onClick={() => setSearchQuery('')} className="absolute right-3 top-2.5 text-gray-500 hover:text-white">
+                        <button onClick={() => setSearchQuery('')} className="absolute right-3 top-3.5 text-gray-500 hover:text-white">
                             <X size={14} />
                         </button>
                     )}
                 </div>
                 <button 
                     onClick={() => setShowFilters(!showFilters)}
-                    className={`px-3 py-2 rounded-lg text-sm border transition-colors flex items-center gap-2 ${showFilters ? 'bg-purple-900/30 border-purple-500 text-white' : 'bg-nebula-900 border-nebula-700 text-gray-400 hover:text-white'}`}
+                    className={`h-11 px-4 rounded-lg text-sm border transition-colors flex items-center gap-2 ${showFilters ? 'bg-purple-900/30 border-purple-500 text-white' : 'bg-nebula-900 border-nebula-700 text-gray-400 hover:text-white'}`}
                 >
                     <Filter size={16} /> Filters
                 </button>
@@ -254,7 +254,7 @@ export const Models: React.FC<ModelsProps> = ({ models, servers, benchmarks }) =
 
       <div className="flex gap-6 flex-1 min-h-0 overflow-hidden">
         {/* Model List/Grid - Compact Mode */}
-        <div className={`flex-1 overflow-y-auto pr-2 ${selectedModel ? 'hidden lg:block lg:w-1/2' : 'w-full'}`}>
+        <div className={`flex-1 overflow-y-auto pr-2 custom-scrollbar ${selectedModel ? 'hidden lg:block lg:w-1/2' : 'w-full'}`}>
              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 pb-6">
                 {filteredModels.map(model => (
                     <div 
@@ -349,7 +349,7 @@ export const Models: React.FC<ModelsProps> = ({ models, servers, benchmarks }) =
                     </div>
                 </div>
 
-                <div className="flex-1 overflow-y-auto p-6 pb-20 bg-nebula-900">
+                <div className="flex-1 overflow-y-auto p-6 pb-20 bg-nebula-900 custom-scrollbar">
                     {detailTab === 'overview' && (
                         <div className="space-y-6 animate-fade-in">
                              <div className="flex gap-4 text-sm text-gray-300">

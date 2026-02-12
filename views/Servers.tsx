@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { ServerProfile, Model } from '../types';
-import { Terminal, Monitor, Command, Play, Square, Plus, X, Check, Package, Layers, Zap, Settings } from 'lucide-react';
+import { Terminal, Monitor, Command, Play, Square, Plus, X, Check, Package, Layers, Zap, Settings, Server as ServerIcon } from 'lucide-react';
 
 const PythonIcon = ({ size = 20, className = "" }: { size?: number, className?: string }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={className}>
@@ -97,11 +97,11 @@ export const Servers: React.FC<ServersProps> = ({ servers, models, onUpdateServe
     };
 
     return (
-        <div className="space-y-6 animate-fade-in h-full flex flex-col">
+        <div className="space-y-6 animate-fade-in h-full flex flex-col p-8">
              <div className="flex justify-between items-center">
                 <div>
                      <h2 className="text-2xl font-bold flex items-center gap-2">
-                        <PythonIcon className="text-purple-500" /> Server Configurations
+                        <ServerIcon className="text-purple-500" /> Server Configurations
                      </h2>
                      <p className="text-sm text-gray-400 mt-1">Manage Python venvs, Llama.cpp instances, and inference endpoints.</p>
                 </div>
@@ -113,7 +113,7 @@ export const Servers: React.FC<ServersProps> = ({ servers, models, onUpdateServe
                 </button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 overflow-y-auto pb-10">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 overflow-y-auto pb-10 custom-scrollbar">
                 {/* Edit Form Card */}
                 {editingId && (
                     <div className="md:col-span-2 xl:col-span-3 bg-nebula-900 border border-purple-500 rounded-xl p-6 relative animate-fade-in shadow-[0_0_20px_rgba(139,92,246,0.1)]">

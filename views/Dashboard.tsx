@@ -59,7 +59,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ serverConfig }) => {
   const prevSlide = () => setSlideIndex((prev) => (prev - 1 + 4) % 4);
 
   return (
-    <div className="h-full overflow-y-auto space-y-6 animate-fade-in pb-10 pr-2 custom-scrollbar">
+    <div className="h-full overflow-y-auto space-y-6 animate-fade-in p-8 custom-scrollbar">
       {/* Alerts Moved to Top */}
       <div className="bg-nebula-900 border border-nebula-700 rounded-xl p-6">
         <h3 className="text-lg font-semibold mb-4">🚀 Recent Alerts</h3>

@@ -521,7 +521,7 @@ const App: React.FC = () => {
     { id: 'datasets', label: 'Datasets', icon: <ClipboardDataIcon size={20} /> },
     { id: 'training', label: 'Training', icon: <DraftingCompassIcon size={20} /> }, 
     { id: 'laboratory', label: 'Laboratory', icon: <FlaskConical size={20} /> },
-    { id: 'servers', label: 'Servers', icon: <PythonIcon size={20} /> },
+    { id: 'servers', label: 'Servers', icon: <Server size={20} /> },
     { id: 'models', label: 'Model Registry', icon: <BrainCircuit size={20} /> },
     { id: 'agents', label: 'Agentic Prompts', icon: <Bot size={20} /> },
     { id: 'chat', label: 'Chat', icon: <MessageSquare size={20} /> },
@@ -603,8 +603,8 @@ const App: React.FC = () => {
         <main className="flex-1 flex flex-col min-w-0 bg-nebula-950 overflow-hidden relative">
           
           {/* View Content */}
-          <div className="flex-1 overflow-hidden p-8 flex flex-col">
-            <div className="max-w-7xl mx-auto w-full h-full flex flex-col">
+          <div className="flex-1 overflow-hidden flex flex-col">
+            <div className="w-full h-full flex flex-col">
               {activeTab === 'dashboard' && <Dashboard serverConfig={SERVER_CONFIG} />}
               {activeTab === 'benchmarks' && <Benchmarks results={MOCK_BENCHMARKS} models={MOCK_MODELS} servers={servers} />}
               {activeTab === 'datasets' && <Datasets datasets={MOCK_DATASETS} />}
