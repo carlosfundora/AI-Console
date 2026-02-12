@@ -719,6 +719,8 @@ export const Benchmarks: React.FC<BenchmarksProps> = ({ results, models, servers
          </div>
       )}
 
+      {activeView === 'data' && renderDataView()}
+
       {activeView === 'config' && (
           <div className="flex flex-1 min-h-0 gap-space-lg animate-fade-in overflow-hidden">
               {/* Left Sidebar: Tag Palette */}
@@ -731,210 +733,152 @@ export const Benchmarks: React.FC<BenchmarksProps> = ({ results, models, servers
                                   key={tag}
                                   draggable
                                   onDragStart={(e) => handleDragStart(e, tag)}
-                                  className="w-full flex items-center gap-space-sm p-space-sm bg-nebula-950 border border-nebula-800 rounded hover:border-purple-500/50 hover:bg-purple-900/10 transition-all text-type-caption group text-left cursor-grab active:cursor-grabbing"
+                                  className="w-full flex items-center gap-space-sm p-space-sm bg-nebula-950 border border-nebula-800 rounded hover:border-purple-500/50 hover:bg-purple-900/10 transition-all text-type-caption group text-left cursor-grab text-gray-400 hover:text-white"
                               >
                                   {getStepIcon(tag)}
-                                  <span className="text-gray-400 group-hover:text-white">{tag}</span>
+                                  <span>{tag}</span>
                               </div>
                           ))}
                       </div>
-                      <p className="text-type-tiny text-gray-500 mt-space-md px-1">
-                          Drag these tags onto a test container to add a step.
-                      </p>
+                      <p className="text-type-tiny text-gray-500 mt-space-md px-1 text-center">Drag onto tests to pipeline</p>
                   </div>
-                  
-                  {/* Create New Button in Sidebar */}
                   <button 
                       onClick={handleNewConfig}
-                      className="p-space-md bg-purple-600 hover:bg-purple-500 text-white rounded font-bold flex items-center justify-center gap-space-sm shadow-lg transition-all shrink-0"
+                      className="w-full py-3 bg-purple-600 hover:bg-purple-500 text-white rounded font-bold flex items-center justify-center gap-space-sm shadow-lg transition-all"
                   >
-                      <Plus size={18} /> Create New Test
+                      <Plus size={18} /> New Test
                   </button>
               </div>
 
-              {/* Main Canvas: List of Tests */}
-              <div className="flex-1 flex flex-col min-w-0 bg-transparent overflow-y-auto space-y-space-md pr-2">
-                  {savedConfigs.length === 0 && (
-                      <div className="flex-1 flex flex-col items-center justify-center text-gray-600 border-2 border-dashed border-nebula-800 rounded">
-                          <Layers size={48} className="mb-4 opacity-20" />
-                          <p>No tests created. Click 'Create New Test' to start.</p>
-                      </div>
-                  )}
-
+              {/* Canvas */}
+              <div className="flex-1 overflow-y-auto space-y-space-md pr-2 custom-scrollbar">
                   {savedConfigs.map(config => (
                       <div 
                           key={config.id}
                           onDragOver={(e) => e.preventDefault()}
                           onDrop={(e) => handleDropOnConfig(e, config.id)}
-                          className={`bg-nebula-900 border ${expandedConfigId === config.id ? 'border-purple-500 ring-1 ring-purple-500/30' : 'border-nebula-700'} rounded transition-all overflow-hidden shadow-lg`}
+                          className={`bg-nebula-900 border ${expandedConfigId === config.id ? 'border-purple-500 ring-1 ring-purple-500/30' : 'border-nebula-700'} rounded transition-all overflow-hidden`}
                       >
-                          {/* Test Header */}
                           <div 
                               className="p-space-md flex justify-between items-center cursor-pointer hover:bg-nebula-800/30"
                               onClick={() => setExpandedConfigId(expandedConfigId === config.id ? null : config.id)}
                           >
                               <div className="flex items-center gap-space-md">
-                                  <div className={`p-2 rounded bg-nebula-950 border border-nebula-800 text-purple-400`}>
-                                      <File size={20} />
+                                  <div className="p-2 rounded bg-nebula-950 border border-nebula-800 text-purple-400">
+                                      <Settings2 size={20} />
                                   </div>
                                   <div>
-                                      {expandedConfigId === config.id ? (
-                                          <input 
-                                              value={config.name}
-                                              onChange={(e) => handleUpdateConfig(config.id, { name: e.target.value })}
-                                              onClick={(e) => e.stopPropagation()}
-                                              className="bg-transparent text-white font-bold text-type-heading-md outline-none placeholder-gray-500"
-                                              placeholder="Test Name"
-                                          />
-                                      ) : (
-                                          <h3 className="text-type-heading-md font-bold text-white">{config.name}</h3>
-                                      )}
-                                      <div className="flex items-center gap-space-sm text-type-caption text-gray-500 mt-1">
-                                          <span className="font-mono">{config.steps.length} steps</span>
+                                      <h3 className="font-bold text-gray-200">{config.name}</h3>
+                                      <div className="flex gap-space-sm text-type-tiny text-gray-500 mt-0.5">
+                                          <span>{config.backend}</span>
                                           <span>•</span>
-                                          <span className="font-mono truncate max-w-[200px]">{config.scriptPath || 'No script attached'}</span>
+                                          <span>{config.steps.length} steps</span>
                                       </div>
                                   </div>
                               </div>
-                              <div className="flex items-center gap-space-sm">
-                                  <button onClick={(e) => { e.stopPropagation(); /* Save Logic Mock */ }} className="p-2 text-gray-400 hover:text-white hover:bg-nebula-800 rounded"><Save size={16}/></button>
-                                  <button onClick={(e) => { e.stopPropagation(); handleDeleteConfig(config.id); }} className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-900/20 rounded"><Trash2 size={16}/></button>
-                                  {expandedConfigId === config.id ? <ChevronDown size={20} className="text-gray-500"/> : <ChevronRight size={20} className="text-gray-500"/>}
+                              <div className="flex gap-space-sm">
+                                  <button onClick={(e) => { e.stopPropagation(); handleDeleteConfig(config.id); }} className="p-1.5 hover:bg-red-900/30 rounded text-gray-400 hover:text-red-400"><Trash2 size={16}/></button>
+                                  {expandedConfigId === config.id ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
                               </div>
                           </div>
 
-                          {/* Expanded Content */}
                           {expandedConfigId === config.id && (
-                              <div className="p-space-lg border-t border-nebula-800 bg-nebula-950/30 animate-fade-in space-y-space-lg">
-                                  
-                                  {/* Script Path */}
-                                  <div>
-                                      <label className="text-type-caption text-gray-500 uppercase font-bold mb-1 flex items-center gap-space-sm"><Code size={12}/> Execution Script</label>
-                                      <div className="flex gap-space-sm">
-                                          <input 
-                                              type="text" 
-                                              value={config.scriptPath || ''}
-                                              onChange={(e) => handleUpdateConfig(config.id, { scriptPath: e.target.value })}
-                                              className="flex-1 bg-nebula-950 border border-nebula-800 rounded p-2 text-type-body text-white font-mono placeholder-gray-600 focus:border-purple-500 outline-none"
-                                              placeholder="path/to/test_script.py"
-                                          />
-                                          <button className="px-3 bg-nebula-800 border border-nebula-700 rounded hover:bg-nebula-700 text-gray-300">
-                                              <FolderOpen size={14} />
-                                          </button>
-                                      </div>
-                                  </div>
-
-                                  {/* Parameters */}
-                                  <div className="grid grid-cols-4 gap-space-md p-space-md bg-nebula-950/50 rounded border border-nebula-800">
-                                      <div>
-                                          <label className="text-type-tiny text-gray-500 uppercase font-bold">Context</label>
-                                          <input 
-                                              type="number" 
-                                              value={config.parameters.contextSize} 
-                                              onChange={(e) => handleUpdateParameter(config.id, 'contextSize', parseInt(e.target.value))}
-                                              className="w-full bg-nebula-900 border border-nebula-800 rounded p-1.5 text-type-caption text-white mt-1"
-                                          />
-                                      </div>
-                                      <div>
-                                          <label className="text-type-tiny text-gray-500 uppercase font-bold">Temp</label>
-                                          <input 
-                                              type="number" step="0.1" 
-                                              value={config.parameters.temperature} 
-                                              onChange={(e) => handleUpdateParameter(config.id, 'temperature', parseFloat(e.target.value))}
-                                              className="w-full bg-nebula-900 border border-nebula-800 rounded p-1.5 text-type-caption text-white mt-1"
-                                          />
-                                      </div>
-                                      <div className="flex items-center gap-space-sm pt-4">
-                                          <input 
-                                              type="checkbox" 
-                                              checked={config.parameters.flashAttention} 
-                                              onChange={(e) => handleUpdateParameter(config.id, 'flashAttention', e.target.checked)}
-                                              className="accent-purple-500" 
-                                          />
-                                          <label className="text-type-caption text-gray-400">Flash Attn</label>
-                                      </div>
-                                      <div className="flex items-center gap-space-sm pt-4">
-                                          <input 
-                                              type="checkbox" 
-                                              checked={config.parameters.warmup} 
-                                              onChange={(e) => handleUpdateParameter(config.id, 'warmup', e.target.checked)}
-                                              className="accent-purple-500" 
-                                          />
-                                          <label className="text-type-caption text-gray-400 flex items-center gap-1"><Flame size={12} className="text-orange-500"/> Warmup</label>
-                                      </div>
-                                  </div>
-
-                                  {/* Steps List */}
-                                  <div>
-                                      <div className="flex justify-between items-end mb-2">
-                                          <label className="text-type-caption text-gray-500 uppercase font-bold">Test Segments</label>
-                                          <span className="text-type-tiny text-gray-600">Drag tags here to add</span>
+                              <div className="p-space-md border-t border-nebula-800 space-y-space-lg animate-fade-in bg-nebula-950/20">
+                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-space-lg">
+                                      <div className="space-y-space-md">
+                                           <div>
+                                              <label className="text-type-tiny text-gray-500 uppercase font-bold">Pipeline Name</label>
+                                              <input 
+                                                  value={config.name} 
+                                                  onChange={(e) => handleUpdateConfig(config.id, { name: e.target.value })}
+                                                  className="w-full bg-nebula-900 border border-nebula-700 rounded p-2 text-white mt-1" 
+                                              />
+                                          </div>
+                                          <div>
+                                              <label className="text-type-tiny text-gray-500 uppercase font-bold">Execution Script</label>
+                                              <div className="flex gap-space-sm mt-1">
+                                                  <input 
+                                                      value={config.scriptPath || ''} 
+                                                      onChange={(e) => handleUpdateConfig(config.id, { scriptPath: e.target.value })}
+                                                      className="flex-1 bg-nebula-900 border border-nebula-700 rounded p-2 text-gray-300 font-mono text-xs" 
+                                                      placeholder="./scripts/custom_test.py"
+                                                  />
+                                                  <button className="p-2 bg-nebula-800 border border-nebula-700 rounded text-gray-400"><FolderOpen size={16}/></button>
+                                              </div>
+                                          </div>
                                       </div>
                                       
-                                      <div className="space-y-space-sm min-h-[100px] p-space-sm border-2 border-dashed border-nebula-800/50 rounded bg-nebula-900/20">
-                                          {config.steps.length === 0 && (
-                                              <div className="flex items-center justify-center h-full py-8 text-gray-600 text-type-caption">
-                                                  Drop components here
-                                              </div>
-                                          )}
+                                      <div className="grid grid-cols-2 gap-space-md">
+                                          <div>
+                                              <label className="text-type-tiny text-gray-500 uppercase font-bold">Context</label>
+                                              <input 
+                                                  type="number" 
+                                                  value={config.parameters.contextSize} 
+                                                  onChange={(e) => handleUpdateParameter(config.id, 'contextSize', parseInt(e.target.value))}
+                                                  className="w-full bg-nebula-900 border border-nebula-700 rounded p-2 text-white mt-1" 
+                                              />
+                                          </div>
+                                          <div>
+                                              <label className="text-type-tiny text-gray-500 uppercase font-bold">Temp</label>
+                                              <input 
+                                                  type="number" step="0.1" 
+                                                  value={config.parameters.temperature} 
+                                                  onChange={(e) => handleUpdateParameter(config.id, 'temperature', parseFloat(e.target.value))}
+                                                  className="w-full bg-nebula-900 border border-nebula-700 rounded p-2 text-white mt-1" 
+                                              />
+                                          </div>
+                                          <div className="flex items-center gap-space-sm pt-4">
+                                              <input 
+                                                  type="checkbox" 
+                                                  checked={config.parameters.flashAttention} 
+                                                  onChange={(e) => handleUpdateParameter(config.id, 'flashAttention', e.target.checked)}
+                                                  className="accent-purple-500" 
+                                              />
+                                              <label className="text-type-caption text-gray-400">Flash Attn</label>
+                                          </div>
+                                          <div className="flex items-center gap-space-sm pt-4">
+                                              <input 
+                                                  type="checkbox" 
+                                                  checked={config.parameters.warmup} 
+                                                  onChange={(e) => handleUpdateParameter(config.id, 'warmup', e.target.checked)}
+                                                  className="accent-purple-500" 
+                                              />
+                                              <label className="text-type-caption text-gray-400 flex items-center gap-1"><Flame size={12} className="text-orange-500"/> Warmup</label>
+                                          </div>
+                                      </div>
+                                  </div>
+
+                                  <div className="space-y-space-sm">
+                                      <label className="text-type-tiny text-gray-500 uppercase font-bold">Execution Segments</label>
+                                      <div className="min-h-[120px] bg-nebula-900/50 border-2 border-dashed border-nebula-800 rounded-lg p-space-md space-y-space-sm">
+                                          {config.steps.length === 0 && <div className="text-center text-gray-600 py-6">Drag and drop components here</div>}
                                           {config.steps.map((step, idx) => (
-                                              <div key={step.id} className="relative group">
-                                                  {idx > 0 && <div className="absolute -top-4 left-6 w-0.5 h-4 bg-nebula-800 z-0"></div>}
-                                                  
-                                                  <div className="relative z-10 bg-nebula-950 border border-nebula-800 rounded-lg p-space-sm hover:border-purple-500/30 transition-all">
-                                                      <div className="flex items-start gap-space-sm">
-                                                          <div className="mt-1 p-2 bg-nebula-900 rounded border border-nebula-800 text-gray-400">
-                                                              {getStepIcon(step.type)}
-                                                          </div>
-                                                          <div className="flex-1 space-y-space-sm">
-                                                              <div className="flex justify-between">
-                                                                  <input 
-                                                                      value={step.name} 
-                                                                      onChange={(e) => updateStepInConfig(config.id, step.id, { name: e.target.value })}
-                                                                      className="bg-transparent text-type-body font-bold text-white outline-none w-full"
-                                                                  />
-                                                                  <div className="flex gap-space-sm">
-                                                                      <span className="text-type-tiny px-2 py-0.5 bg-nebula-900 rounded text-gray-500 border border-nebula-800">{step.type}</span>
-                                                                      <button onClick={() => removeStepFromConfig(config.id, step.id)} className="text-gray-600 hover:text-red-400"><X size={14}/></button>
-                                                                  </div>
-                                                              </div>
-                                                              
-                                                              <div className="flex gap-space-md">
-                                                                  <div className="flex-1">
-                                                                      <select 
-                                                                          value={step.serverId || ''} 
-                                                                          onChange={(e) => updateStepInConfig(config.id, step.id, { serverId: e.target.value })}
-                                                                          className="w-full bg-nebula-900 border border-nebula-800 rounded p-1.5 text-type-caption text-gray-400 focus:border-purple-500 outline-none"
-                                                                      >
-                                                                          <option value="">Server: Default</option>
-                                                                          {servers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-                                                                      </select>
-                                                                  </div>
-                                                                  <div className="flex-1">
-                                                                      <select 
-                                                                          value={step.modelId || ''} 
-                                                                          onChange={(e) => updateStepInConfig(config.id, step.id, { modelId: e.target.value })}
-                                                                          className="w-full bg-nebula-900 border border-nebula-800 rounded p-1.5 text-type-caption text-gray-400 focus:border-purple-500 outline-none"
-                                                                      >
-                                                                          <option value="">Model: Default</option>
-                                                                          {models.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
-                                                                      </select>
-                                                                  </div>
-                                                              </div>
+                                              <div key={step.id} className="bg-nebula-950 border border-nebula-800 rounded-lg p-space-sm flex items-start gap-space-md animate-fade-in group">
+                                                  <div className="p-2 bg-nebula-900 rounded border border-nebula-800 text-gray-400">
+                                                      {getStepIcon(step.type)}
+                                                  </div>
+                                                  <div className="flex-1 space-y-space-sm">
+                                                      <div className="flex justify-between items-center">
+                                                          <input 
+                                                              value={step.name} 
+                                                              onChange={(e) => updateStepInConfig(config.id, step.id, { name: e.target.value })}
+                                                              className="bg-transparent text-type-body font-bold text-white outline-none"
+                                                          />
+                                                          <div className="flex gap-space-sm">
+                                                              <span className="text-type-tiny px-2 py-0.5 bg-nebula-900 rounded text-gray-500 border border-nebula-800">{step.type}</span>
+                                                              <button onClick={() => removeStepFromConfig(config.id, step.id)} className="text-gray-600 hover:text-red-400"><X size={14}/></button>
                                                           </div>
                                                       </div>
-                                                      
-                                                      {/* Specific Step Configs */}
                                                       {renderStepConfigFields(step, config.id)}
                                                   </div>
                                               </div>
                                           ))}
                                       </div>
                                   </div>
-
+                                  
                                   <div className="flex justify-end pt-2">
-                                      <button className="px-6 py-2 bg-purple-600 hover:bg-purple-500 text-white text-sm font-bold rounded flex items-center gap-2 shadow-[0_0_15px_rgba(139,92,246,0.3)]">
-                                          <Play size={14} fill="currentColor" /> Run Test
+                                      <button className="px-6 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded font-bold text-sm flex items-center gap-2 shadow-lg">
+                                          <Play size={14} fill="currentColor" /> Run Simulation
                                       </button>
                                   </div>
                               </div>

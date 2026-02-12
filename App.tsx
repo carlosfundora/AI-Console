@@ -489,6 +489,7 @@ const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<ViewState>('dashboard');
   const [servers, setServers] = useState<ServerProfile[]>(MOCK_SERVERS);
   const [agents, setAgents] = useState<AgentConfig[]>(MOCK_AGENTS);
+  const [benchmarks, setBenchmarks] = useState<BenchmarkResult[]>(MOCK_BENCHMARKS);
   
   const handleUpdateServer = (updated: ServerProfile) => {
       setServers(servers.map(s => s.id === updated.id ? updated : s));
@@ -512,6 +513,10 @@ const App: React.FC = () => {
 
   const handleDeleteAgent = (id: string) => {
       setAgents(agents.filter(a => a.id !== id));
+  };
+
+  const handleAddBenchmark = (result: BenchmarkResult) => {
+      setBenchmarks(prev => [result, ...prev]);
   };
   
   // Updated Nav Items with new icons and swaps
@@ -601,12 +606,12 @@ const App: React.FC = () => {
           <div className="flex-1 overflow-hidden flex flex-col">
             <div className="w-full h-full flex flex-col">
               {activeTab === 'dashboard' && <Dashboard serverConfig={SERVER_CONFIG} />}
-              {activeTab === 'benchmarks' && <Benchmarks results={MOCK_BENCHMARKS} models={MOCK_MODELS} servers={servers} />}
+              {activeTab === 'benchmarks' && <Benchmarks results={benchmarks} models={MOCK_MODELS} servers={servers} />}
               {activeTab === 'datasets' && <Datasets datasets={MOCK_DATASETS} />}
               {activeTab === 'training' && <Training models={MOCK_MODELS} datasets={MOCK_DATASETS} />}
               {activeTab === 'laboratory' && <Laboratory models={MOCK_MODELS} />}
               {activeTab === 'servers' && <Servers servers={servers} models={MOCK_MODELS} onUpdateServer={handleUpdateServer} onDeleteServer={handleDeleteServer} onAddServer={handleAddServer} />}
-              {activeTab === 'models' && <Models models={MOCK_MODELS} servers={servers} benchmarks={MOCK_BENCHMARKS} />}
+              {activeTab === 'models' && <Models models={MOCK_MODELS} servers={servers} benchmarks={benchmarks} onAddBenchmark={handleAddBenchmark} />}
               {activeTab === 'agents' && <Agents agents={agents} onSaveAgent={handleSaveAgent} onDeleteAgent={handleDeleteAgent} />}
               {activeTab === 'settings' && <Settings />}
               {activeTab === 'chat' && <Chat models={MOCK_MODELS} servers={servers} agents={agents} onUpdateServer={handleUpdateServer} />}

@@ -1,17 +1,18 @@
 
 import React, { useState } from 'react';
 import { Model, ModelVersion, ServerProfile, BenchmarkResult } from '../types';
-import { GitBranch, Box, FileCode, Tag, ExternalLink, Cpu, Terminal, Scale, X, BarChart2, Filter, Check, Server, FileText, Activity, Plus, RefreshCw, Trash2, Layers, Zap, Merge, Scissors, User, FlaskConical, Beaker, Database, ArrowLeftRight, TrendingUp } from 'lucide-react';
+import { GitBranch, Box, FileCode, Tag, ExternalLink, Cpu, Terminal, Scale, X, BarChart2, Filter, Check, Server, FileText, Activity, Plus, RefreshCw, Trash2, Layers, Zap, Merge, Scissors, User, FlaskConical, Beaker, Database, ArrowLeftRight, TrendingUp, Play, Loader2 } from 'lucide-react';
 
 interface ModelsProps {
   models: Model[];
   servers: ServerProfile[];
   benchmarks: BenchmarkResult[];
+  onAddBenchmark: (result: BenchmarkResult) => void;
 }
 
 type ModelCategory = 'All' | 'Base' | 'Fine-Tuned' | 'Distilled' | 'Merged' | 'Custom';
 
-export const Models: React.FC<ModelsProps> = ({ models, servers, benchmarks }) => {
+export const Models: React.FC<ModelsProps> = ({ models, servers, benchmarks, onAddBenchmark }) => {
   // Local state for models allows us to add tags dynamically in the UI
   const [localModels, setLocalModels] = useState<Model[]>(models);
   const [selectedModel, setSelectedModel] = useState<Model | null>(null);
@@ -20,6 +21,7 @@ export const Models: React.FC<ModelsProps> = ({ models, servers, benchmarks }) =
   const [searchQuery, setSearchQuery] = useState('');
   const [detailTab, setDetailTab] = useState<'overview' | 'versions' | 'docs' | 'benchmarks' | 'engineering'>('overview');
   const [newTag, setNewTag] = useState('');
+  const [isBenchmarking, setIsBenchmarking] = useState(false);
 
   // Drag and Drop Comparison State
   const [draggingModelId, setDraggingModelId] = useState<string | null>(null);
@@ -92,6 +94,32 @@ export const Models: React.FC<ModelsProps> = ({ models, servers, benchmarks }) =
       setFilterFamily('All');
       setFilterTensor('All');
       setFilterTag('All');
+  };
+
+  const handleRunBenchmark = () => {
+      if (!selectedModel) return;
+      setIsBenchmarking(true);
+      
+      // Simulate benchmark run
+      setTimeout(() => {
+          const newResult: BenchmarkResult = {
+              id: `b-${Date.now()}`,
+              modelId: selectedModel.id,
+              versionId: selectedModel.versions[0]?.id || 'unknown',
+              dataset: 'Standard-1K',
+              score: Math.floor(Math.random() * 20) + 80, // 80-99
+              latency: Math.floor(Math.random() * 50) + 20, // 20-70ms
+              tokensPerSecond: Math.random() * 50 + 40, // 40-90 t/s
+              hardware: 'GPU',
+              hardwareName: 'Simulated GPU',
+              date: new Date().toISOString().split('T')[0],
+              metric: 'Throughput',
+              type: 'Core',
+              notes: 'Manual Run'
+          };
+          onAddBenchmark(newResult);
+          setIsBenchmarking(false);
+      }, 2000);
   };
 
   // Derived filter options from LOCAL models to include new tags
@@ -513,6 +541,14 @@ export const Models: React.FC<ModelsProps> = ({ models, servers, benchmarks }) =
                                         <Activity size={16} />
                                         Performance History
                                     </h3>
+                                    <button 
+                                        onClick={handleRunBenchmark}
+                                        disabled={isBenchmarking}
+                                        className="text-xs bg-purple-600 hover:bg-purple-500 disabled:opacity-50 disabled:cursor-not-allowed px-3 py-1.5 rounded text-white font-bold border border-purple-500/50 flex items-center gap-2 shadow-lg transition-all"
+                                    >
+                                        {isBenchmarking ? <Loader2 size={12} className="animate-spin" /> : <Play size={12} fill="currentColor" />}
+                                        {isBenchmarking ? 'Running...' : 'Run Benchmark'}
+                                    </button>
                                 </div>
                                 
                                 {getModelBenchmarks(selectedModel.id).length > 0 ? (
@@ -546,7 +582,13 @@ export const Models: React.FC<ModelsProps> = ({ models, servers, benchmarks }) =
                                     <div className="flex flex-col items-center justify-center p-12 border-2 border-dashed border-nebula-800 rounded-lg text-gray-600">
                                         <Activity size={32} className="mb-2 opacity-50" />
                                         <p>No benchmark results found for this model.</p>
-                                        <button className="mt-4 text-purple-400 text-xs font-bold hover:text-purple-300">RUN BENCHMARK</button>
+                                        <button 
+                                            onClick={handleRunBenchmark}
+                                            disabled={isBenchmarking}
+                                            className="mt-4 text-purple-400 text-xs font-bold hover:text-purple-300 disabled:opacity-50"
+                                        >
+                                            {isBenchmarking ? 'RUNNING TEST...' : 'RUN BENCHMARK'}
+                                        </button>
                                     </div>
                                 )}
                             </div>
