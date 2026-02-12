@@ -1,6 +1,6 @@
 
-import React, { useState } from 'react';
-import { LayoutDashboard, Database, BrainCircuit, Activity, Settings as SettingsIcon, Server, Terminal, FlaskConical, Loader2, MessageSquare, Briefcase, GraduationCap, Bot, BookOpen, Eye } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { LayoutDashboard, Database, BrainCircuit, Activity, Settings as SettingsIcon, Server, Terminal, FlaskConical, Loader2, MessageSquare, Briefcase, GraduationCap, Bot, BookOpen, Eye, Command } from 'lucide-react';
 import { Dashboard } from './views/Dashboard';
 import { Benchmarks } from './views/Benchmarks';
 import { Datasets } from './views/Datasets';
@@ -12,6 +12,7 @@ import { Settings } from './views/Settings';
 import { Chat } from './views/Chat';
 import { Agents } from './views/Agents';
 import { Notebooks } from './views/Notebooks';
+import { CommandPalette } from './components/CommandPalette';
 import { ViewState, Model, BenchmarkResult, Dataset, ServerConfig, ModelStatus, ServerProfile, AgentConfig } from './types';
 
 // --- Custom Icons matching the requested style ---
@@ -31,15 +32,6 @@ const ClipboardDataIcon = ({ size = 20, className = "" }: { size?: number, class
     <path d="M4 11a1 1 0 1 1 2 0v1a1 1 0 1 1-2 0v-1zm6-4a1 1 0 1 1 2 0v5a1 1 0 1 1-2 0V7zM7 9a1 1 0 0 1 2 0v3a1 1 0 1 1-2 0V9z"/>
     <path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z"/>
     <path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h3zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3z"/>
-  </svg>
-);
-
-const DraftingCompassIcon = ({ size = 20, className = "" }: { size?: number, className?: string }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={className}>
-    <circle cx="12" cy="5" r="2" />
-    <path d="m12 7 7.53 13" />
-    <path d="m12 7-7.53 13" />
-    <path d="M5 19h14" />
   </svg>
 );
 
@@ -493,6 +485,53 @@ const App: React.FC = () => {
   const [agents, setAgents] = useState<AgentConfig[]>(MOCK_AGENTS);
   const [benchmarks, setBenchmarks] = useState<BenchmarkResult[]>(MOCK_BENCHMARKS);
   
+  // Command Palette State
+  const [isPaletteOpen, setIsPaletteOpen] = useState(false);
+
+  // Live Telemetry State
+  const [telemetry, setTelemetry] = useState({ gpu: 12, vram: 8.2, temp: 45, power: 120 });
+  const [systemLog, setSystemLog] = useState("System initialized. Monitoring active.");
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setIsPaletteOpen(prev => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  // Simulated Telemetry Stream
+  useEffect(() => {
+    const interval = setInterval(() => {
+        // Random walk for metrics
+        setTelemetry(prev => ({
+            gpu: Math.min(100, Math.max(0, prev.gpu + (Math.random() - 0.5) * 15)),
+            vram: Math.min(12, Math.max(0, prev.vram + (Math.random() - 0.5) * 0.2)),
+            temp: Math.min(90, Math.max(30, prev.temp + (Math.random() - 0.5) * 3)),
+            power: Math.min(230, Math.max(50, prev.power + (Math.random() - 0.5) * 15)),
+        }));
+        
+        // Random system logs
+        if (Math.random() > 0.85) {
+            const logs = [
+                "GC Triggered: Freed 24MB", 
+                "Batch #4092 finalized", 
+                "Context swapped to NVMe", 
+                "KV Cache hit ratio: 94%", 
+                "Heartbeat ACK from Agent-1",
+                "Optimizing compute graph...",
+                "Thermal throttle check: PASS",
+                "Inference queue: 0 pending"
+            ];
+            setSystemLog(logs[Math.floor(Math.random() * logs.length)]);
+        }
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
+  
   const handleUpdateServer = (updated: ServerProfile) => {
       setServers(servers.map(s => s.id === updated.id ? updated : s));
   };
@@ -543,6 +582,14 @@ const App: React.FC = () => {
 
   return (
     <div className="flex flex-col h-screen bg-nebula-950 text-nebula-100 font-sans overflow-hidden text-type-body selection:bg-purple-500/30">
+      
+      {/* Command Palette Overlay */}
+      <CommandPalette 
+        isOpen={isPaletteOpen} 
+        onClose={() => setIsPaletteOpen(false)} 
+        onNavigate={setActiveTab} 
+      />
+
       {/* Streamlined Top Header with Vertical Glassmorphism */}
       <header className="h-header bg-nebula-950/80 backdrop-blur-md border-b border-white/5 flex items-center justify-between px-space-lg z-30 shrink-0 relative shadow-md">
           {/* Subtle gradient overlay, top-down only */}
@@ -605,6 +652,17 @@ const App: React.FC = () => {
               </button>
             ))}
           </nav>
+          
+          {/* Quick Command Trigger in Sidebar */}
+          <div className="p-4 border-t border-white/5">
+             <button 
+                onClick={() => setIsPaletteOpen(true)}
+                className="w-full flex items-center justify-between px-3 py-2 rounded bg-nebula-900 border border-nebula-800 text-xs text-gray-400 hover:text-white hover:border-purple-500/50 transition-all group"
+             >
+                 <span className="flex items-center gap-2"><Command size={12}/> Commands</span>
+                 <span className="bg-nebula-950 px-1.5 rounded text-[10px] opacity-50 group-hover:opacity-100 transition-opacity">⌘K</span>
+             </button>
+          </div>
         </aside>
 
         {/* Main Content */}
@@ -630,31 +688,59 @@ const App: React.FC = () => {
         </main>
       </div>
 
-       {/* Full Width Footer with Glassmorphism */}
-      <footer className="h-8 bg-nebula-950/80 backdrop-blur-md border-t border-white/5 flex items-center justify-between px-4 text-type-caption text-gray-500 select-none z-40 relative shadow-[0_-5px_15px_rgba(0,0,0,0.3)] w-full font-mono uppercase tracking-tighter">
-            <div className="flex gap-space-md items-center">
-                <span className="flex items-center gap-space-xs">
+       {/* Full Width Footer with Live Telemetry */}
+      <footer className="h-8 bg-nebula-950/90 backdrop-blur-md border-t border-white/5 flex items-center justify-between px-4 text-type-caption text-gray-500 select-none z-40 relative shadow-[0_-5px_15px_rgba(0,0,0,0.3)] w-full font-mono uppercase tracking-tighter">
+            {/* Left: Status - No wrapping, allowing it to take necessary width */}
+            <div className="flex gap-space-md items-center whitespace-nowrap shrink-0">
+                <span className="flex items-center gap-space-xs text-gray-500 font-bold">
                     <span className="w-2 h-2 rounded-full bg-green-500 animate-heartbeat shadow-[0_0_8px_#22c55e]"></span> 
-                    <span className="opacity-70">System Online</span>
+                    <span className="opacity-90">Connected</span>
                 </span>
-                {SERVER_CONFIG.rocmEnabled && (
-                  <span className="flex items-center gap-space-xs">
-                      <span className="w-2 h-2 rounded-full bg-red-500/50"></span>
-                      <span className="text-gray-600">ROCm Active</span>
-                  </span>
-                )}
-                <span className="flex items-center gap-space-xs opacity-50">GPU: 12%</span>
-                <span className="flex items-center gap-space-xs opacity-50">VRAM: 8/12 GB</span>
+                
+                <span className="flex items-center gap-space-xs">
+                    <span className={`w-2 h-2 rounded-full transition-all duration-300 ${SERVER_CONFIG.rocmEnabled ? 'bg-green-500 shadow-[0_0_8px_#22c55e]' : 'bg-red-500 shadow-[0_0_8px_#ef4444]'}`}></span>
+                    <span className="font-bold text-gray-500">ROCm</span>
+                </span>
+                
+                <span className="text-gray-600">|</span>
+                <span className="text-gray-500 whitespace-nowrap">v2.3.0-Nightly</span>
             </div>
             
-             {/* Global Loading Indicator */}
-            <div className="flex items-center gap-space-sm text-purple-400 font-bold">
-                <Loader2 size={12} className="animate-spin" />
-                <span className="animate-pulse">Task Sync Active</span>
+             {/* Center: System Log Ticker */}
+            <div className="flex-1 flex justify-center items-center overflow-hidden px-4">
+                <div className="flex items-center gap-space-sm text-gray-400 animate-fade-in key={systemLog}">
+                    <Activity size={12} className="text-purple-500" />
+                    <span className="truncate max-w-lg">{systemLog}</span>
+                </div>
             </div>
 
-            <div className="opacity-40 font-bold">
-                v2.3.0-Nightly // REPLICATOR-AI
+            {/* Right: Live Telemetry */}
+            <div className="flex items-center gap-4 w-auto shrink-0 text-[10px] font-bold">
+                <div className="flex items-center gap-2">
+                    <span className="text-gray-600">GPU</span>
+                    <div className="w-16 h-2 bg-nebula-900 rounded-full overflow-hidden border border-white/5">
+                        <div className="h-full bg-purple-500 transition-all duration-700 ease-out" style={{ width: `${telemetry.gpu}%` }}></div>
+                    </div>
+                    <span className="text-purple-300 w-8 text-right">{telemetry.gpu.toFixed(0)}%</span>
+                </div>
+
+                <div className="flex items-center gap-2">
+                    <span className="text-gray-600">VRAM</span>
+                    <div className="w-16 h-2 bg-nebula-900 rounded-full overflow-hidden border border-white/5">
+                        <div className={`h-full transition-all duration-700 ease-out ${telemetry.vram > 10 ? 'bg-red-500' : 'bg-blue-500'}`} style={{ width: `${(telemetry.vram / 12) * 100}%` }}></div>
+                    </div>
+                    <span className="text-blue-300 w-12 text-right">{telemetry.vram.toFixed(1)}GB</span>
+                </div>
+
+                <div className="flex items-center gap-2 pl-2 border-l border-white/5">
+                    <span className="text-gray-600">TEMP</span>
+                    <span className={`${telemetry.temp > 80 ? 'text-red-400' : 'text-green-400'}`}>{telemetry.temp.toFixed(0)}°C</span>
+                </div>
+
+                <div className="flex items-center gap-2">
+                    <span className="text-gray-600">PWR</span>
+                    <span className="text-yellow-500">{telemetry.power.toFixed(0)}W</span>
+                </div>
             </div>
       </footer>
     </div>

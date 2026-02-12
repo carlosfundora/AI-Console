@@ -148,65 +148,33 @@ export const Dashboard: React.FC<DashboardProps> = ({ serverConfig }) => {
                 <ChevronRight size={24} />
             </button>
 
-            {/* Slide 0: VRAM & Load */}
+            {/* Slide 0: GPU Load History (Widescreen) */}
             {slideIndex === 0 && (
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-fade-in h-[450px]">
-                    <div className="bg-gradient-to-b from-nebula-900 to-nebula-950 border border-white/5 rounded-xl p-6 lg:col-span-1 flex flex-col items-center justify-center relative overflow-hidden shadow-lg hover:shadow-[0_0_20px_rgba(124,58,237,0.05)] transition-shadow">
-                        <div className="absolute top-0 right-0 p-4 opacity-5">
-                            <span className="text-6xl">💾</span>
+                <div className="h-[450px] animate-fade-in">
+                    <div className="bg-gradient-to-b from-nebula-900 to-nebula-950 border border-white/5 rounded-xl p-6 h-full shadow-lg flex flex-col">
+                        <div className="flex items-center gap-3 mb-6">
+                             <span className="p-2 bg-purple-500/10 rounded-lg text-purple-400 border border-purple-500/10 shadow-[0_0_10px_rgba(124,58,237,0.1)]">⚡</span>
+                             <h3 className="text-lg font-bold text-white">GPU Load History</h3>
                         </div>
-                        <h3 className="text-lg font-semibold mb-4 w-full text-left flex items-center gap-2 text-white">VRAM Distribution</h3>
-                        <div className="h-56 w-full">
+                        <div className="flex-1 w-full min-h-0">
                             <ResponsiveContainer width="100%" height="100%">
-                            <PieChart>
-                                <Pie
-                                data={vramData}
-                                cx="50%"
-                                cy="50%"
-                                innerRadius={60}
-                                outerRadius={80}
-                                paddingAngle={5}
-                                dataKey="value"
-                                stroke="none"
-                                >
-                                {vramData.map((entry, index) => (
-                                    <Cell key={`cell-${index}`} fill={entry.color} />
-                                ))}
-                                </Pie>
+                            <AreaChart data={activityData} margin={{ left: -20, right: 10 }}>
+                                <defs>
+                                <linearGradient id="colorLoad" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.6}/>
+                                    <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0}/>
+                                </linearGradient>
+                                </defs>
+                                <CartesianGrid strokeDasharray="3 3" stroke="#1c1c24" vertical={false} />
+                                <XAxis dataKey="time" stroke="#4b5563" tickLine={false} axisLine={false} tick={{fontSize: 10}} dy={10} />
+                                <YAxis stroke="#4b5563" tickLine={false} axisLine={false} tick={{fontSize: 10}} />
                                 <Tooltip 
                                 contentStyle={{ backgroundColor: '#0a0a0e', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '4px' }}
-                                itemStyle={{ color: '#fff' }}
                                 />
-                            </PieChart>
+                                <Area type="monotone" dataKey="load" stroke="#8b5cf6" strokeWidth={2} fillOpacity={1} fill="url(#colorLoad)" />
+                            </AreaChart>
                             </ResponsiveContainer>
                         </div>
-                        <div className="flex justify-between w-full px-8 text-sm text-gray-400 font-medium">
-                            <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-purple-600 shadow-[0_0_8px_rgba(139,92,246,0.5)]"></div> Used (24GB)</div>
-                            <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-nebula-700"></div> Free (56GB)</div>
-                        </div>
-                    </div>
-
-                    <div className="bg-gradient-to-b from-nebula-900 to-nebula-950 border border-white/5 rounded-xl p-6 lg:col-span-2 shadow-lg">
-                    <h3 className="text-lg font-semibold mb-4 text-white">⚡ GPU Load History</h3>
-                    <div className="h-full max-h-[350px] w-full">
-                        <ResponsiveContainer width="100%" height="100%">
-                        <AreaChart data={activityData}>
-                            <defs>
-                            <linearGradient id="colorLoad" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.8}/>
-                                <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0}/>
-                            </linearGradient>
-                            </defs>
-                            <CartesianGrid strokeDasharray="3 3" stroke="#1c1c24" vertical={false} />
-                            <XAxis dataKey="time" stroke="#4b5563" tickLine={false} axisLine={false} />
-                            <YAxis stroke="#4b5563" tickLine={false} axisLine={false} />
-                            <Tooltip 
-                            contentStyle={{ backgroundColor: '#0a0a0e', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '4px' }}
-                            />
-                            <Area type="monotone" dataKey="load" stroke="#8b5cf6" fillOpacity={1} fill="url(#colorLoad)" />
-                        </AreaChart>
-                        </ResponsiveContainer>
-                    </div>
                     </div>
                 </div>
             )}
@@ -214,9 +182,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ serverConfig }) => {
             {/* Slide 1: Active Tasks */}
             {slideIndex === 1 && (
                 <div className="bg-gradient-to-b from-nebula-900 to-nebula-950 border border-white/5 rounded-xl p-6 h-[450px] animate-fade-in flex flex-col shadow-lg">
-                    <h3 className="text-lg font-semibold mb-6 flex items-center gap-2 text-white">
-                        <List className="text-blue-500" /> Active Operations & Tasks
-                    </h3>
+                    <div className="flex justify-between items-center mb-6">
+                        <h3 className="text-lg font-bold flex items-center gap-3 text-white">
+                            <span className="p-2 bg-blue-500/10 rounded-lg text-blue-400 border border-blue-500/10 shadow-[0_0_10px_rgba(59,130,246,0.1)]">
+                                <List size={18} />
+                            </span>
+                            Active Operations & Tasks
+                        </h3>
+                    </div>
                     <div className="flex-1 space-y-6 overflow-y-auto px-2 custom-scrollbar">
                         {activeTasks.map(task => (
                             <div key={task.id} className="bg-white/5 p-5 rounded-xl border border-white/5 hover:border-white/10 transition-colors">
@@ -227,9 +200,12 @@ export const Dashboard: React.FC<DashboardProps> = ({ serverConfig }) => {
                                     </div>
                                     <span className="text-white font-mono bg-nebula-900 px-2.5 py-1 rounded-md border border-white/5 shadow-inner">{task.progress}%</span>
                                 </div>
-                                <div className="w-full bg-nebula-950 h-2.5 rounded-full overflow-hidden border border-white/5">
-                                    <div className={`h-full ${task.color} relative transition-all duration-1000 ease-out`} style={{ width: `${task.progress}%` }}>
-                                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-[shimmer_2s_infinite]"></div>
+                                <div className="w-full bg-nebula-950 h-1.5 rounded-full overflow-hidden border border-white/5">
+                                    <div 
+                                        className={`h-full ${task.color} relative transition-all duration-1000 ease-out shadow-[0_0_12px_currentColor] opacity-80`} 
+                                        style={{ width: `${task.progress}%` }}
+                                    >
+                                        <div className="absolute inset-0 bg-white/20 animate-pulse"></div>
                                     </div>
                                 </div>
                             </div>
@@ -246,8 +222,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ serverConfig }) => {
                     </div>
                     
                     <div className="flex justify-between items-center mb-8 relative z-10">
-                        <h3 className="text-xl font-black flex items-center gap-3 tracking-tight text-white">
-                            <Trophy className="text-yellow-500" /> Model High Scores
+                        <h3 className="text-lg font-bold flex items-center gap-3 text-white">
+                            <span className="p-2 bg-yellow-500/10 rounded-lg text-yellow-400 border border-yellow-500/10 shadow-[0_0_10px_rgba(234,179,8,0.1)]">
+                                <Trophy size={18} />
+                            </span>
+                            Model Benchmarks
                         </h3>
                         <div className="text-[10px] text-gray-500 font-bold uppercase tracking-widest border border-white/10 px-3 py-1 rounded bg-nebula-950">
                             Hall of Fame
@@ -319,9 +298,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ serverConfig }) => {
                                     <XAxis type="number" stroke="#4b5563" tick={{fontSize: 10}} hide />
                                     <YAxis dataKey="name" type="category" width={80} stroke="#9ca3af" tick={{fontSize: 12, fontWeight: 700}} axisLine={false} tickLine={false} />
                                     <Tooltip cursor={{fill: 'rgba(255,255,255,0.02)'}} contentStyle={{ backgroundColor: '#0a0a0e', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '4px' }} />
-                                    <Bar dataKey="tokens" fill="#7c3aed" radius={[0, 4, 4, 0]} barSize={24}>
+                                    <Bar dataKey="tokens" fill="#7c3aed" radius={[0, 4, 4, 0]} barSize={24} fillOpacity={0.6}>
                                         {throughputData.map((entry, index) => (
-                                            <Cell key={`cell-${index}`} fill={entry.color} />
+                                            <Cell key={`cell-${index}`} fill={entry.color} fillOpacity={0.6} />
                                         ))}
                                     </Bar>
                                 </BarChart>
@@ -350,7 +329,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ serverConfig }) => {
                         
                         <div className="flex-1 min-h-0 relative z-10">
                             <ResponsiveContainer width="100%" height="100%">
-                                <LineChart data={sftLossData}>
+                                <LineChart data={sftLossData} margin={{ left: -20, right: 10 }}>
                                     <CartesianGrid strokeDasharray="3 3" stroke="#1c1c24" vertical={false} />
                                     <XAxis dataKey="step" stroke="#4b5563" tick={{fontSize: 10}} tickLine={false} axisLine={false} />
                                     <YAxis stroke="#4b5563" tick={{fontSize: 10}} tickLine={false} axisLine={false} />
@@ -378,7 +357,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ serverConfig }) => {
 
                         <div className="flex-1 min-h-0 relative z-10">
                             <ResponsiveContainer width="100%" height="100%">
-                                <BarChart data={sftComparisonData} barGap={4}>
+                                <BarChart data={sftComparisonData} barGap={4} margin={{ left: -20, right: 10 }}>
                                     <CartesianGrid strokeDasharray="3 3" stroke="#1c1c24" vertical={false} />
                                     <XAxis dataKey="metric" stroke="#6b7280" tick={{fontSize: 10, fontWeight: 600}} tickLine={false} axisLine={false} />
                                     <YAxis stroke="#4b5563" tick={{fontSize: 10}} tickLine={false} axisLine={false} domain={[0, 100]} />
@@ -387,10 +366,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ serverConfig }) => {
                                         contentStyle={{ backgroundColor: '#0a0a0e', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '4px' }} 
                                     />
                                     <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }} />
-                                    <Bar dataKey="base" name="Base Model" fill="#374151" radius={[4, 4, 0, 0]} barSize={20} />
-                                    <Bar dataKey="sft" name="Fine-Tuned" fill="#10b981" radius={[4, 4, 0, 0]} barSize={20}>
+                                    <Bar dataKey="base" name="Base Model" fill="#374151" radius={[4, 4, 0, 0]} barSize={20} fillOpacity={0.5} />
+                                    <Bar dataKey="sft" name="Fine-Tuned" fill="#10b981" radius={[4, 4, 0, 0]} barSize={20} fillOpacity={0.5}>
                                         {sftComparisonData.map((entry, index) => (
-                                            <Cell key={`cell-${index}`} fill={entry.sft > entry.base ? '#10b981' : '#ef4444'} />
+                                            <Cell key={`cell-${index}`} fill={entry.sft > entry.base ? '#10b981' : '#ef4444'} fillOpacity={0.6} />
                                         ))}
                                     </Bar>
                                 </BarChart>
