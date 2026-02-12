@@ -1,8 +1,8 @@
 
 import React, { useState } from 'react';
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, AreaChart, Area, XAxis, YAxis, CartesianGrid, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, BarChart, Bar, Legend } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, AreaChart, Area, XAxis, YAxis, CartesianGrid, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, BarChart, Bar, Legend, LineChart, Line } from 'recharts';
 import { ServerConfig } from '../types';
-import { ChevronLeft, ChevronRight, List, Trophy, Activity, ArrowRight, Bell, ExternalLink, CheckCircle, AlertTriangle, Medal, Star, TrendingUp } from 'lucide-react';
+import { ChevronLeft, ChevronRight, List, Trophy, Activity, ArrowRight, Bell, ExternalLink, CheckCircle, AlertTriangle, Medal, Star, TrendingUp, GitMerge, TrendingDown } from 'lucide-react';
 
 interface DashboardProps {
   serverConfig: ServerConfig;
@@ -37,6 +37,26 @@ const healthData = [
   { subject: 'Network', A: 30, fullMark: 100 },
 ];
 
+// SFT Training Data
+const sftLossData = [
+    { step: 0, current: 2.8, baseline: 2.9 },
+    { step: 100, current: 2.1, baseline: 2.4 },
+    { step: 200, current: 1.6, baseline: 2.1 },
+    { step: 300, current: 1.2, baseline: 1.8 },
+    { step: 400, current: 0.9, baseline: 1.6 },
+    { step: 500, current: 0.75, baseline: 1.5 },
+    { step: 600, current: 0.68, baseline: 1.45 },
+    { step: 700, current: 0.65, baseline: 1.42 },
+];
+
+const sftComparisonData = [
+    { metric: 'MMLU (Reasoning)', base: 45, sft: 52 },
+    { metric: 'HellaSwag (Common)', base: 60, sft: 68 },
+    { metric: 'GSM8K (Math)', base: 32, sft: 41 },
+    { metric: 'TruthfulQA', base: 48, sft: 65 },
+    { metric: 'HumanEval (Code)', base: 28, sft: 30 },
+];
+
 // Mock Data for Slides
 const activeTasks = [
     { id: 1, name: 'Llama-3-8b SFT (Epoch 2/3)', progress: 65, status: 'Training', color: 'bg-purple-600' },
@@ -53,9 +73,10 @@ const highScores = [
 
 export const Dashboard: React.FC<DashboardProps> = ({ serverConfig }) => {
   const [slideIndex, setSlideIndex] = useState(0);
+  const TOTAL_SLIDES = 5;
 
-  const nextSlide = () => setSlideIndex((prev) => (prev + 1) % 4);
-  const prevSlide = () => setSlideIndex((prev) => (prev - 1 + 4) % 4);
+  const nextSlide = () => setSlideIndex((prev) => (prev + 1) % TOTAL_SLIDES);
+  const prevSlide = () => setSlideIndex((prev) => (prev - 1 + TOTAL_SLIDES) % TOTAL_SLIDES);
 
   return (
     <div className="h-full overflow-y-auto space-y-6 animate-fade-in p-8 custom-scrollbar">
@@ -310,8 +331,77 @@ export const Dashboard: React.FC<DashboardProps> = ({ serverConfig }) => {
                 </div>
             )}
 
+            {/* Slide 4: SFT Analytics */}
+            {slideIndex === 4 && (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-[450px] animate-fade-in">
+                    {/* Left: Loss Curve */}
+                    <div className="bg-gradient-to-b from-nebula-900 to-nebula-950 border border-white/5 rounded-xl p-6 flex flex-col shadow-lg relative overflow-hidden">
+                        <div className="flex justify-between items-start mb-6 relative z-10">
+                            <div>
+                                <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                                    <TrendingDown size={18} className="text-purple-500" /> SFT Training Convergence
+                                </h3>
+                                <p className="text-xs text-gray-500 font-bold uppercase tracking-wider mt-1">Loss vs. Steps (Current vs. Baseline)</p>
+                            </div>
+                            <span className="text-[10px] bg-purple-900/30 text-purple-300 border border-purple-500/30 px-2 py-1 rounded font-mono">
+                                Step: 750 / 1000
+                            </span>
+                        </div>
+                        
+                        <div className="flex-1 min-h-0 relative z-10">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <LineChart data={sftLossData}>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="#1c1c24" vertical={false} />
+                                    <XAxis dataKey="step" stroke="#4b5563" tick={{fontSize: 10}} tickLine={false} axisLine={false} />
+                                    <YAxis stroke="#4b5563" tick={{fontSize: 10}} tickLine={false} axisLine={false} />
+                                    <Tooltip contentStyle={{ backgroundColor: '#0a0a0e', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '4px' }} />
+                                    <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }} />
+                                    <Line type="monotone" dataKey="current" name="Current Run" stroke="#8b5cf6" strokeWidth={3} dot={false} activeDot={{ r: 6 }} />
+                                    <Line type="monotone" dataKey="baseline" name="Baseline (v1)" stroke="#4b5563" strokeWidth={2} strokeDasharray="5 5" dot={false} />
+                                </LineChart>
+                            </ResponsiveContainer>
+                        </div>
+                        {/* Background Decor */}
+                        <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-purple-600/5 rounded-full blur-3xl pointer-events-none"></div>
+                    </div>
+
+                    {/* Right: Impact Analysis */}
+                    <div className="bg-gradient-to-b from-nebula-900 to-nebula-950 border border-white/5 rounded-xl p-6 flex flex-col shadow-lg relative overflow-hidden">
+                        <div className="flex justify-between items-start mb-6 relative z-10">
+                            <div>
+                                <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                                    <GitMerge size={18} className="text-green-500" /> Base vs. SFT Delta
+                                </h3>
+                                <p className="text-xs text-gray-500 font-bold uppercase tracking-wider mt-1">Impact Analysis on Key Benchmarks</p>
+                            </div>
+                        </div>
+
+                        <div className="flex-1 min-h-0 relative z-10">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart data={sftComparisonData} barGap={4}>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="#1c1c24" vertical={false} />
+                                    <XAxis dataKey="metric" stroke="#6b7280" tick={{fontSize: 10, fontWeight: 600}} tickLine={false} axisLine={false} />
+                                    <YAxis stroke="#4b5563" tick={{fontSize: 10}} tickLine={false} axisLine={false} domain={[0, 100]} />
+                                    <Tooltip 
+                                        cursor={{fill: 'rgba(255,255,255,0.02)'}}
+                                        contentStyle={{ backgroundColor: '#0a0a0e', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '4px' }} 
+                                    />
+                                    <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }} />
+                                    <Bar dataKey="base" name="Base Model" fill="#374151" radius={[4, 4, 0, 0]} barSize={20} />
+                                    <Bar dataKey="sft" name="Fine-Tuned" fill="#10b981" radius={[4, 4, 0, 0]} barSize={20}>
+                                        {sftComparisonData.map((entry, index) => (
+                                            <Cell key={`cell-${index}`} fill={entry.sft > entry.base ? '#10b981' : '#ef4444'} />
+                                        ))}
+                                    </Bar>
+                                </BarChart>
+                            </ResponsiveContainer>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-3">
-                {[0, 1, 2, 3].map(i => (
+                {Array.from({ length: TOTAL_SLIDES }).map((_, i) => (
                     <button 
                         key={i} 
                         onClick={() => setSlideIndex(i)}
