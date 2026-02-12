@@ -181,7 +181,7 @@ Ensure your browser supports WebGPU and you have enabled unsafe-webgpu flags if 
   { 
     id: 'equall-saul-7b', 
     name: 'Saul 7B Instruct v1', 
-    provider: 'Equall',
+    provider: 'Equall', 
     family: 'Mistral',
     description: 'Legal domain expert model. Recommended for final analysis generation.',
     tags: ['Legal', 'Domain Expert', 'Fine-Tuned', 'SFT'],

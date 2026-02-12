@@ -1,8 +1,8 @@
 
 import React, { useState, useMemo } from 'react';
-import { BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend, CartesianGrid, PieChart, Pie, Cell } from 'recharts';
+import { BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend, CartesianGrid, PieChart, Pie, Cell, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis } from 'recharts';
 import { BenchmarkResult, Model, AdvancedBenchmarkConfig, BenchmarkStep, BenchmarkStepType, MockDataSource, ServerProfile } from '../types';
-import { Play, Settings2, MessageSquare, Database, Binary, FileText, Wrench, Search, ChevronDown, ChevronRight, X, ArrowRight, Loader2, File, Code, Table, Plus, Trash2, Expand, Clock, Info, Layers, GripVertical, Save, FolderOpen, Flame, Box, Server, Edit2, GitFork, ScanSearch, Filter, Tag, ListChecks, CheckCircle2, Zap } from 'lucide-react';
+import { Play, Settings2, MessageSquare, Database, Binary, FileText, Wrench, Search, ChevronDown, ChevronRight, X, ArrowRight, Loader2, File, Code, Table, Plus, Trash2, Expand, Clock, Info, Layers, GripVertical, Save, FolderOpen, Flame, Box, Server, Edit2, GitFork, ScanSearch, Filter, Tag, ListChecks, CheckCircle2, Zap, ChevronLeft, LayoutDashboard, History, FileStack } from 'lucide-react';
 
 interface BenchmarksProps {
   results: BenchmarkResult[];
@@ -59,7 +59,7 @@ const INITIAL_MOCK_DATA: MockDataSource[] = [
 const COLORS = ['#8b5cf6', '#10b981', '#3b82f6', '#f59e0b', '#ec4899', '#6366f1', '#14b8a6', '#f43f5e'];
 
 export const Benchmarks: React.FC<BenchmarksProps> = ({ results, models, servers }) => {
-  const [activeView, setActiveView] = useState<'matrix' | 'trends' | 'config' | 'data'>('matrix');
+  const [activeView, setActiveView] = useState<'overview' | 'history' | 'config' | 'mock_data'>('overview');
   const [savedConfigs, setSavedConfigs] = useState<AdvancedBenchmarkConfig[]>(MOCK_SAVED_CONFIGS);
   
   // Data Management State
@@ -71,6 +71,9 @@ export const Benchmarks: React.FC<BenchmarksProps> = ({ results, models, servers
   // Test Editor State
   const [expandedConfigId, setExpandedConfigId] = useState<string | null>(null);
   const [draggingTag, setDraggingTag] = useState<BenchmarkStepType | null>(null);
+
+  // Overview Carousel State
+  const [slideIndex, setSlideIndex] = useState(0);
 
   // Trend Filters
   const [trendModelFilter, setTrendModelFilter] = useState<string[]>([]); 
@@ -93,6 +96,11 @@ export const Benchmarks: React.FC<BenchmarksProps> = ({ results, models, servers
           setTrendModelFilter([...trendModelFilter, modelId]);
       }
   };
+
+  const nextSlide = () => setSlideIndex((prev) => (prev + 1) % 3);
+  const prevSlide = () => setSlideIndex((prev) => (prev - 1 + 3) % 3);
+
+  // --- Data Processing for Visualizations ---
 
   const processedTrendData = useMemo(() => {
     // 1. Filter raw results
@@ -123,6 +131,36 @@ export const Benchmarks: React.FC<BenchmarksProps> = ({ results, models, servers
 
     return Object.values(dataByDate);
   }, [results, trendModelFilter, trendDatasetFilter]);
+
+  const modelAggregatedStats = useMemo(() => {
+      const stats: Record<string, { tps: number, score: number, count: number }> = {};
+      results.forEach(r => {
+          if (!stats[r.modelId]) stats[r.modelId] = { tps: 0, score: 0, count: 0 };
+          stats[r.modelId].tps += r.tokensPerSecond || 0;
+          stats[r.modelId].score += r.score;
+          stats[r.modelId].count++;
+      });
+      return Object.keys(stats).map(k => ({
+          name: k,
+          tps: stats[k].tps / stats[k].count,
+          score: stats[k].score / stats[k].count
+      }));
+  }, [results]);
+
+  const categoryStats = useMemo(() => {
+      const stats: Record<string, { count: number, avgScore: number }> = {};
+      results.forEach(r => {
+          const type = r.type || 'Unknown';
+          if (!stats[type]) stats[type] = { count: 0, avgScore: 0 };
+          stats[type].count++;
+          stats[type].avgScore += r.score;
+      });
+      return Object.keys(stats).map(k => ({
+          subject: k,
+          A: stats[k].avgScore / stats[k].count,
+          fullMark: 100
+      }));
+  }, [results]);
 
   // --- CRUD Operations for Tests ---
 
@@ -377,7 +415,7 @@ export const Benchmarks: React.FC<BenchmarksProps> = ({ results, models, servers
       return null;
   };
 
-  const renderDataView = () => (
+  const renderMockDataView = () => (
       <div className="grid grid-cols-1 md:grid-cols-3 gap-space-lg animate-fade-in h-full overflow-hidden pb-4">
           <div className="bg-nebula-900 border border-nebula-700 rounded p-space-md flex flex-col h-full overflow-hidden">
               <div className="flex justify-between items-center mb-space-md border-b border-nebula-800 pb-2">
@@ -442,33 +480,163 @@ export const Benchmarks: React.FC<BenchmarksProps> = ({ results, models, servers
         <h2 className="text-type-heading-lg font-bold">📊 Benchmarks & Analytics</h2>
         <div className="flex bg-nebula-900 rounded p-1 border border-nebula-700">
              <button 
-                onClick={() => setActiveView('matrix')}
-                className={`px-3 py-1.5 rounded text-type-caption transition-all ${activeView === 'matrix' ? 'bg-nebula-700 text-white' : 'text-gray-400 hover:text-white'}`}
+                onClick={() => setActiveView('overview')}
+                className={`px-3 py-1.5 rounded text-type-caption transition-all flex items-center gap-2 ${activeView === 'overview' ? 'bg-purple-600 text-white shadow-lg' : 'text-gray-400 hover:text-white'}`}
             >
-                Overview
+                <LayoutDashboard size={14} /> Overview
             </button>
             <button 
-                onClick={() => setActiveView('trends')}
-                className={`px-3 py-1.5 rounded text-type-caption transition-all ${activeView === 'trends' ? 'bg-nebula-700 text-white' : 'text-gray-400 hover:text-white'}`}
+                onClick={() => setActiveView('history')}
+                className={`px-3 py-1.5 rounded text-type-caption transition-all flex items-center gap-2 ${activeView === 'history' ? 'bg-nebula-700 text-white' : 'text-gray-400 hover:text-white'}`}
             >
-                Trends
+                <History size={14} /> History
             </button>
             <button 
-                onClick={() => setActiveView('data')}
-                className={`px-3 py-1.5 rounded text-type-caption transition-all flex items-center gap-2 ${activeView === 'data' ? 'bg-nebula-700 text-white' : 'text-gray-400 hover:text-white'}`}
+                onClick={() => setActiveView('mock_data')}
+                className={`px-3 py-1.5 rounded text-type-caption transition-all flex items-center gap-2 ${activeView === 'mock_data' ? 'bg-nebula-700 text-white' : 'text-gray-400 hover:text-white'}`}
             >
-                 Data Sources
+                 <FileStack size={14} /> Mock Data
             </button>
             <button 
                 onClick={() => setActiveView('config')}
-                className={`px-3 py-1.5 rounded text-type-caption transition-all flex items-center gap-2 ${activeView === 'config' ? 'bg-purple-600 text-white' : 'text-gray-400 hover:text-white'}`}
+                className={`px-3 py-1.5 rounded text-type-caption transition-all flex items-center gap-2 ${activeView === 'config' ? 'bg-nebula-700 text-white' : 'text-gray-400 hover:text-white'}`}
             >
-                 Tests
+                 <Settings2 size={14} /> Tests
             </button>
         </div>
       </div>
 
-      {activeView === 'matrix' && (
+      {activeView === 'overview' && (
+         <div className="flex-1 overflow-hidden relative animate-fade-in group">
+             {/* Carousel Controls */}
+             <button 
+                onClick={prevSlide}
+                className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-3 z-20 p-2 bg-nebula-900/80 border border-white/10 rounded-full text-gray-400 hover:text-white hover:bg-nebula-800 shadow-lg transition-all opacity-0 group-hover:opacity-100 hover:scale-110"
+            >
+                <ChevronLeft size={24} />
+            </button>
+            <button 
+                onClick={nextSlide}
+                className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-3 z-20 p-2 bg-nebula-900/80 border border-white/10 rounded-full text-gray-400 hover:text-white hover:bg-nebula-800 shadow-lg transition-all opacity-0 group-hover:opacity-100 hover:scale-110"
+            >
+                <ChevronRight size={24} />
+            </button>
+
+            {/* Slide 0: Model Comparison */}
+            {slideIndex === 0 && (
+                <div className="h-full bg-nebula-900 border border-nebula-700 rounded-xl p-space-xl flex flex-col animate-fade-in">
+                    <h3 className="text-type-heading-md font-bold mb-space-lg flex items-center gap-space-sm text-white">
+                        <Zap size={20} className="text-yellow-500" /> Model Performance Comparison
+                    </h3>
+                    <div className="flex-1 min-h-0">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={modelAggregatedStats}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="#272730" vertical={false} />
+                                <XAxis dataKey="name" stroke="#6b7280" fontSize={12} />
+                                <YAxis yAxisId="left" stroke="#8b5cf6" fontSize={12} orientation="left" />
+                                <YAxis yAxisId="right" stroke="#10b981" fontSize={12} orientation="right" />
+                                <Tooltip contentStyle={{ backgroundColor: '#121217', borderColor: '#272730' }} />
+                                <Legend />
+                                <Bar yAxisId="left" dataKey="tps" name="Throughput (t/s)" fill="#8b5cf6" radius={[4, 4, 0, 0]} barSize={40} />
+                                <Bar yAxisId="right" dataKey="score" name="Avg Score" fill="#10b981" radius={[4, 4, 0, 0]} barSize={40} />
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </div>
+                </div>
+            )}
+
+            {/* Slide 1: Historical Trends */}
+            {slideIndex === 1 && (
+                <div className="h-full bg-nebula-900 border border-nebula-700 rounded-xl p-space-xl flex flex-col animate-fade-in relative">
+                    <div className="flex justify-between items-center mb-space-lg">
+                        <h3 className="text-type-heading-md font-bold flex items-center gap-space-sm text-white">
+                            <Clock size={20} className="text-blue-500" /> Latency Trends Over Time
+                        </h3>
+                        {/* Inline Filters for Trend View */}
+                        <div className="flex items-center gap-2">
+                            <span className="text-xs text-gray-500 uppercase font-bold">Filter:</span>
+                            {availableModels.slice(0,3).map((m, i) => (
+                                <button 
+                                    key={m}
+                                    onClick={() => toggleModelFilter(m)}
+                                    className={`px-2 py-1 rounded text-[10px] border transition-all ${
+                                        trendModelFilter.includes(m) 
+                                        ? 'bg-blue-900/30 border-blue-500 text-blue-200' 
+                                        : 'bg-nebula-950 border-nebula-800 text-gray-500'
+                                    }`}
+                                >
+                                    {m}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                    <div className="flex-1 min-h-0">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <LineChart data={processedTrendData}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="#272730" />
+                                <XAxis dataKey="date" stroke="#6b7280" fontSize={12} />
+                                <YAxis stroke="#6b7280" fontSize={12} />
+                                <Tooltip contentStyle={{ backgroundColor: '#121217', borderColor: '#272730' }} />
+                                <Legend />
+                                {trendModelFilter.map((modelId, i) => (
+                                    <Line 
+                                        key={modelId}
+                                        type="monotone" 
+                                        dataKey={`${modelId}_lat`} 
+                                        stroke={COLORS[i % COLORS.length]} 
+                                        strokeWidth={3} 
+                                        dot={{ r: 4 }} 
+                                        activeDot={{ r: 6 }} 
+                                        name={modelId}
+                                        connectNulls
+                                    />
+                                ))}
+                            </LineChart>
+                        </ResponsiveContainer>
+                    </div>
+                </div>
+            )}
+
+            {/* Slide 2: Category Analysis */}
+            {slideIndex === 2 && (
+                <div className="h-full bg-nebula-900 border border-nebula-700 rounded-xl p-space-xl flex flex-col animate-fade-in">
+                    <h3 className="text-type-heading-md font-bold mb-space-lg flex items-center gap-space-sm text-white">
+                        <ScanSearch size={20} className="text-green-500" /> Quality by Category
+                    </h3>
+                    <div className="flex-1 min-h-0 flex justify-center items-center">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <RadarChart cx="50%" cy="50%" outerRadius="80%" data={categoryStats}>
+                                <PolarGrid stroke="#272730" />
+                                <PolarAngleAxis dataKey="subject" tick={{ fill: '#9ca3af', fontSize: 12, fontWeight: 600 }} />
+                                <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
+                                <Radar
+                                    name="Avg Score"
+                                    dataKey="A"
+                                    stroke="#10b981"
+                                    strokeWidth={3}
+                                    fill="#10b981"
+                                    fillOpacity={0.3}
+                                />
+                                <Tooltip contentStyle={{ backgroundColor: '#121217', borderColor: '#272730' }} />
+                            </RadarChart>
+                        </ResponsiveContainer>
+                    </div>
+                </div>
+            )}
+
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-3">
+                {[0, 1, 2].map(i => (
+                    <button 
+                        key={i} 
+                        onClick={() => setSlideIndex(i)}
+                        className={`h-2 rounded-full transition-all duration-300 ${slideIndex === i ? 'bg-purple-600 w-8 shadow-[0_0_10px_#8b5cf6]' : 'bg-gray-700 w-2 hover:bg-gray-600'}`}
+                    ></button>
+                ))}
+            </div>
+         </div>
+      )}
+
+      {activeView === 'history' && (
         <div className="space-y-space-lg animate-fade-in flex-1 overflow-y-auto">
             <div className="overflow-x-auto rounded border border-nebula-800">
               <table className="w-full text-left bg-nebula-900">
@@ -596,130 +764,7 @@ export const Benchmarks: React.FC<BenchmarksProps> = ({ results, models, servers
           </div>
       )}
 
-      {activeView === 'trends' && (
-         <div className="flex-1 overflow-y-auto animate-fade-in flex flex-col gap-space-lg">
-             
-             {/* Trend Controls */}
-             <div className="bg-nebula-900 border border-nebula-700 rounded p-space-md flex flex-wrap gap-space-md items-center">
-                 <div className="flex items-center gap-space-sm border-r border-nebula-800 pr-space-md">
-                     <Filter size={16} className="text-purple-400" />
-                     <span className="text-type-body font-bold text-gray-300">Filters</span>
-                 </div>
-                 
-                 <div className="flex items-center gap-space-sm">
-                     <label className="text-type-caption text-gray-500 uppercase font-bold">Test/Dataset</label>
-                     <select 
-                        value={trendDatasetFilter}
-                        onChange={(e) => setTrendDatasetFilter(e.target.value)}
-                        className="bg-nebula-950 border border-nebula-800 rounded px-2 py-1 text-type-body text-gray-200 outline-none focus:border-purple-500"
-                     >
-                         <option value="All">All Datasets</option>
-                         {availableDatasets.map(ds => <option key={ds} value={ds}>{ds}</option>)}
-                     </select>
-                 </div>
-
-                 <div className="flex-1 flex flex-wrap gap-space-sm items-center pl-space-md border-l border-nebula-800">
-                     <span className="text-type-caption text-gray-500 uppercase font-bold mr-2">Models:</span>
-                     {availableModels.map((m, i) => (
-                         <button 
-                            key={m}
-                            onClick={() => toggleModelFilter(m)}
-                            className={`px-2 py-1 rounded text-type-caption border flex items-center gap-space-sm transition-all ${
-                                trendModelFilter.includes(m) 
-                                ? 'bg-purple-900/30 border-purple-500 text-purple-200' 
-                                : 'bg-nebula-950 border-nebula-800 text-gray-500 hover:text-gray-300'
-                            }`}
-                         >
-                            <div className="w-2 h-2 rounded-full" style={{backgroundColor: COLORS[i % COLORS.length]}}></div>
-                            {m}
-                            {trendModelFilter.includes(m) && <CheckCircle2 size={10} />}
-                         </button>
-                     ))}
-                 </div>
-             </div>
-
-             <div className="grid grid-cols-1 gap-space-lg">
-                {/* Throughput Chart */}
-                <div className="bg-nebula-900 border border-nebula-700 rounded p-space-lg h-96">
-                    <h3 className="text-type-heading-sm font-bold mb-space-md flex items-center gap-space-sm"><Zap size={18} className="text-yellow-500"/> Throughput Evolution (Tokens/Sec)</h3>
-                    <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={processedTrendData}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="#272730" />
-                            <XAxis dataKey="date" stroke="#6b7280" fontSize={12} />
-                            <YAxis stroke="#6b7280" fontSize={12} />
-                            <Tooltip contentStyle={{ backgroundColor: '#121217', borderColor: '#272730' }} />
-                            <Legend />
-                            {trendModelFilter.map((modelId, i) => (
-                                <Line 
-                                    key={modelId}
-                                    type="monotone" 
-                                    dataKey={`${modelId}_tps`} 
-                                    stroke={COLORS[i % COLORS.length]} 
-                                    strokeWidth={2} 
-                                    dot={{ r: 4 }} 
-                                    activeDot={{ r: 6 }} 
-                                    name={modelId}
-                                    connectNulls
-                                />
-                            ))}
-                        </LineChart>
-                    </ResponsiveContainer>
-                </div>
-
-                 {/* Latency Chart */}
-                 <div className="bg-nebula-900 border border-nebula-700 rounded p-space-lg h-96">
-                    <h3 className="text-type-heading-sm font-bold mb-space-md flex items-center gap-space-sm"><Clock size={18} className="text-blue-500"/> Latency Analysis (ms)</h3>
-                     <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={processedTrendData}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="#272730" />
-                            <XAxis dataKey="date" stroke="#6b7280" fontSize={12} />
-                            <YAxis stroke="#6b7280" fontSize={12} />
-                            <Tooltip contentStyle={{ backgroundColor: '#121217', borderColor: '#272730' }} />
-                            <Legend />
-                            {trendModelFilter.map((modelId, i) => (
-                                <Line 
-                                    key={modelId}
-                                    type="monotone" 
-                                    dataKey={`${modelId}_lat`} 
-                                    stroke={COLORS[i % COLORS.length]} 
-                                    strokeWidth={2} 
-                                    dot={{ r: 4 }} 
-                                    activeDot={{ r: 6 }} 
-                                    name={modelId}
-                                    connectNulls
-                                />
-                            ))}
-                        </LineChart>
-                    </ResponsiveContainer>
-                 </div>
-
-                 {/* Score Chart */}
-                 <div className="bg-nebula-900 border border-nebula-700 rounded p-space-lg h-96">
-                    <h3 className="text-type-heading-sm font-bold mb-space-md flex items-center gap-space-sm"><ScanSearch size={18} className="text-green-500"/> Quality/Score Tracking</h3>
-                     <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={processedTrendData}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="#272730" />
-                            <XAxis dataKey="date" stroke="#6b7280" fontSize={12} />
-                            <YAxis stroke="#6b7280" fontSize={12} />
-                            <Tooltip contentStyle={{ backgroundColor: '#121217', borderColor: '#272730' }} />
-                            <Legend />
-                             {trendModelFilter.map((modelId, i) => (
-                                <Bar 
-                                    key={modelId}
-                                    dataKey={`${modelId}_score`} 
-                                    fill={COLORS[i % COLORS.length]} 
-                                    radius={[4, 4, 0, 0]} 
-                                    name={modelId}
-                                />
-                            ))}
-                        </BarChart>
-                    </ResponsiveContainer>
-                 </div>
-             </div>
-         </div>
-      )}
-
-      {activeView === 'data' && renderDataView()}
+      {activeView === 'mock_data' && renderMockDataView()}
 
       {activeView === 'config' && (
           <div className="flex flex-1 min-h-0 gap-space-lg animate-fade-in overflow-hidden">

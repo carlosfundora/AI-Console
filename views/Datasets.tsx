@@ -1,8 +1,8 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Dataset, DatasetTemplate } from '../types';
 import { generateSyntheticDataSample } from '../services/geminiService';
-import { Filter, SortAsc, Sparkles, Download, FileText, MessageSquare, Code, Save, FileJson, AlignLeft, Edit3, Plus, Trash2, X, Check, Copy, AlertTriangle, Wand2, Database } from 'lucide-react';
+import { Filter, SortAsc, Sparkles, Download, FileText, MessageSquare, Code, Save, FileJson, AlignLeft, Edit3, Plus, Trash2, X, Check, Copy, AlertTriangle, Wand2, Database, MoreHorizontal, Maximize2, CheckCircle2, Search, Table as TableIcon } from 'lucide-react';
 
 interface DatasetsProps {
   datasets: Dataset[];
@@ -110,18 +110,72 @@ export const Datasets: React.FC<DatasetsProps> = ({ datasets }) => {
   const [filterBy, setFilterBy] = useState<FilterOption>('all');
 
   // Template Management State
-  const [templates, setTemplates] = useState<DatasetTemplate[]>(DEFAULT_TEMPLATES);
+  const [templates, setTemplates] = useState<DatasetTemplate[]>(() => {
+      try {
+          const saved = localStorage.getItem('customDatasetTemplates');
+          const custom = saved ? JSON.parse(saved) : [];
+          return [...DEFAULT_TEMPLATES, ...custom];
+      } catch (e) {
+          console.error("Failed to load templates", e);
+          return DEFAULT_TEMPLATES;
+      }
+  });
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>(DEFAULT_TEMPLATES[0].id);
   const [isManageMode, setIsManageMode] = useState(false);
   
   // Editing State
   const [editingTemplate, setEditingTemplate] = useState<DatasetTemplate | null>(null);
 
-  // Validation State
+  // Validation State (Generator)
   const [validationStatus, setValidationStatus] = useState<'idle' | 'valid' | 'invalid'>('idle');
   const [validationMsg, setValidationMsg] = useState('');
 
+  // Viewer Modal State
+  const [viewingDataset, setViewingDataset] = useState<Dataset | null>(null);
+  const [datasetContent, setDatasetContent] = useState<string>('');
+  const [viewerValidation, setViewerValidation] = useState<{valid: boolean, msg: string} | null>(null);
+
   const activeTemplate = templates.find(t => t.id === selectedTemplateId) || templates[0];
+
+  // Helper: Mock content generation for viewer
+  useEffect(() => {
+      if (viewingDataset) {
+          setViewerValidation(null);
+          // Simulate loading content based on format
+          let mockContent = [];
+          const count = 3;
+          
+          if (viewingDataset.format === 'Alpaca') {
+              mockContent = Array(count).fill(0).map((_, i) => ({
+                  instruction: `Instruction ${i+1} from ${viewingDataset.name}`,
+                  input: "",
+                  output: `This is a simulated output for row ${i+1}.`
+              }));
+          } else if (viewingDataset.format === 'ShareGPT') {
+              mockContent = Array(count).fill(0).map((_, i) => ({
+                  conversations: [
+                      { from: "human", value: `User query ${i+1}` },
+                      { from: "gpt", value: `Assistant response ${i+1}` }
+                  ]
+              }));
+          } else if (viewingDataset.format === 'ChatML') {
+              mockContent = Array(count).fill(0).map((_, i) => ({
+                  messages: [
+                      { role: "system", content: "System prompt" },
+                      { role: "user", content: `User ${i+1}` },
+                      { role: "assistant", content: `Assistant ${i+1}` }
+                  ]
+              }));
+          } else {
+              // Generic
+              mockContent = Array(count).fill(0).map((_, i) => ({
+                  id: i,
+                  content: `Generic content row ${i+1}`
+              }));
+          }
+          setDatasetContent(JSON.stringify(mockContent, null, 2));
+      }
+  }, [viewingDataset]);
 
   const validateData = (data: any[], formatName: string): { valid: boolean; msg: string } => {
       if (!data || data.length === 0) return { valid: false, msg: "No data to validate" };
@@ -150,12 +204,22 @@ export const Datasets: React.FC<DatasetsProps> = ({ datasets }) => {
       return { valid: true, msg: "Format check passed" };
   };
 
+  const handleRunViewerValidation = () => {
+      if (!viewingDataset) return;
+      try {
+          const data = JSON.parse(datasetContent);
+          const result = validateData(Array.isArray(data) ? data : [data], viewingDataset.format || 'Custom');
+          setViewerValidation(result);
+      } catch (e) {
+          setViewerValidation({ valid: false, msg: "Invalid JSON Syntax" });
+      }
+  };
+
   const handleGenerate = async () => {
     if (!topic) return;
     setIsGenerating(true);
     setValidationStatus('idle');
     try {
-      // Pass the template structure to the service
       const jsonStr = await generateSyntheticDataSample(
           topic, 
           3, 
@@ -173,7 +237,6 @@ export const Datasets: React.FC<DatasetsProps> = ({ datasets }) => {
       }
       setGeneratedData(data);
       
-      // Auto-validate
       const check = validateData(data, activeTemplate.name);
       setValidationStatus(check.valid ? 'valid' : 'invalid');
       setValidationMsg(check.msg);
@@ -190,16 +253,25 @@ export const Datasets: React.FC<DatasetsProps> = ({ datasets }) => {
     .filter(d => filterBy === 'all' || d.type === filterBy)
     .sort((a, b) => {
         if (sortBy === 'rows') return b.rows - a.rows;
-        if (sortBy === 'size') return parseFloat(b.size) - parseFloat(a.size); // simplistic parsing
+        if (sortBy === 'size') return parseFloat(b.size) - parseFloat(a.size);
         return a.name.localeCompare(b.name);
     });
 
   const getFormatBadge = (format?: string) => {
       switch(format) {
-          case 'Alpaca': return <span className="text-[9px] bg-pink-900/30 text-pink-400 px-1.5 py-0.5 rounded border border-pink-500/30">Alpaca</span>;
-          case 'ShareGPT': return <span className="text-[9px] bg-cyan-900/30 text-cyan-400 px-1.5 py-0.5 rounded border border-cyan-500/30">ShareGPT</span>;
-          case 'ChatML': return <span className="text-[9px] bg-green-900/30 text-green-400 px-1.5 py-0.5 rounded border border-green-500/30">ChatML</span>;
-          default: return <span className="text-[9px] bg-gray-800 text-gray-500 px-1.5 py-0.5 rounded border border-gray-700">Custom</span>;
+          case 'Alpaca': return <span className="text-[10px] bg-pink-500/10 text-pink-400 px-2 py-0.5 rounded border border-pink-500/20 font-medium">Alpaca</span>;
+          case 'ShareGPT': return <span className="text-[10px] bg-cyan-500/10 text-cyan-400 px-2 py-0.5 rounded border border-cyan-500/20 font-medium">ShareGPT</span>;
+          case 'ChatML': return <span className="text-[10px] bg-green-500/10 text-green-400 px-2 py-0.5 rounded border border-green-500/20 font-medium">ChatML</span>;
+          default: return <span className="text-[10px] bg-gray-800 text-gray-400 px-2 py-0.5 rounded border border-gray-700 font-medium">{format || 'Custom'}</span>;
+      }
+  };
+
+  const getTypeBadge = (type: string) => {
+      switch(type) {
+          case 'SFT': return <span className="text-[10px] bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded border border-blue-500/20 font-bold tracking-wider">SFT</span>;
+          case 'DPO': return <span className="text-[10px] bg-orange-500/10 text-orange-400 px-2 py-0.5 rounded border border-orange-500/20 font-bold tracking-wider">DPO</span>;
+          case 'Pretrain': return <span className="text-[10px] bg-purple-500/10 text-purple-400 px-2 py-0.5 rounded border border-purple-500/20 font-bold tracking-wider">PRETRAIN</span>;
+          default: return <span className="text-[10px] bg-gray-800 text-gray-300 px-2 py-0.5 rounded border border-gray-700">{type}</span>;
       }
   };
 
@@ -213,10 +285,10 @@ export const Datasets: React.FC<DatasetsProps> = ({ datasets }) => {
   const handleCreateTemplate = () => {
       setEditingTemplate({
           id: `tpl-${Date.now()}`,
-          name: 'New Template',
-          description: '',
+          name: 'New Custom Template',
+          description: 'Custom dataset format',
           format: 'Custom',
-          systemPrompt: '',
+          systemPrompt: 'You are a helpful assistant that generates data in JSON format.',
           exampleStructure: '[\n  {\n    "field1": "value"\n  }\n]',
           isPreset: false
       });
@@ -226,20 +298,40 @@ export const Datasets: React.FC<DatasetsProps> = ({ datasets }) => {
   const handleSaveTemplate = () => {
       if (!editingTemplate) return;
       
-      const exists = templates.find(t => t.id === editingTemplate.id);
-      if (exists) {
-          setTemplates(templates.map(t => t.id === editingTemplate.id ? editingTemplate : t));
-      } else {
-          setTemplates([...templates, editingTemplate]);
+      let templateToSave = { ...editingTemplate };
+      if (templateToSave.isPreset) {
+          templateToSave.id = `tpl-${Date.now()}`;
+          templateToSave.name = `${templateToSave.name} (Copy)`;
+          templateToSave.isPreset = false;
       }
-      setSelectedTemplateId(editingTemplate.id);
+
+      let newTemplates = [...templates];
+      const index = newTemplates.findIndex(t => t.id === templateToSave.id);
+      
+      if (index >= 0) {
+          newTemplates[index] = templateToSave;
+      } else {
+          newTemplates.push(templateToSave);
+      }
+      
+      setTemplates(newTemplates);
+      
+      const customTemplates = newTemplates.filter(t => !t.isPreset);
+      localStorage.setItem('customDatasetTemplates', JSON.stringify(customTemplates));
+
+      setSelectedTemplateId(templateToSave.id);
       setEditingTemplate(null);
       setIsManageMode(false);
   };
 
   const handleDeleteTemplate = (id: string) => {
       if (confirm('Delete this template?')) {
-          setTemplates(templates.filter(t => t.id !== id));
+          const newTemplates = templates.filter(t => t.id !== id);
+          setTemplates(newTemplates);
+          
+          const customTemplates = newTemplates.filter(t => !t.isPreset);
+          localStorage.setItem('customDatasetTemplates', JSON.stringify(customTemplates));
+
           if (selectedTemplateId === id) setSelectedTemplateId(templates[0].id);
           if (editingTemplate?.id === id) {
               setEditingTemplate(null);
@@ -248,18 +340,39 @@ export const Datasets: React.FC<DatasetsProps> = ({ datasets }) => {
       }
   };
 
+  // --- Syntax Highlighter for Modal ---
+  const SyntaxHighlight = ({ code }: { code: string }) => {
+      const [highlighted, setHighlighted] = useState('');
+      
+      useEffect(() => {
+          if ((window as any).Prism) {
+              const html = (window as any).Prism.highlight(code || '', (window as any).Prism.languages.json, 'json');
+              setHighlighted(html);
+          } else {
+              setHighlighted(code);
+          }
+      }, [code]);
+
+      return (
+          <pre className="font-mono text-xs leading-relaxed text-gray-300 whitespace-pre-wrap break-all" dangerouslySetInnerHTML={{ __html: highlighted }} />
+      );
+  };
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-space-xl h-full p-space-lg overflow-hidden relative">
       
       {/* LEFT COLUMN: Datasets List */}
       <div className="flex flex-col space-y-space-md overflow-hidden">
         <div className="flex justify-between items-end shrink-0">
-            <h2 className="text-type-heading-lg font-bold">📚 Data Curation</h2>
+            <div>
+                <h2 className="text-type-heading-lg font-bold">📚 Data Curation</h2>
+                <p className="text-type-body text-gray-400 mt-1">Manage local training datasets.</p>
+            </div>
             
             {/* Controls */}
             <div className="flex gap-space-sm">
                  <div className="relative group">
-                    <button className="bg-nebula-900 border border-nebula-700 p-space-sm rounded hover:bg-nebula-800 text-gray-400 hover:text-white transition-colors">
+                    <button className="bg-nebula-900 border border-nebula-700 p-2 rounded hover:bg-nebula-800 text-gray-400 hover:text-white transition-colors">
                         <Filter size={16} />
                     </button>
                     <div className="absolute right-0 mt-2 w-32 bg-nebula-900 border border-nebula-700 rounded shadow-xl hidden group-hover:block z-10">
@@ -276,7 +389,7 @@ export const Datasets: React.FC<DatasetsProps> = ({ datasets }) => {
                  </div>
 
                  <div className="relative group">
-                    <button className="bg-nebula-900 border border-nebula-700 p-space-sm rounded hover:bg-nebula-800 text-gray-400 hover:text-white transition-colors">
+                    <button className="bg-nebula-900 border border-nebula-700 p-2 rounded hover:bg-nebula-800 text-gray-400 hover:text-white transition-colors">
                         <SortAsc size={16} />
                     </button>
                     <div className="absolute right-0 mt-2 w-32 bg-nebula-900 border border-nebula-700 rounded shadow-xl hidden group-hover:block z-10">
@@ -294,31 +407,49 @@ export const Datasets: React.FC<DatasetsProps> = ({ datasets }) => {
             </div>
         </div>
 
-        <div className="bg-nebula-900 border border-nebula-700 rounded-xl flex-1 overflow-hidden flex flex-col">
+        <div className="bg-nebula-900 border border-nebula-700 rounded-xl flex-1 overflow-hidden flex flex-col shadow-lg">
             <div className="p-space-md border-b border-nebula-700 bg-nebula-950/30 flex justify-between items-center">
-                <span className="font-semibold text-gray-200 text-type-body">{filteredDatasets.length} Local Datasets</span>
-                <button className="text-type-tiny bg-nebula-800 px-2 py-1 rounded text-purple-300 hover:text-white transition-colors flex items-center gap-1">
-                    <Download size={10} /> Import .JSONL
+                <span className="font-semibold text-gray-200 text-type-body flex items-center gap-2"><Database size={14}/> {filteredDatasets.length} Datasets</span>
+                <button className="text-type-tiny bg-nebula-800 px-3 py-1.5 rounded text-purple-300 hover:text-white transition-colors flex items-center gap-1 border border-nebula-700 hover:border-purple-500/50 shadow-sm">
+                    <Download size={12} /> Import .JSONL
                 </button>
             </div>
-            <div className="overflow-y-auto flex-1 p-space-sm space-y-space-sm custom-scrollbar">
+            <div className="overflow-y-auto flex-1 p-space-md space-y-space-md custom-scrollbar">
                 {filteredDatasets.map(ds => (
-                    <div key={ds.id} className="p-space-md rounded-lg bg-nebula-950/50 border border-nebula-700/50 hover:border-purple-500/30 transition-all cursor-pointer group">
-                        <div className="flex justify-between items-start">
-                            <div>
-                                <h4 className="font-bold text-gray-200 group-hover:text-purple-300 transition-colors text-type-body">{ds.name}</h4>
-                                <p className="text-type-tiny text-gray-500 mt-1">{ds.description}</p>
+                    <div 
+                        key={ds.id} 
+                        onDoubleClick={() => setViewingDataset(ds)}
+                        className="p-space-md rounded-xl bg-nebula-950/50 border border-nebula-700/50 hover:border-purple-500/30 hover:bg-nebula-900/80 transition-all cursor-pointer group relative overflow-hidden"
+                    >
+                        <div className="flex justify-between items-start mb-2">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-nebula-900 rounded-lg border border-nebula-800 text-purple-400 group-hover:text-purple-300 group-hover:border-purple-500/30 transition-colors">
+                                    <FileJson size={18} />
+                                </div>
+                                <div>
+                                    <h4 className="font-bold text-gray-200 group-hover:text-white transition-colors text-type-body leading-tight">{ds.name}</h4>
+                                    <p className="text-type-tiny text-gray-500 mt-0.5 line-clamp-1">{ds.description}</p>
+                                </div>
                             </div>
-                            <div className="flex flex-col items-end gap-1">
-                                <span className={`text-type-tiny px-2 py-1 rounded border ${ds.type === 'SFT' ? 'bg-blue-900/20 border-blue-500/30 text-blue-300' : ds.type === 'DPO' ? 'bg-orange-900/20 border-orange-500/30 text-orange-300' : 'bg-gray-800 text-gray-300'}`}>
-                                    {ds.type}
-                                </span>
+                            <div className="flex items-center gap-2">
+                                {getTypeBadge(ds.type)}
                                 {getFormatBadge(ds.format)}
                             </div>
                         </div>
-                        <div className="mt-3 flex gap-space-lg text-type-tiny text-gray-500 font-mono">
-                            <span className="flex items-center gap-1"><AlignLeft size={10}/> {ds.size}</span>
-                            <span className="flex items-center gap-1"><FileJson size={10}/> {ds.rows.toLocaleString()} rows</span>
+                        
+                        <div className="grid grid-cols-2 gap-4 mt-4 pt-3 border-t border-nebula-800/50">
+                            <div className="flex flex-col">
+                                <span className="text-[9px] uppercase text-gray-500 font-bold tracking-wider">Size</span>
+                                <span className="text-type-caption font-mono text-gray-300 flex items-center gap-1"><AlignLeft size={10}/> {ds.size}</span>
+                            </div>
+                            <div className="flex flex-col">
+                                <span className="text-[9px] uppercase text-gray-500 font-bold tracking-wider">Volume</span>
+                                <span className="text-type-caption font-mono text-gray-300 flex items-center gap-1"><TableIcon size={10}/> {ds.rows.toLocaleString()} rows</span>
+                            </div>
+                        </div>
+
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <Maximize2 size={12} className="text-gray-500" />
                         </div>
                     </div>
                 ))}
@@ -330,7 +461,7 @@ export const Datasets: React.FC<DatasetsProps> = ({ datasets }) => {
       <div className="flex flex-col space-y-space-md overflow-hidden relative">
         <div className="flex justify-between items-center shrink-0">
             <h2 className="text-type-heading-lg font-bold flex items-center gap-space-sm">
-                <Database className="text-purple-500" /> Dataset Generator
+                <Wand2 className="text-purple-500" /> Generator
             </h2>
             
             {/* Validation Badge */}
@@ -342,7 +473,7 @@ export const Datasets: React.FC<DatasetsProps> = ({ datasets }) => {
             )}
         </div>
         
-        <div className="bg-nebula-900 border border-nebula-700 rounded-xl p-space-lg flex flex-col h-full relative overflow-hidden">
+        <div className="bg-nebula-900 border border-nebula-700 rounded-xl p-space-lg flex flex-col h-full relative overflow-hidden shadow-lg">
              {/* Background Decoration */}
              <div className="absolute top-0 right-0 p-space-2xl opacity-5 pointer-events-none">
                 <Sparkles size={120} />
@@ -351,47 +482,70 @@ export const Datasets: React.FC<DatasetsProps> = ({ datasets }) => {
             {/* Template Manager Overlay/Mode */}
             {isManageMode && editingTemplate ? (
                 <div className="absolute inset-0 bg-nebula-900 z-20 flex flex-col p-space-lg animate-fade-in">
-                    <div className="flex justify-between items-center mb-4 border-b border-nebula-800 pb-2">
-                        <h3 className="font-bold text-white flex items-center gap-2"><Edit3 size={16}/> Edit Template</h3>
+                    <div className="flex justify-between items-center mb-4 border-b border-nebula-800 pb-2 shrink-0">
+                        <h3 className="font-bold text-white flex items-center gap-2">
+                            <Edit3 size={16}/> 
+                            {editingTemplate.isPreset ? 'View / Clone Template' : 'Edit Template'}
+                        </h3>
                         <button onClick={() => setIsManageMode(false)} className="text-gray-500 hover:text-white"><X size={20}/></button>
                     </div>
-                    <div className="flex-1 overflow-y-auto space-y-4 custom-scrollbar">
-                        <div>
-                            <label className="text-type-tiny text-gray-500 font-bold uppercase">Template Name</label>
-                            <input 
-                                value={editingTemplate.name} 
-                                onChange={e => setEditingTemplate({...editingTemplate, name: e.target.value})}
-                                className="w-full bg-nebula-950 border border-nebula-700 rounded p-2 text-white mt-1"
-                            />
-                        </div>
-                        <div>
-                            <label className="text-type-tiny text-gray-500 font-bold uppercase">System Prompt (Context)</label>
-                            <textarea 
-                                value={editingTemplate.systemPrompt} 
-                                onChange={e => setEditingTemplate({...editingTemplate, systemPrompt: e.target.value})}
-                                className="w-full bg-nebula-950 border border-nebula-700 rounded p-2 text-white mt-1 h-20 resize-none text-sm"
-                            />
-                        </div>
-                        <div className="flex-1 flex flex-col min-h-0">
-                            <label className="text-type-tiny text-gray-500 font-bold uppercase flex justify-between items-center">
-                                <span>Target JSON Structure (Example)</span>
-                                <span className="text-[10px] bg-nebula-800 px-2 py-0.5 rounded">The LLM will mimic this</span>
-                            </label>
-                            <textarea 
-                                value={editingTemplate.exampleStructure} 
-                                onChange={e => setEditingTemplate({...editingTemplate, exampleStructure: e.target.value})}
-                                className="w-full flex-1 bg-nebula-950 border border-nebula-700 rounded p-2 text-green-400 font-mono text-xs mt-1 resize-none"
-                                spellCheck={false}
-                            />
+                    
+                    <div className="flex-1 flex flex-col min-h-0 overflow-hidden space-y-4">
+                        <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col space-y-4">
+                            <div className="flex gap-4 shrink-0">
+                                <div className="flex-1">
+                                    <label className="text-type-tiny text-gray-500 font-bold uppercase">Template Name</label>
+                                    <input 
+                                        value={editingTemplate.name} 
+                                        onChange={e => setEditingTemplate({...editingTemplate, name: e.target.value})}
+                                        className="w-full bg-nebula-950 border border-nebula-700 rounded p-2 text-white mt-1 outline-none focus:border-purple-500"
+                                    />
+                                </div>
+                                <div className="w-1/3">
+                                    <label className="text-type-tiny text-gray-500 font-bold uppercase">Format Tag</label>
+                                    <select 
+                                        value={editingTemplate.format}
+                                        onChange={e => setEditingTemplate({...editingTemplate, format: e.target.value as any})}
+                                        className="w-full bg-nebula-950 border border-nebula-700 rounded p-2 text-white mt-1 outline-none focus:border-purple-500"
+                                    >
+                                        <option value="Custom">Custom</option>
+                                        <option value="Alpaca">Alpaca</option>
+                                        <option value="ShareGPT">ShareGPT</option>
+                                        <option value="ChatML">ChatML</option>
+                                        <option value="JSON">JSON</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div className="shrink-0">
+                                <label className="text-type-tiny text-gray-500 font-bold uppercase">System Prompt (Context)</label>
+                                <textarea 
+                                    value={editingTemplate.systemPrompt} 
+                                    onChange={e => setEditingTemplate({...editingTemplate, systemPrompt: e.target.value})}
+                                    className="w-full bg-nebula-950 border border-nebula-700 rounded p-2 text-white mt-1 h-20 resize-none text-sm outline-none focus:border-purple-500"
+                                />
+                            </div>
+                            
+                            <div className="flex-1 flex flex-col min-h-[150px]">
+                                <label className="text-type-tiny text-gray-500 font-bold uppercase flex justify-between items-center mb-1">
+                                    <span>Target JSON Structure (Example)</span>
+                                    <span className="text-[10px] bg-nebula-800 px-2 py-0.5 rounded">The LLM will mimic this</span>
+                                </label>
+                                <textarea 
+                                    value={editingTemplate.exampleStructure} 
+                                    onChange={e => setEditingTemplate({...editingTemplate, exampleStructure: e.target.value})}
+                                    className="w-full flex-1 bg-nebula-950 border border-nebula-700 rounded p-2 text-green-400 font-mono text-xs resize-none outline-none focus:border-purple-500"
+                                    spellCheck={false}
+                                />
+                            </div>
                         </div>
                     </div>
-                    <div className="flex justify-end gap-2 mt-4 pt-4 border-t border-nebula-800">
-                        {/* Only show delete for custom templates */}
+
+                    <div className="flex justify-end gap-2 mt-4 pt-4 border-t border-nebula-800 shrink-0">
                         {!editingTemplate.isPreset && (
                             <button onClick={() => handleDeleteTemplate(editingTemplate.id)} className="mr-auto text-red-400 hover:text-red-300 flex items-center gap-1 text-sm font-bold"><Trash2 size={14}/> Delete</button>
                         )}
                         <button onClick={handleSaveTemplate} className="bg-purple-600 hover:bg-purple-500 text-white px-6 py-2 rounded font-bold flex items-center gap-2">
-                            <Save size={16}/> Save Template
+                            <Save size={16}/> {editingTemplate.isPreset ? 'Save as Copy' : 'Save Template'}
                         </button>
                     </div>
                 </div>
@@ -492,6 +646,72 @@ export const Datasets: React.FC<DatasetsProps> = ({ datasets }) => {
             )}
         </div>
       </div>
+
+      {/* Dataset Viewer Modal */}
+      {viewingDataset && (
+          <div className="absolute inset-0 z-50 bg-nebula-950/90 backdrop-blur-sm flex items-center justify-center p-space-2xl animate-fade-in" onClick={() => setViewingDataset(null)}>
+              <div 
+                className="bg-nebula-900 border border-nebula-700 rounded-xl w-full h-full flex flex-col shadow-2xl relative overflow-hidden max-w-5xl max-h-[85vh]"
+                onClick={(e) => e.stopPropagation()}
+              >
+                  {/* Modal Header */}
+                  <div className="flex justify-between items-center p-space-lg border-b border-nebula-700 bg-nebula-950/50">
+                      <div>
+                          <h2 className="text-type-heading-md font-bold text-white flex items-center gap-3">
+                              {viewingDataset.name}
+                              {getFormatBadge(viewingDataset.format)}
+                          </h2>
+                          <p className="text-type-tiny text-gray-400 mt-1 uppercase font-bold tracking-widest">{viewingDataset.id} • {viewingDataset.rows} ROWS</p>
+                      </div>
+                      <div className="flex items-center gap-space-md">
+                          {viewerValidation && (
+                              <div className={`px-3 py-1 rounded text-[10px] font-bold uppercase flex items-center gap-2 border ${viewerValidation.valid ? 'bg-green-900/20 text-green-400 border-green-500/30' : 'bg-red-900/20 text-red-400 border-red-500/30'}`}>
+                                  {viewerValidation.valid ? <CheckCircle2 size={12}/> : <AlertTriangle size={12}/>}
+                                  {viewerValidation.msg}
+                              </div>
+                          )}
+                          <button 
+                            onClick={handleRunViewerValidation}
+                            className="px-3 py-1.5 bg-nebula-800 border border-nebula-700 hover:border-purple-500 text-gray-300 hover:text-white rounded text-xs font-bold transition-all"
+                          >
+                              Run Validation
+                          </button>
+                          <button onClick={() => setViewingDataset(null)} className="p-2 hover:bg-nebula-800 rounded-full text-gray-400 hover:text-white transition-colors">
+                              <X size={24} />
+                          </button>
+                      </div>
+                  </div>
+
+                  {/* Modal Content */}
+                  <div className="flex-1 flex overflow-hidden">
+                      <div className="w-64 bg-nebula-900/50 border-r border-nebula-800 p-space-md overflow-y-auto">
+                          <h4 className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-4">Metadata</h4>
+                          <div className="space-y-4">
+                              <div>
+                                  <label className="text-[9px] text-gray-600 block mb-1">TYPE</label>
+                                  {getTypeBadge(viewingDataset.type)}
+                              </div>
+                              <div>
+                                  <label className="text-[9px] text-gray-600 block mb-1">SIZE</label>
+                                  <span className="text-type-caption font-mono text-gray-300">{viewingDataset.size}</span>
+                              </div>
+                              <div>
+                                  <label className="text-[9px] text-gray-600 block mb-1">DESCRIPTION</label>
+                                  <p className="text-xs text-gray-400 leading-relaxed">{viewingDataset.description}</p>
+                              </div>
+                          </div>
+                      </div>
+                      
+                      <div className="flex-1 bg-nebula-950 p-space-lg overflow-y-auto custom-scrollbar relative group">
+                          <div className="absolute top-4 right-6 text-[10px] text-gray-600 font-mono uppercase tracking-widest pointer-events-none group-hover:text-purple-500 transition-colors">
+                              Preview Mode (Read-Only)
+                          </div>
+                          <SyntaxHighlight code={datasetContent} />
+                      </div>
+                  </div>
+              </div>
+          </div>
+      )}
     </div>
   );
 };
