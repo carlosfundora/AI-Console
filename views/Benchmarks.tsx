@@ -896,23 +896,65 @@ export const Benchmarks: React.FC<BenchmarksProps> = ({ results, models, servers
                                                   className="w-full bg-nebula-900 border border-nebula-700 rounded p-2 text-white mt-1" 
                                               />
                                           </div>
-                                          <div className="flex items-center gap-space-sm pt-4">
+                                          
+                                          {/* NEW: GPU Layers */}
+                                          <div>
+                                              <label className="text-type-tiny text-gray-500 uppercase font-bold">GPU Layers</label>
                                               <input 
-                                                  type="checkbox" 
-                                                  checked={config.parameters.flashAttention} 
-                                                  onChange={(e) => handleUpdateParameter(config.id, 'flashAttention', e.target.checked)}
-                                                  className="accent-purple-500" 
+                                                  type="number" 
+                                                  value={config.parameters.gpuLayers ?? 99} 
+                                                  onChange={(e) => handleUpdateParameter(config.id, 'gpuLayers', parseInt(e.target.value))}
+                                                  className="w-full bg-nebula-900 border border-nebula-700 rounded p-2 text-white mt-1" 
                                               />
-                                              <label className="text-type-caption text-gray-400">Flash Attn</label>
                                           </div>
-                                          <div className="flex items-center gap-space-sm pt-4">
-                                              <input 
-                                                  type="checkbox" 
-                                                  checked={config.parameters.warmup} 
-                                                  onChange={(e) => handleUpdateParameter(config.id, 'warmup', e.target.checked)}
-                                                  className="accent-purple-500" 
-                                              />
-                                              <label className="text-type-caption text-gray-400 flex items-center gap-1"><Flame size={12} className="text-orange-500"/> Warmup</label>
+
+                                          {/* Expanded Toggles Grid */}
+                                          <div className="col-span-2 grid grid-cols-2 md:grid-cols-3 gap-4 pt-2">
+                                              <div className="flex items-center gap-space-sm">
+                                                  <input 
+                                                      type="checkbox" 
+                                                      checked={config.parameters.flashAttention} 
+                                                      onChange={(e) => handleUpdateParameter(config.id, 'flashAttention', e.target.checked)}
+                                                      className="accent-purple-500" 
+                                                  />
+                                                  <label className="text-type-caption text-gray-400">Flash Attn</label>
+                                              </div>
+                                              <div className="flex items-center gap-space-sm">
+                                                  <input 
+                                                      type="checkbox" 
+                                                      checked={config.parameters.warmup} 
+                                                      onChange={(e) => handleUpdateParameter(config.id, 'warmup', e.target.checked)}
+                                                      className="accent-purple-500" 
+                                                  />
+                                                  <label className="text-type-caption text-gray-400 flex items-center gap-1"><Flame size={12} className="text-orange-500"/> Warmup</label>
+                                              </div>
+                                              <div className="flex items-center gap-space-sm">
+                                                  <input 
+                                                      type="checkbox" 
+                                                      checked={config.parameters.memoryLock} 
+                                                      onChange={(e) => handleUpdateParameter(config.id, 'memoryLock', e.target.checked)}
+                                                      className="accent-purple-500" 
+                                                  />
+                                                  <label className="text-type-caption text-gray-400">Memory Lock</label>
+                                              </div>
+                                              <div className="flex items-center gap-space-sm">
+                                                  <input 
+                                                      type="checkbox" 
+                                                      checked={config.parameters.continuousBatching} 
+                                                      onChange={(e) => handleUpdateParameter(config.id, 'continuousBatching', e.target.checked)}
+                                                      className="accent-purple-500" 
+                                                  />
+                                                  <label className="text-type-caption text-gray-400">Cont. Batching</label>
+                                              </div>
+                                              <div className="flex items-center gap-space-sm">
+                                                  <input 
+                                                      type="checkbox" 
+                                                      checked={!!config.parameters.keepAlive} 
+                                                      onChange={(e) => handleUpdateParameter(config.id, 'keepAlive', e.target.checked ? '5m' : undefined)}
+                                                      className="accent-purple-500" 
+                                                  />
+                                                  <label className="text-type-caption text-gray-400">Keep Alive</label>
+                                              </div>
                                           </div>
                                       </div>
                                   </div>
