@@ -43,6 +43,12 @@ export interface Model {
   versions: ModelVersion[];
   lastUsed: string;
   documentation?: string; // Markdown content for model documentation
+  // Performance Metrics
+  perplexity?: number;
+  latencyMs?: number;
+  accuracy?: number;
+  vramGB?: number;
+  tokensPerSecond?: number;
 }
 
 export interface ServerProfile {
@@ -90,7 +96,7 @@ export interface BenchmarkStep {
         vectorStore?: string;
         rerankTopK?: number;
         toolSchemaUrl?: string;
-        metric?: 'ExactMatch' | 'Semantic' | 'FunctionCallValidity' | 'Throughput';
+        metric?: 'ExactMatch' | 'Semantic' | 'FunctionCallValidity' | 'Throughput' | 'Accuracy' | 'F1' | 'Precision' | 'Recall';
         sourcePath?: string;
         docType?: 'PDF' | 'Markdown' | 'HTML';
         // Embedding Specific

@@ -50,7 +50,7 @@ const MOCK_MODELS: Model[] = [
     provider: 'LiquidAI', 
     family: 'Liquid',
     description: 'Efficient reasoning model. Excellent for pipeline pre-processing and structured output.',
-    tags: ['Reasoning', 'Efficient', 'Pipeline-Ready'],
+    tags: ['Reasoning', 'Efficient', 'Pipeline-Ready', 'Base'],
     params: '1.2B',
     tensorType: 'BF16',
     lastUsed: '2026-01-18',
@@ -97,7 +97,7 @@ model = AutoModelForCausalLM.from_pretrained("LiquidAI/LFM2.5-1.2B")
           size: '663MB', 
           created: '2026-01-11', 
           baseModel: 'v1-fp16', 
-          status: ModelStatus.Ready,
+          status: ModelStatus.Ready, 
           metrics: { 
             latencyMs: 180, 
             vramGB: 0.7,
@@ -114,7 +114,7 @@ model = AutoModelForCausalLM.from_pretrained("LiquidAI/LFM2.5-1.2B")
     provider: 'LiquidAI', 
     family: 'Liquid',
     description: 'Multimodal audio model capable of ASR, TTS, and interleaved conversation. WebGPU optimized.',
-    tags: ['Audio', 'Multimodal', 'WebGPU-Ready'],
+    tags: ['Audio', 'Multimodal', 'WebGPU-Ready', 'Base'],
     params: '1.5B',
     tensorType: 'FP16',
     lastUsed: '2026-01-19',
@@ -159,7 +159,7 @@ Ensure your browser supports WebGPU and you have enabled unsafe-webgpu flags if 
     provider: 'Equall',
     family: 'Mistral',
     description: 'Legal domain expert model. Recommended for final analysis generation.',
-    tags: ['Legal', 'Domain Expert'],
+    tags: ['Legal', 'Domain Expert', 'Fine-Tuned', 'SFT'],
     params: '7B',
     tensorType: 'BF16',
     lastUsed: '2026-01-18',
@@ -192,7 +192,7 @@ Ensure your browser supports WebGPU and you have enabled unsafe-webgpu flags if 
           size: '7.7GB', 
           created: '2025-12-05', 
           baseModel: 'Mistral-7B', 
-          status: ModelStatus.Ready,
+          status: ModelStatus.Ready, 
           metrics: {
             latencyMs: 2100,
             vramGB: 8.2,
@@ -226,7 +226,7 @@ Ensure your browser supports WebGPU and you have enabled unsafe-webgpu flags if 
     provider: 'MixedBread AI',
     family: 'Bert',
     description: 'State-of-the-art embedding model for RAG applications.',
-    tags: ['Embedding', 'SOTA'],
+    tags: ['Embedding', 'SOTA', 'Base'],
     params: '335M',
     tensorType: 'FP16',
     lastUsed: '2026-01-11',
@@ -258,7 +258,7 @@ Ensure your browser supports WebGPU and you have enabled unsafe-webgpu flags if 
     provider: 'Snowflake', 
     family: 'Bert',
     description: 'Dense embedding model used for dual-embedding strategies.',
-    tags: ['Embedding'],
+    tags: ['Embedding', 'Base'],
     params: '335M',
     tensorType: 'FP16',
     lastUsed: '2026-01-11',
@@ -279,6 +279,66 @@ Ensure your browser supports WebGPU and you have enabled unsafe-webgpu flags if 
             accuracy: 91.8,
             tokensPerSecond: 0
           }
+        }
+    ]
+  },
+  {
+    id: 'frankenclyde-13b',
+    name: 'FrankenClyde 13B (Merged)',
+    provider: 'Community',
+    family: 'Llama',
+    description: 'Merged model combining Llama-2-13b-Chat and Clydesdale-13b using Linear Interpolation. Excellent story-telling capabilities.',
+    tags: ['Merged', 'Roleplay', 'Creative'],
+    params: '13B',
+    tensorType: 'FP16',
+    lastUsed: '2026-01-19',
+    links: [],
+    versions: [
+        {
+            id: 'v1-merged',
+            name: 'FP16 Merged',
+            format: 'Safetensors',
+            quantization: 'FP16',
+            size: '26GB',
+            created: '2026-01-19',
+            baseModel: 'Llama-2-13b',
+            status: ModelStatus.Ready,
+            metrics: {
+                latencyMs: 45,
+                vramGB: 24.5,
+                perplexity: 4.8,
+                tokensPerSecond: 32.1
+            }
+        }
+    ]
+  },
+  {
+    id: 'tiny-llama-distill',
+    name: 'TinyLlama-1.1B-Distill',
+    provider: 'Local Lab',
+    family: 'Llama',
+    description: 'Distilled version of Llama-3-8B trained on synthetic reasoning traces.',
+    tags: ['Distilled', 'Reasoning', 'Small'],
+    params: '1.1B',
+    tensorType: 'BF16',
+    lastUsed: '2026-01-20',
+    links: [],
+    versions: [
+        {
+            id: 'v1-distill',
+            name: 'BF16 Distilled',
+            format: 'Pytorch',
+            quantization: 'BF16',
+            size: '2.2GB',
+            created: '2026-01-20',
+            baseModel: 'TinyLlama-1.1B',
+            status: ModelStatus.Ready,
+            metrics: {
+                latencyMs: 12,
+                vramGB: 2.5,
+                perplexity: 6.2,
+                tokensPerSecond: 145.8
+            }
         }
     ]
   }
@@ -527,7 +587,7 @@ const App: React.FC = () => {
               {activeTab === 'training' && <Training models={MOCK_MODELS} datasets={MOCK_DATASETS} />}
               {activeTab === 'laboratory' && <Laboratory models={MOCK_MODELS} />}
               {activeTab === 'servers' && <Servers servers={servers} models={MOCK_MODELS} onUpdateServer={handleUpdateServer} onDeleteServer={handleDeleteServer} onAddServer={handleAddServer} />}
-              {activeTab === 'models' && <Models models={MOCK_MODELS} servers={servers} />}
+              {activeTab === 'models' && <Models models={MOCK_MODELS} servers={servers} benchmarks={MOCK_BENCHMARKS} />}
               {activeTab === 'agents' && <Agents agents={agents} onSaveAgent={handleSaveAgent} onDeleteAgent={handleDeleteAgent} />}
               {activeTab === 'settings' && <Settings />}
               {activeTab === 'chat' && <Chat models={MOCK_MODELS} servers={servers} agents={agents} onUpdateServer={handleUpdateServer} />}

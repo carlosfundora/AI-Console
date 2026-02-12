@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { AgentConfig } from '../types';
-import { Briefcase, Code, Plus, Save, Trash2, Key, FolderOpen, Bot, FileJson, X } from 'lucide-react';
+import { Briefcase, Code, Plus, Save, Trash2, Key, FolderOpen, Bot, FileJson, X, Globe, Database } from 'lucide-react';
 
 interface AgentsProps {
     agents: AgentConfig[];
@@ -18,6 +18,66 @@ const EMPTY_AGENT: AgentConfig = {
     envVars: [],
     externalPaths: [],
     lastModified: new Date().toISOString().split('T')[0]
+};
+
+const TOOL_TEMPLATES = {
+    search: `[
+  {
+    "type": "function",
+    "function": {
+      "name": "web_search",
+      "description": "Search the internet for real-time information.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "The search keywords"
+          }
+        },
+        "required": ["query"]
+      }
+    }
+  }
+]`,
+    code: `[
+  {
+    "type": "function",
+    "function": {
+      "name": "python_interpreter",
+      "description": "Execute python code to analyze data or solve math problems.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Valid python code snippet"
+          }
+        },
+        "required": ["code"]
+      }
+    }
+  }
+]`,
+    api: `[
+  {
+    "type": "function",
+    "function": {
+      "name": "get_stock_price",
+      "description": "Get the current stock price for a given ticker symbol.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "ticker": {
+            "type": "string",
+            "description": "The stock ticker symbol, e.g. AAPL"
+          }
+        },
+        "required": ["ticker"]
+      }
+    }
+  }
+]`
 };
 
 export const Agents: React.FC<AgentsProps> = ({ agents, onSaveAgent, onDeleteAgent }) => {
@@ -81,6 +141,13 @@ export const Agents: React.FC<AgentsProps> = ({ agents, onSaveAgent, onDeleteAge
     const removePath = (index: number) => {
         const newPaths = currentAgent.externalPaths.filter((_, i) => i !== index);
         setCurrentAgent({ ...currentAgent, externalPaths: newPaths });
+    };
+
+    const loadTemplate = (type: keyof typeof TOOL_TEMPLATES) => {
+        if (currentAgent.toolsSchema && currentAgent.toolsSchema !== '[]' && currentAgent.toolsSchema.length > 5) {
+            if (!confirm('This will overwrite the current tool definitions. Continue?')) return;
+        }
+        setCurrentAgent({ ...currentAgent, toolsSchema: TOOL_TEMPLATES[type] });
     };
 
     return (
@@ -177,9 +244,32 @@ export const Agents: React.FC<AgentsProps> = ({ agents, onSaveAgent, onDeleteAge
 
                             {/* Tools Schema */}
                             <div className="space-y-2">
-                                <label className="text-xs uppercase text-purple-400 font-bold flex items-center gap-2">
-                                    <FileJson size={14} /> Tool Definitions (JSON Schema)
-                                </label>
+                                <div className="flex justify-between items-end mb-2">
+                                    <label className="text-xs uppercase text-purple-400 font-bold flex items-center gap-2">
+                                        <FileJson size={14} /> Tool Definitions (JSON Schema)
+                                    </label>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Examples:</span>
+                                        <button 
+                                            onClick={() => loadTemplate('search')}
+                                            className="text-[10px] bg-nebula-950 border border-nebula-800 hover:border-purple-500 hover:text-white px-2 py-1 rounded text-gray-400 transition-all flex items-center gap-1"
+                                        >
+                                            <Globe size={10} /> Web Search
+                                        </button>
+                                        <button 
+                                            onClick={() => loadTemplate('code')}
+                                            className="text-[10px] bg-nebula-950 border border-nebula-800 hover:border-purple-500 hover:text-white px-2 py-1 rounded text-gray-400 transition-all flex items-center gap-1"
+                                        >
+                                            <Code size={10} /> Python Exec
+                                        </button>
+                                        <button 
+                                            onClick={() => loadTemplate('api')}
+                                            className="text-[10px] bg-nebula-950 border border-nebula-800 hover:border-purple-500 hover:text-white px-2 py-1 rounded text-gray-400 transition-all flex items-center gap-1"
+                                        >
+                                            <Database size={10} /> API Fetch
+                                        </button>
+                                    </div>
+                                </div>
                                 <div className="relative">
                                     <textarea 
                                         value={currentAgent.toolsSchema}

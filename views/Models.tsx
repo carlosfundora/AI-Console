@@ -1,25 +1,35 @@
 
 import React, { useState } from 'react';
-import { Model, ModelVersion, ServerProfile } from '../types';
-import { GitBranch, Box, FileCode, Tag, ExternalLink, Cpu, Terminal, Scale, X, BarChart2, Filter, Check, Server, FileText } from 'lucide-react';
+import { Model, ModelVersion, ServerProfile, BenchmarkResult } from '../types';
+import { GitBranch, Box, FileCode, Tag, ExternalLink, Cpu, Terminal, Scale, X, BarChart2, Filter, Check, Server, FileText, Activity, Plus, RefreshCw, Trash2, Layers, Zap, Merge, Scissors, User } from 'lucide-react';
 
 interface ModelsProps {
   models: Model[];
   servers: ServerProfile[];
+  benchmarks: BenchmarkResult[];
 }
 
-export const Models: React.FC<ModelsProps> = ({ models, servers }) => {
+type ModelCategory = 'All' | 'Base' | 'Fine-Tuned' | 'Distilled' | 'Merged' | 'Custom';
+
+export const Models: React.FC<ModelsProps> = ({ models, servers, benchmarks }) => {
+  // Local state for models allows us to add tags dynamically in the UI
+  const [localModels, setLocalModels] = useState<Model[]>(models);
   const [selectedModel, setSelectedModel] = useState<Model | null>(null);
   const [selectedVersionIds, setSelectedVersionIds] = useState<Set<string>>(new Set());
   const [showComparison, setShowComparison] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [detailTab, setDetailTab] = useState<'overview' | 'versions' | 'docs'>('overview');
+  const [detailTab, setDetailTab] = useState<'overview' | 'versions' | 'docs' | 'benchmarks'>('overview');
+  const [newTag, setNewTag] = useState('');
+
+  // View Category State
+  const [viewCategory, setViewCategory] = useState<ModelCategory>('All');
 
   // Filters
   const [showFilters, setShowFilters] = useState(false);
   const [filterProvider, setFilterProvider] = useState<string>('All');
   const [filterFamily, setFilterFamily] = useState<string>('All');
   const [filterTensor, setFilterTensor] = useState<string>('All');
+  const [filterTag, setFilterTag] = useState<string>('All');
 
   const toggleVersionSelection = (id: string) => {
     const next = new Set(selectedVersionIds);
@@ -36,16 +46,73 @@ export const Models: React.FC<ModelsProps> = ({ models, servers }) => {
     return selectedModel.versions.filter(v => selectedVersionIds.has(v.id));
   };
 
-  // Derived filter options
-  const providers = ['All', ...Array.from(new Set(models.map(m => m.provider)))];
-  const families = ['All', ...Array.from(new Set(models.map(m => m.family)))];
-  const tensors = ['All', ...Array.from(new Set(models.map(m => m.tensorType)))];
+  const handleAddTag = () => {
+      if (!newTag.trim() || !selectedModel) return;
+      const tag = newTag.trim();
+      
+      // Update local models state
+      const updatedModels = localModels.map(m => 
+          m.id === selectedModel.id 
+          ? { ...m, tags: [...m.tags, tag] } 
+          : m
+      );
+      setLocalModels(updatedModels);
+      
+      // Update currently selected model to reflect change immediately
+      setSelectedModel({
+          ...selectedModel,
+          tags: [...selectedModel.tags, tag]
+      });
+      setNewTag('');
+  };
 
-  const filteredModels = models.filter(m => {
+  const removeTag = (tagToRemove: string) => {
+      if (!selectedModel) return;
+      
+      const updatedModels = localModels.map(m => 
+          m.id === selectedModel.id 
+          ? { ...m, tags: m.tags.filter(t => t !== tagToRemove) } 
+          : m
+      );
+      setLocalModels(updatedModels);
+      
+      setSelectedModel({
+          ...selectedModel,
+          tags: selectedModel.tags.filter(t => t !== tagToRemove)
+      });
+  };
+
+  const clearFilters = () => {
+      setSearchQuery('');
+      setFilterProvider('All');
+      setFilterFamily('All');
+      setFilterTensor('All');
+      setFilterTag('All');
+  };
+
+  // Derived filter options from LOCAL models to include new tags
+  const providers = ['All', ...Array.from(new Set(localModels.map(m => m.provider)))];
+  const families = ['All', ...Array.from(new Set(localModels.map(m => m.family)))];
+  const tensors = ['All', ...Array.from(new Set(localModels.map(m => m.tensorType)))];
+  const availableTags = ['All', ...Array.from(new Set(localModels.flatMap(m => m.tags)))];
+
+  const filteredModels = localModels.filter(m => {
+      // 1. Category Filter
+      let categoryMatch = true;
+      if (viewCategory === 'Base') categoryMatch = m.tags.includes('Base');
+      else if (viewCategory === 'Fine-Tuned') categoryMatch = m.tags.some(t => ['Fine-Tuned', 'SFT', 'LoRA'].includes(t));
+      else if (viewCategory === 'Distilled') categoryMatch = m.tags.some(t => ['Distilled', 'Distill'].includes(t));
+      else if (viewCategory === 'Merged') categoryMatch = m.tags.some(t => ['Merged', 'Fusion'].includes(t));
+      else if (viewCategory === 'Custom') categoryMatch = m.tags.includes('Custom');
+      
+      if (!categoryMatch) return false;
+
+      // 2. Standard Filters
       if (searchQuery && !m.name.toLowerCase().includes(searchQuery.toLowerCase())) return false;
       if (filterProvider !== 'All' && m.provider !== filterProvider) return false;
       if (filterFamily !== 'All' && m.family !== filterFamily) return false;
       if (filterTensor !== 'All' && m.tensorType !== filterTensor) return false;
+      if (filterTag !== 'All' && !m.tags.includes(filterTag)) return false;
       return true;
   });
 
@@ -53,19 +120,64 @@ export const Models: React.FC<ModelsProps> = ({ models, servers }) => {
       return servers.filter(s => s.compatibleModels.includes(modelId));
   };
 
+  const getModelBenchmarks = (modelId: string) => {
+      return benchmarks.filter(b => b.modelId === modelId);
+  };
+
+  const getCategoryIcon = (cat: ModelCategory) => {
+      switch(cat) {
+          case 'Base': return <Box size={14} />;
+          case 'Fine-Tuned': return <Zap size={14} />;
+          case 'Distilled': return <Scissors size={14} />;
+          case 'Merged': return <Merge size={14} />;
+          case 'Custom': return <User size={14} />;
+          default: return <Layers size={14} />;
+      }
+  };
+
   return (
-    <div className="space-y-6 h-full flex flex-col relative">
-      <div className="flex flex-col gap-4">
-        <div className="flex justify-between items-center">
+    <div className="h-full flex flex-col relative animate-fade-in">
+      <div className="flex flex-col gap-4 mb-4 shrink-0">
+        <div className="flex items-center gap-3">
             <h2 className="text-2xl font-bold">🤖 Model Registry</h2>
-            <div className="flex gap-2">
-                <div className="relative">
+            <span className="text-xs bg-nebula-900 text-gray-400 px-2 py-1 rounded border border-nebula-800">
+                Showing {filteredModels.length} of {localModels.length}
+            </span>
+            {/* Import HF Button - Subtler */}
+            <button className="text-xs bg-nebula-900 hover:bg-nebula-800 text-purple-400 border border-nebula-700 hover:border-purple-500/50 px-3 py-1 rounded flex items-center gap-1 transition-all shadow-sm">
+                <Plus size={12} /> Import HF
+            </button>
+        </div>
+
+        {/* Combined Row: Tabs + Search */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            {/* View Category Tabs */}
+            <div className="flex gap-1 bg-nebula-900 p-1 rounded-lg border border-nebula-700 overflow-x-auto max-w-full">
+                {(['All', 'Base', 'Fine-Tuned', 'Distilled', 'Merged', 'Custom'] as ModelCategory[]).map(cat => (
+                    <button
+                        key={cat}
+                        onClick={() => setViewCategory(cat)}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all whitespace-nowrap ${
+                            viewCategory === cat 
+                            ? 'bg-purple-600 text-white shadow-md' 
+                            : 'text-gray-400 hover:text-white hover:bg-nebula-800'
+                        }`}
+                    >
+                        {getCategoryIcon(cat)}
+                        {cat}
+                    </button>
+                ))}
+            </div>
+            
+            {/* Search & Filter Bar */}
+            <div className="flex gap-2 w-full md:w-auto">
+                <div className="relative flex-1 md:w-64">
                     <input 
                         type="text" 
-                        placeholder="Search models..." 
+                        placeholder={`Search ${viewCategory === 'All' ? '' : viewCategory} models...`}
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="bg-nebula-900 border border-nebula-700 rounded-lg pl-4 pr-10 py-2 text-sm outline-none text-white focus:border-purple-500 min-w-[300px]" 
+                        className="w-full bg-nebula-900 border border-nebula-700 rounded-lg pl-4 pr-10 py-2 text-sm outline-none text-white focus:border-purple-500" 
                     />
                     {searchQuery && (
                         <button onClick={() => setSearchQuery('')} className="absolute right-3 top-2.5 text-gray-500 hover:text-white">
@@ -75,62 +187,80 @@ export const Models: React.FC<ModelsProps> = ({ models, servers }) => {
                 </div>
                 <button 
                     onClick={() => setShowFilters(!showFilters)}
-                    className={`px-3 py-2 rounded-lg text-sm border transition-colors flex items-center gap-2 ${showFilters ? 'bg-purple-600 border-purple-500 text-white' : 'bg-nebula-900 border-nebula-700 text-gray-400 hover:text-white'}`}
+                    className={`px-3 py-2 rounded-lg text-sm border transition-colors flex items-center gap-2 ${showFilters ? 'bg-purple-900/30 border-purple-500 text-white' : 'bg-nebula-900 border-nebula-700 text-gray-400 hover:text-white'}`}
                 >
                     <Filter size={16} /> Filters
-                </button>
-                <button className="bg-purple-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-purple-500 flex items-center gap-2">
-                    <span>+</span> Import HF
                 </button>
             </div>
         </div>
         
         {/* Filter Panel */}
         {showFilters && (
-            <div className="bg-nebula-900 border border-nebula-700 rounded-xl p-4 grid grid-cols-3 gap-4 animate-fade-in">
+            <div className="bg-nebula-900 border border-nebula-700 rounded-xl p-4 grid grid-cols-4 gap-4 animate-fade-in relative">
                 <div>
-                    <label className="text-xs text-gray-500 uppercase font-bold block mb-1">Provider</label>
+                    <label className="text-[10px] text-gray-500 uppercase font-bold block mb-1">Provider</label>
                     <select 
                         value={filterProvider}
                         onChange={(e) => setFilterProvider(e.target.value)}
-                        className="w-full bg-nebula-950 border border-nebula-800 rounded p-2 text-sm text-gray-300 outline-none focus:border-purple-500"
+                        className="w-full bg-nebula-950 border border-nebula-800 rounded p-2 text-sm text-gray-300 outline-none focus:border-purple-500 cursor-pointer"
                     >
                         {providers.map(p => <option key={p} value={p}>{p}</option>)}
                     </select>
                 </div>
                 <div>
-                    <label className="text-xs text-gray-500 uppercase font-bold block mb-1">Family</label>
+                    <label className="text-[10px] text-gray-500 uppercase font-bold block mb-1">Family</label>
                     <select 
                         value={filterFamily}
                         onChange={(e) => setFilterFamily(e.target.value)}
-                        className="w-full bg-nebula-950 border border-nebula-800 rounded p-2 text-sm text-gray-300 outline-none focus:border-purple-500"
+                        className="w-full bg-nebula-950 border border-nebula-800 rounded p-2 text-sm text-gray-300 outline-none focus:border-purple-500 cursor-pointer"
                     >
                         {families.map(f => <option key={f} value={f}>{f}</option>)}
                     </select>
                 </div>
                 <div>
-                    <label className="text-xs text-gray-500 uppercase font-bold block mb-1">Tensor Type</label>
+                    <label className="text-[10px] text-gray-500 uppercase font-bold block mb-1">Tensor Type</label>
                     <select 
                         value={filterTensor}
                         onChange={(e) => setFilterTensor(e.target.value)}
-                        className="w-full bg-nebula-950 border border-nebula-800 rounded p-2 text-sm text-gray-300 outline-none focus:border-purple-500"
+                        className="w-full bg-nebula-950 border border-nebula-800 rounded p-2 text-sm text-gray-300 outline-none focus:border-purple-500 cursor-pointer"
                     >
                         {tensors.map(t => <option key={t} value={t}>{t}</option>)}
                     </select>
                 </div>
+                <div>
+                    <label className="text-[10px] text-gray-500 uppercase font-bold block mb-1">Tags</label>
+                    <select 
+                        value={filterTag}
+                        onChange={(e) => setFilterTag(e.target.value)}
+                        className="w-full bg-nebula-950 border border-nebula-800 rounded p-2 text-sm text-gray-300 outline-none focus:border-purple-500 cursor-pointer"
+                    >
+                        {availableTags.map(t => <option key={t} value={t}>{t}</option>)}
+                    </select>
+                </div>
+                
+                {/* Clear Button */}
+                {(filterProvider !== 'All' || filterFamily !== 'All' || filterTensor !== 'All' || filterTag !== 'All' || searchQuery) && (
+                    <button 
+                        onClick={clearFilters}
+                        className="absolute -top-3 -right-3 bg-nebula-800 text-gray-400 hover:text-white p-1.5 rounded-full border border-nebula-700 shadow-lg"
+                        title="Clear all filters"
+                    >
+                        <RefreshCw size={12} />
+                    </button>
+                )}
             </div>
         )}
       </div>
 
-      <div className="flex gap-6 flex-1 min-h-0">
+      <div className="flex gap-6 flex-1 min-h-0 overflow-hidden">
         {/* Model List/Grid - Compact Mode */}
-        <div className={`flex-1 overflow-y-auto ${selectedModel ? 'hidden lg:block lg:w-1/2' : 'w-full'}`}>
-             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+        <div className={`flex-1 overflow-y-auto pr-2 ${selectedModel ? 'hidden lg:block lg:w-1/2' : 'w-full'}`}>
+             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 pb-6">
                 {filteredModels.map(model => (
                     <div 
                         key={model.id} 
                         onClick={() => { setSelectedModel(model); setSelectedVersionIds(new Set()); setShowComparison(false); setDetailTab('overview'); }}
-                        className={`bg-nebula-900 border ${selectedModel?.id === model.id ? 'border-purple-500' : 'border-nebula-700'} rounded-xl p-3 hover:border-purple-500/50 transition-all cursor-pointer group relative overflow-hidden`}
+                        className={`bg-nebula-900 border ${selectedModel?.id === model.id ? 'border-purple-500 bg-purple-900/10' : 'border-nebula-700'} rounded-xl p-3 hover:border-purple-500/50 transition-all cursor-pointer group relative overflow-hidden`}
                     >
                         <div className="flex justify-between items-start mb-2">
                             <span className="text-[10px] bg-nebula-800 text-purple-300 px-1.5 py-0.5 rounded border border-nebula-700">{model.provider}</span>
@@ -150,11 +280,12 @@ export const Models: React.FC<ModelsProps> = ({ models, servers }) => {
                         <p className="text-[10px] text-gray-400 mb-2 line-clamp-2 leading-relaxed">{model.description}</p>
                         
                         <div className="flex flex-wrap gap-1 mb-2">
-                            {model.tags.slice(0, 3).map(tag => (
+                            {model.tags.slice(0, 4).map(tag => (
                                 <span key={tag} className="text-[9px] px-1.5 py-0.5 rounded-full bg-nebula-950 border border-nebula-800 text-gray-500">
                                     {tag}
                                 </span>
                             ))}
+                            {model.tags.length > 4 && <span className="text-[9px] text-gray-600">+{model.tags.length - 4}</span>}
                         </div>
 
                         <div className="flex items-center gap-3 text-[10px] text-gray-600 pt-2 border-t border-nebula-800/50">
@@ -190,22 +321,28 @@ export const Models: React.FC<ModelsProps> = ({ models, servers }) => {
                         <button onClick={() => setSelectedModel(null)} className="lg:hidden text-gray-400 hover:text-white">Close</button>
                     </div>
 
-                    <div className="flex gap-2 border-b border-nebula-800">
+                    <div className="flex gap-2 border-b border-nebula-800 overflow-x-auto">
                         <button 
                             onClick={() => setDetailTab('overview')}
-                            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${detailTab === 'overview' ? 'border-purple-500 text-white' : 'border-transparent text-gray-500 hover:text-gray-300'}`}
+                            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${detailTab === 'overview' ? 'border-purple-500 text-white' : 'border-transparent text-gray-500 hover:text-gray-300'}`}
                         >
                             Overview
                         </button>
                         <button 
                             onClick={() => setDetailTab('versions')}
-                            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${detailTab === 'versions' ? 'border-purple-500 text-white' : 'border-transparent text-gray-500 hover:text-gray-300'}`}
+                            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${detailTab === 'versions' ? 'border-purple-500 text-white' : 'border-transparent text-gray-500 hover:text-gray-300'}`}
                         >
                             Versions <span className="text-[10px] bg-nebula-800 px-1.5 rounded-full ml-1">{selectedModel.versions.length}</span>
                         </button>
                         <button 
+                            onClick={() => setDetailTab('benchmarks')}
+                            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${detailTab === 'benchmarks' ? 'border-purple-500 text-white' : 'border-transparent text-gray-500 hover:text-gray-300'}`}
+                        >
+                            Benchmarks
+                        </button>
+                        <button 
                             onClick={() => setDetailTab('docs')}
-                            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${detailTab === 'docs' ? 'border-purple-500 text-white' : 'border-transparent text-gray-500 hover:text-gray-300'}`}
+                            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${detailTab === 'docs' ? 'border-purple-500 text-white' : 'border-transparent text-gray-500 hover:text-gray-300'}`}
                         >
                             Documentation
                         </button>
@@ -233,6 +370,30 @@ export const Models: React.FC<ModelsProps> = ({ models, servers }) => {
                             <div>
                                 <h4 className="text-sm font-bold text-gray-400 uppercase mb-2">Description</h4>
                                 <p className="text-gray-300 text-sm leading-relaxed bg-nebula-950/30 p-4 rounded border border-nebula-800/50">{selectedModel.description}</p>
+                            </div>
+
+                            {/* Tag Management */}
+                            <div>
+                                <h4 className="text-sm font-bold text-gray-400 uppercase mb-2 flex items-center gap-2"><Tag size={12}/> Custom Tags</h4>
+                                <div className="flex flex-wrap gap-2 items-center bg-nebula-950 border border-nebula-800 p-3 rounded-lg">
+                                    {selectedModel.tags.map(tag => (
+                                        <span key={tag} className="text-xs px-2 py-1 rounded bg-nebula-800 border border-nebula-700 text-gray-300 flex items-center gap-1 group">
+                                            {tag}
+                                            <button onClick={() => removeTag(tag)} className="text-gray-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"><X size={10} /></button>
+                                        </span>
+                                    ))}
+                                    <div className="flex items-center gap-1 bg-nebula-900 border border-nebula-800 rounded px-2 py-1 focus-within:border-purple-500 transition-colors">
+                                        <Plus size={12} className="text-gray-500" />
+                                        <input 
+                                            type="text" 
+                                            value={newTag}
+                                            onChange={(e) => setNewTag(e.target.value)}
+                                            onKeyDown={(e) => e.key === 'Enter' && handleAddTag()}
+                                            placeholder="Add tag..." 
+                                            className="bg-transparent border-none outline-none text-xs text-white w-20"
+                                        />
+                                    </div>
+                                </div>
                             </div>
                             
                             <div>
@@ -271,6 +432,52 @@ export const Models: React.FC<ModelsProps> = ({ models, servers }) => {
                                     </div>
                                 </div>
                             </div>
+                        </div>
+                    )}
+
+                    {detailTab === 'benchmarks' && (
+                        <div className="space-y-4 animate-fade-in">
+                            <div className="flex justify-between items-center mb-2">
+                                <h3 className="font-semibold text-sm flex items-center gap-2 text-gray-400">
+                                    <Activity size={16} />
+                                    Performance History
+                                </h3>
+                            </div>
+                            
+                            {getModelBenchmarks(selectedModel.id).length > 0 ? (
+                                <div className="bg-nebula-950 border border-nebula-800 rounded-lg overflow-hidden">
+                                    <table className="w-full text-xs">
+                                        <thead className="bg-nebula-900 text-gray-500 font-bold uppercase">
+                                            <tr>
+                                                <th className="px-4 py-3 text-left">Date</th>
+                                                <th className="px-4 py-3 text-left">Version</th>
+                                                <th className="px-4 py-3 text-left">Dataset</th>
+                                                <th className="px-4 py-3 text-left">Metric</th>
+                                                <th className="px-4 py-3 text-right">Score</th>
+                                                <th className="px-4 py-3 text-right">Latency</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-nebula-800 text-gray-300">
+                                            {getModelBenchmarks(selectedModel.id).map(bench => (
+                                                <tr key={bench.id} className="hover:bg-nebula-900/50 transition-colors">
+                                                    <td className="px-4 py-3 font-mono text-gray-500">{bench.date}</td>
+                                                    <td className="px-4 py-3">{bench.versionId}</td>
+                                                    <td className="px-4 py-3">{bench.dataset}</td>
+                                                    <td className="px-4 py-3 text-purple-300">{bench.metric}</td>
+                                                    <td className="px-4 py-3 text-right font-bold text-green-400">{bench.score}</td>
+                                                    <td className="px-4 py-3 text-right font-mono text-blue-300">{bench.latency}ms</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            ) : (
+                                <div className="flex flex-col items-center justify-center p-12 border-2 border-dashed border-nebula-800 rounded-lg text-gray-600">
+                                    <Activity size={32} className="mb-2 opacity-50" />
+                                    <p>No benchmark results found for this model.</p>
+                                    <button className="mt-4 text-purple-400 text-xs font-bold hover:text-purple-300">RUN BENCHMARK</button>
+                                </div>
+                            )}
                         </div>
                     )}
 

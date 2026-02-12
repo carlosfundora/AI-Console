@@ -1,8 +1,8 @@
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend, CartesianGrid, PieChart, Pie, Cell } from 'recharts';
 import { BenchmarkResult, Model, AdvancedBenchmarkConfig, BenchmarkStep, BenchmarkStepType, MockDataSource, ServerProfile } from '../types';
-import { Play, Settings2, MessageSquare, Database, Binary, FileText, Wrench, Search, ChevronDown, ChevronRight, X, ArrowRight, Loader2, File, Code, Table, Plus, Trash2, Expand, Clock, Info, Layers, GripVertical, Save, FolderOpen, Flame, Box, Server, Edit2, GitFork, ScanSearch, Filter, Tag, ListChecks } from 'lucide-react';
+import { Play, Settings2, MessageSquare, Database, Binary, FileText, Wrench, Search, ChevronDown, ChevronRight, X, ArrowRight, Loader2, File, Code, Table, Plus, Trash2, Expand, Clock, Info, Layers, GripVertical, Save, FolderOpen, Flame, Box, Server, Edit2, GitFork, ScanSearch, Filter, Tag, ListChecks, CheckCircle2, Zap } from 'lucide-react';
 
 interface BenchmarksProps {
   results: BenchmarkResult[];
@@ -56,6 +56,8 @@ const INITIAL_MOCK_DATA: MockDataSource[] = [
     { id: 'm4', name: 'Customer_Support_Q4.sql', type: 'SQL', size: '450 MB', date: '2026-01-18', path: '/data/sql/cust_q4.db' },
 ];
 
+const COLORS = ['#8b5cf6', '#10b981', '#3b82f6', '#f59e0b', '#ec4899', '#6366f1', '#14b8a6', '#f43f5e'];
+
 export const Benchmarks: React.FC<BenchmarksProps> = ({ results, models, servers }) => {
   const [activeView, setActiveView] = useState<'matrix' | 'trends' | 'config' | 'data'>('matrix');
   const [savedConfigs, setSavedConfigs] = useState<AdvancedBenchmarkConfig[]>(MOCK_SAVED_CONFIGS);
@@ -70,10 +72,57 @@ export const Benchmarks: React.FC<BenchmarksProps> = ({ results, models, servers
   const [expandedConfigId, setExpandedConfigId] = useState<string | null>(null);
   const [draggingTag, setDraggingTag] = useState<BenchmarkStepType | null>(null);
 
-  // Prepare Data for Charts
-  const trendData = results
-    .filter(r => r.tokensPerSecond || r.latency)
-    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  // Trend Filters
+  const [trendModelFilter, setTrendModelFilter] = useState<string[]>([]); 
+  const [trendDatasetFilter, setTrendDatasetFilter] = useState<string>('All');
+
+  const availableModels = useMemo(() => Array.from(new Set(results.map(r => r.modelId))), [results]);
+  const availableDatasets = useMemo(() => Array.from(new Set(results.map(r => r.dataset))), [results]);
+
+  // Initializing filters with all models if empty
+  useMemo(() => {
+      if (trendModelFilter.length === 0 && availableModels.length > 0) {
+          setTrendModelFilter(availableModels);
+      }
+  }, [availableModels]);
+
+  const toggleModelFilter = (modelId: string) => {
+      if (trendModelFilter.includes(modelId)) {
+          setTrendModelFilter(trendModelFilter.filter(m => m !== modelId));
+      } else {
+          setTrendModelFilter([...trendModelFilter, modelId]);
+      }
+  };
+
+  const processedTrendData = useMemo(() => {
+    // 1. Filter raw results
+    const filtered = results.filter(r => {
+        const modelMatch = trendModelFilter.length === 0 || trendModelFilter.includes(r.modelId);
+        const datasetMatch = trendDatasetFilter === 'All' || r.dataset === trendDatasetFilter;
+        return modelMatch && datasetMatch;
+    });
+
+    // 2. Group by Date for Recharts (X-Axis)
+    const dataByDate: Record<string, any> = {};
+    
+    // Sort chronologically first
+    const sorted = [...filtered].sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+    sorted.forEach(r => {
+        if (!dataByDate[r.date]) {
+            dataByDate[r.date] = { date: r.date };
+        }
+        // We use modelId as the key for the lines
+        // For Throughput
+        if (r.tokensPerSecond) dataByDate[r.date][`${r.modelId}_tps`] = r.tokensPerSecond;
+        // For Latency
+        if (r.latency) dataByDate[r.date][`${r.modelId}_lat`] = r.latency;
+        // For Score
+        if (r.score) dataByDate[r.date][`${r.modelId}_score`] = r.score;
+    });
+
+    return Object.values(dataByDate);
+  }, [results, trendModelFilter, trendDatasetFilter]);
 
   // --- CRUD Operations for Tests ---
 
@@ -290,12 +339,47 @@ export const Benchmarks: React.FC<BenchmarksProps> = ({ results, models, servers
               </div>
           );
       }
+
+      if (step.type === 'Classification') {
+          return (
+              <div className="space-y-4 pt-2">
+                  <div className="bg-nebula-900/50 p-3 rounded border border-nebula-800 space-y-3">
+                      <div>
+                          <label className="text-[10px] uppercase font-bold text-indigo-400 block mb-1">Classifier Model</label>
+                          <select 
+                            value={step.modelId || ''} 
+                            onChange={(e) => updateStepInConfig(configId, step.id, { modelId: e.target.value })}
+                            className="w-full bg-nebula-950 border border-nebula-700 rounded p-1.5 text-xs text-gray-300 focus:border-purple-500 outline-none"
+                          >
+                              <option value="">Select Model...</option>
+                              {models.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
+                          </select>
+                      </div>
+                      
+                      <div>
+                          <label className="text-[10px] uppercase font-bold text-gray-500 block mb-1">Evaluation Metric</label>
+                          <select 
+                            value={step.config.metric || 'Accuracy'} 
+                            onChange={(e) => updateConfig({ metric: e.target.value })}
+                            className="w-full bg-nebula-950 border border-nebula-700 rounded p-1.5 text-xs text-gray-300 focus:border-purple-500 outline-none"
+                          >
+                              <option value="Accuracy">Accuracy (Exact Match)</option>
+                              <option value="F1">F1 Score (Weighted)</option>
+                              <option value="Precision">Precision</option>
+                              <option value="Recall">Recall</option>
+                          </select>
+                      </div>
+                  </div>
+              </div>
+          );
+      }
+
       return null;
   };
 
   const renderDataView = () => (
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-fade-in h-full overflow-hidden pb-4">
-          <div className="bg-nebula-900 border border-nebula-700 rounded p-4 flex flex-col">
+          <div className="bg-nebula-900 border border-nebula-700 rounded p-4 flex flex-col h-full overflow-hidden">
               <div className="flex justify-between items-center mb-4 border-b border-nebula-800 pb-2">
                   <h3 className="font-bold text-gray-200 flex items-center gap-2"><FileText size={16} className="text-blue-400" /> Documents (PDF/HTML)</h3>
                   <button onClick={() => addMockData('PDF')} className="p-1 hover:bg-nebula-800 rounded text-gray-400 hover:text-white"><Plus size={16}/></button>
@@ -313,7 +397,7 @@ export const Benchmarks: React.FC<BenchmarksProps> = ({ results, models, servers
               </div>
           </div>
 
-          <div className="bg-nebula-900 border border-nebula-700 rounded p-4 flex flex-col">
+          <div className="bg-nebula-900 border border-nebula-700 rounded p-4 flex flex-col h-full overflow-hidden">
               <div className="flex justify-between items-center mb-4 border-b border-nebula-800 pb-2">
                   <h3 className="font-bold text-gray-200 flex items-center gap-2"><Code size={16} className="text-green-400" /> Prompts (Txt/Json)</h3>
                   <button onClick={() => addMockData('Prompt')} className="p-1 hover:bg-nebula-800 rounded text-gray-400 hover:text-white"><Plus size={16}/></button>
@@ -331,7 +415,7 @@ export const Benchmarks: React.FC<BenchmarksProps> = ({ results, models, servers
               </div>
           </div>
 
-          <div className="bg-nebula-900 border border-nebula-700 rounded p-4 flex flex-col">
+          <div className="bg-nebula-900 border border-nebula-700 rounded p-4 flex flex-col h-full overflow-hidden">
               <div className="flex justify-between items-center mb-4 border-b border-nebula-800 pb-2">
                   <h3 className="font-bold text-gray-200 flex items-center gap-2"><Table size={16} className="text-orange-400" /> Structured (SQL/CSV)</h3>
                   <button onClick={() => addMockData('SQL')} className="p-1 hover:bg-nebula-800 rounded text-gray-400 hover:text-white"><Plus size={16}/></button>
@@ -352,9 +436,9 @@ export const Benchmarks: React.FC<BenchmarksProps> = ({ results, models, servers
   );
 
   return (
-    <div className="space-y-6 h-full flex flex-col relative">
+    <div className="space-y-6 h-full flex flex-col relative overflow-hidden">
       {/* Header Controls */}
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-center shrink-0">
         <h2 className="text-2xl font-bold">📊 Benchmarks & Analytics</h2>
         <div className="flex bg-nebula-900 rounded p-1 border border-nebula-700">
              <button 
@@ -515,30 +599,121 @@ export const Benchmarks: React.FC<BenchmarksProps> = ({ results, models, servers
       {activeView === 'data' && renderDataView()}
 
       {activeView === 'trends' && (
-         <div className="flex-1 overflow-y-auto animate-fade-in">
+         <div className="flex-1 overflow-y-auto animate-fade-in flex flex-col gap-6">
+             
+             {/* Trend Controls */}
+             <div className="bg-nebula-900 border border-nebula-700 rounded p-4 flex flex-wrap gap-4 items-center">
+                 <div className="flex items-center gap-2 border-r border-nebula-800 pr-4">
+                     <Filter size={16} className="text-purple-400" />
+                     <span className="text-sm font-bold text-gray-300">Filters</span>
+                 </div>
+                 
+                 <div className="flex items-center gap-2">
+                     <label className="text-xs text-gray-500 uppercase font-bold">Test/Dataset</label>
+                     <select 
+                        value={trendDatasetFilter}
+                        onChange={(e) => setTrendDatasetFilter(e.target.value)}
+                        className="bg-nebula-950 border border-nebula-800 rounded px-2 py-1 text-sm text-gray-200 outline-none focus:border-purple-500"
+                     >
+                         <option value="All">All Datasets</option>
+                         {availableDatasets.map(ds => <option key={ds} value={ds}>{ds}</option>)}
+                     </select>
+                 </div>
+
+                 <div className="flex-1 flex flex-wrap gap-2 items-center pl-4 border-l border-nebula-800">
+                     <span className="text-xs text-gray-500 uppercase font-bold mr-2">Models:</span>
+                     {availableModels.map((m, i) => (
+                         <button 
+                            key={m}
+                            onClick={() => toggleModelFilter(m)}
+                            className={`px-2 py-1 rounded text-xs border flex items-center gap-2 transition-all ${
+                                trendModelFilter.includes(m) 
+                                ? 'bg-purple-900/30 border-purple-500 text-purple-200' 
+                                : 'bg-nebula-950 border-nebula-800 text-gray-500 hover:text-gray-300'
+                            }`}
+                         >
+                            <div className="w-2 h-2 rounded-full" style={{backgroundColor: COLORS[i % COLORS.length]}}></div>
+                            {m}
+                            {trendModelFilter.includes(m) && <CheckCircle2 size={10} />}
+                         </button>
+                     ))}
+                 </div>
+             </div>
+
              <div className="grid grid-cols-1 gap-6">
+                {/* Throughput Chart */}
                 <div className="bg-nebula-900 border border-nebula-700 rounded p-6 h-96">
-                    <h3 className="text-lg font-bold mb-4">Throughput Trends</h3>
+                    <h3 className="text-lg font-bold mb-4 flex items-center gap-2"><Zap size={18} className="text-yellow-500"/> Throughput Evolution (Tokens/Sec)</h3>
                     <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={trendData}>
+                        <LineChart data={processedTrendData}>
                             <CartesianGrid strokeDasharray="3 3" stroke="#272730" />
                             <XAxis dataKey="date" stroke="#6b7280" fontSize={12} />
                             <YAxis stroke="#6b7280" fontSize={12} />
                             <Tooltip contentStyle={{ backgroundColor: '#121217', borderColor: '#272730' }} />
                             <Legend />
-                            <Line type="monotone" dataKey="tokensPerSecond" stroke="#8b5cf6" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} name="Tokens/Sec" />
+                            {trendModelFilter.map((modelId, i) => (
+                                <Line 
+                                    key={modelId}
+                                    type="monotone" 
+                                    dataKey={`${modelId}_tps`} 
+                                    stroke={COLORS[i % COLORS.length]} 
+                                    strokeWidth={2} 
+                                    dot={{ r: 4 }} 
+                                    activeDot={{ r: 6 }} 
+                                    name={modelId}
+                                    connectNulls
+                                />
+                            ))}
                         </LineChart>
                     </ResponsiveContainer>
                 </div>
+
+                 {/* Latency Chart */}
                  <div className="bg-nebula-900 border border-nebula-700 rounded p-6 h-96">
-                    <h3 className="text-lg font-bold mb-4">Latency by Model</h3>
+                    <h3 className="text-lg font-bold mb-4 flex items-center gap-2"><Clock size={18} className="text-blue-500"/> Latency Analysis (ms)</h3>
                      <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={trendData}>
+                        <LineChart data={processedTrendData}>
                             <CartesianGrid strokeDasharray="3 3" stroke="#272730" />
-                            <XAxis dataKey="modelId" stroke="#6b7280" fontSize={10} angle={-15} textAnchor="end" height={60}/>
+                            <XAxis dataKey="date" stroke="#6b7280" fontSize={12} />
                             <YAxis stroke="#6b7280" fontSize={12} />
                             <Tooltip contentStyle={{ backgroundColor: '#121217', borderColor: '#272730' }} />
-                            <Bar dataKey="latency" fill="#3b82f6" radius={[4, 4, 0, 0]} name="Latency (ms)" />
+                            <Legend />
+                            {trendModelFilter.map((modelId, i) => (
+                                <Line 
+                                    key={modelId}
+                                    type="monotone" 
+                                    dataKey={`${modelId}_lat`} 
+                                    stroke={COLORS[i % COLORS.length]} 
+                                    strokeWidth={2} 
+                                    dot={{ r: 4 }} 
+                                    activeDot={{ r: 6 }} 
+                                    name={modelId}
+                                    connectNulls
+                                />
+                            ))}
+                        </LineChart>
+                    </ResponsiveContainer>
+                 </div>
+
+                 {/* Score Chart */}
+                 <div className="bg-nebula-900 border border-nebula-700 rounded p-6 h-96">
+                    <h3 className="text-lg font-bold mb-4 flex items-center gap-2"><ScanSearch size={18} className="text-green-500"/> Quality/Score Tracking</h3>
+                     <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={processedTrendData}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#272730" />
+                            <XAxis dataKey="date" stroke="#6b7280" fontSize={12} />
+                            <YAxis stroke="#6b7280" fontSize={12} />
+                            <Tooltip contentStyle={{ backgroundColor: '#121217', borderColor: '#272730' }} />
+                            <Legend />
+                             {trendModelFilter.map((modelId, i) => (
+                                <Bar 
+                                    key={modelId}
+                                    dataKey={`${modelId}_score`} 
+                                    fill={COLORS[i % COLORS.length]} 
+                                    radius={[4, 4, 0, 0]} 
+                                    name={modelId}
+                                />
+                            ))}
                         </BarChart>
                     </ResponsiveContainer>
                  </div>
@@ -549,10 +724,10 @@ export const Benchmarks: React.FC<BenchmarksProps> = ({ results, models, servers
       {activeView === 'config' && (
           <div className="flex flex-1 min-h-0 gap-6 animate-fade-in overflow-hidden">
               {/* Left Sidebar: Tag Palette */}
-              <div className="w-64 flex flex-col gap-4">
-                  <div className="p-4 bg-nebula-900 border border-nebula-700 rounded">
+              <div className="w-64 flex flex-col gap-4 shrink-0">
+                  <div className="p-4 bg-nebula-900 border border-nebula-700 rounded h-full flex flex-col">
                       <h3 className="text-sm font-bold text-gray-300 mb-4 uppercase tracking-wider">Components</h3>
-                      <div className="space-y-2 max-h-[calc(100vh-350px)] overflow-y-auto pr-2">
+                      <div className="space-y-2 flex-1 overflow-y-auto pr-2">
                           {(['Custom', 'Retrieval', 'Embedding', 'Tool Calling', 'Generation', 'ColBERT', 'Extraction', 'Routing', 'Classification'] as BenchmarkStepType[]).map(tag => (
                               <div
                                   key={tag}
@@ -573,7 +748,7 @@ export const Benchmarks: React.FC<BenchmarksProps> = ({ results, models, servers
                   {/* Create New Button in Sidebar */}
                   <button 
                       onClick={handleNewConfig}
-                      className="p-4 bg-purple-600 hover:bg-purple-500 text-white rounded font-bold flex items-center justify-center gap-2 shadow-lg transition-all"
+                      className="p-4 bg-purple-600 hover:bg-purple-500 text-white rounded font-bold flex items-center justify-center gap-2 shadow-lg transition-all shrink-0"
                   >
                       <Plus size={18} /> Create New Test
                   </button>

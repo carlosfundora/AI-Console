@@ -1,6 +1,8 @@
+
 import React, { useState } from 'react';
 import { Model, LabArtifact } from '../types';
-import { FlaskConical, Dna, Merge, Scissors, Zap, Box, Save, Plus, Trash2, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
+import { FlaskConical, Dna, Merge, Scissors, Zap, Box, Save, Plus, Trash2, CheckCircle, Loader2, BarChart2, TrendingDown, Activity, Settings } from 'lucide-react';
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 
 interface LaboratoryProps {
   models: Model[];
@@ -16,6 +18,13 @@ const MOCK_INVENTORY: LabArtifact[] = [
     { id: 'a3', type: 'MedusaHead', name: 'Medusa-Draft-v1', sourceModel: 'Mistral-7b', size: '450MB', created: '2023-10-27' },
 ];
 
+const MOCK_LOSS_DATA = [
+    { step: 10, loss: 2.8 }, { step: 20, loss: 2.5 }, { step: 30, loss: 2.3 }, 
+    { step: 40, loss: 2.1 }, { step: 50, loss: 1.9 }, { step: 60, loss: 1.85 },
+    { step: 70, loss: 1.8 }, { step: 80, loss: 1.75 }, { step: 90, loss: 1.72 },
+    { step: 100, loss: 1.68 }, { step: 110, loss: 1.65 }, { step: 120, loss: 1.62 }
+];
+
 export const Laboratory: React.FC<LaboratoryProps> = ({ models }) => {
   const [mode, setMode] = useState<LabMode>('merge');
   const [mergeMethod, setMergeMethod] = useState<MergeMethod>('arcee_fusion');
@@ -24,6 +33,14 @@ export const Laboratory: React.FC<LaboratoryProps> = ({ models }) => {
       { id: 1, modelId: '', weight: 1.0 },
       { id: 2, modelId: '', weight: 1.0 }
   ]);
+  
+  // MergeKit Config
+  const [mergeConfig, setMergeConfig] = useState({
+      normalize: true,
+      int8_mask: false,
+      density: 0.5,
+      epsilon: 0.01
+  });
 
   // Medusa State
   const [medusaConfig, setMedusaConfig] = useState({
@@ -114,13 +131,13 @@ export const Laboratory: React.FC<LaboratoryProps> = ({ models }) => {
             </div>
 
             {/* Workspace */}
-            <div className="flex-1 bg-nebula-900 border border-nebula-700 rounded-xl p-6 relative overflow-hidden backdrop-blur-sm">
+            <div className="flex-1 bg-nebula-900 border border-nebula-700 rounded-xl p-6 relative overflow-hidden backdrop-blur-sm flex flex-col">
                 <div className="absolute top-0 right-0 p-8 opacity-5 pointer-events-none">
                     <Zap size={200} />
                 </div>
 
                 {mode === 'merge' && (
-                    <div className="space-y-8 relative z-10 animate-fade-in">
+                    <div className="space-y-8 relative z-10 animate-fade-in overflow-y-auto flex-1 pr-2">
                         <div className="grid grid-cols-2 gap-8">
                             <div className="space-y-4">
                                 <label className="text-purple-400 text-sm font-bold uppercase block mb-2">Synthesis Method</label>
@@ -138,6 +155,52 @@ export const Laboratory: React.FC<LaboratoryProps> = ({ models }) => {
                                             <p className="text-xs mt-1 opacity-70">{getMergeMethodInfo(m).desc}</p>
                                         </button>
                                     ))}
+                                </div>
+
+                                {/* Advanced Merge Config */}
+                                <div className="mt-6 p-4 bg-nebula-950/50 border border-nebula-800 rounded-xl">
+                                    <h4 className="text-xs text-gray-500 font-bold uppercase mb-4 flex items-center gap-2">
+                                        <Settings size={12} /> Algorithm Parameters
+                                    </h4>
+                                    
+                                    <div className="space-y-4">
+                                        {(mergeMethod === 'dare_linear' || mergeMethod === 'dare_ties') && (
+                                            <div>
+                                                <div className="flex justify-between text-xs text-gray-400 mb-1">
+                                                    <span>Density</span>
+                                                    <span>{mergeConfig.density}</span>
+                                                </div>
+                                                <input 
+                                                    type="range" min="0" max="1" step="0.05"
+                                                    value={mergeConfig.density}
+                                                    onChange={(e) => setMergeConfig({...mergeConfig, density: parseFloat(e.target.value)})}
+                                                    className="w-full accent-purple-500"
+                                                />
+                                            </div>
+                                        )}
+                                        
+                                        <div className="flex items-center gap-2">
+                                            <input 
+                                                type="checkbox" 
+                                                id="normalize"
+                                                checked={mergeConfig.normalize}
+                                                onChange={(e) => setMergeConfig({...mergeConfig, normalize: e.target.checked})}
+                                                className="accent-purple-500"
+                                            />
+                                            <label htmlFor="normalize" className="text-sm text-gray-300">Normalize Weights</label>
+                                        </div>
+
+                                        <div className="flex items-center gap-2">
+                                            <input 
+                                                type="checkbox" 
+                                                id="int8_mask"
+                                                checked={mergeConfig.int8_mask}
+                                                onChange={(e) => setMergeConfig({...mergeConfig, int8_mask: e.target.checked})}
+                                                className="accent-purple-500"
+                                            />
+                                            <label htmlFor="int8_mask" className="text-sm text-gray-300">Int8 Mask (Memory Efficient)</label>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 
@@ -203,7 +266,7 @@ export const Laboratory: React.FC<LaboratoryProps> = ({ models }) => {
                 )}
 
                 {mode === 'extract' && (
-                     <div className="space-y-8 relative z-10 animate-fade-in">
+                     <div className="space-y-8 relative z-10 animate-fade-in overflow-y-auto flex-1 pr-2">
                         <div className="grid grid-cols-2 gap-8">
                              <div className="p-6 bg-nebula-950/50 border border-nebula-800 rounded-xl relative">
                                 <h3 className="text-xl font-bold text-purple-400 mb-4 flex items-center gap-2"><Scissors size={20}/> LoRA Extraction</h3>
@@ -293,19 +356,19 @@ export const Laboratory: React.FC<LaboratoryProps> = ({ models }) => {
                 )}
 
                 {mode === 'medusa' && (
-                    <div className="space-y-6 relative z-10 animate-fade-in">
-                        <div className="flex items-start gap-6">
-                            <div className="flex-1 space-y-4">
-                                <h3 className="text-xl font-bold text-purple-400 mb-2 flex items-center gap-2"><Dna size={20}/> Medusa Head Training</h3>
+                    <div className="space-y-6 relative z-10 animate-fade-in flex flex-col h-full overflow-hidden">
+                        <div className="flex items-start gap-6 flex-1 min-h-0">
+                            <div className="w-1/2 space-y-4 overflow-y-auto h-full pr-2">
+                                <h3 className="text-xl font-bold text-purple-400 mb-2 flex items-center gap-2"><Dna size={20}/> Medusa Head Configuration</h3>
                                 <p className="text-sm text-gray-400">Train multiple lightweight heads on top of a frozen backbone to predict future tokens in parallel (Speculative Decoding).</p>
                                 
                                 <div className="grid grid-cols-2 gap-4 mt-6">
-                                     <div>
+                                     <div className="col-span-2">
                                         <label className="text-xs uppercase text-gray-500 font-bold">Backbone Model (Frozen)</label>
                                         <select 
                                             value={medusaConfig.backbone}
                                             onChange={(e) => setMedusaConfig({...medusaConfig, backbone: e.target.value})}
-                                            className="w-full bg-nebula-900 border border-nebula-700 rounded p-2 text-gray-300 mt-1 outline-none focus:border-purple-500"
+                                            className="w-full bg-nebula-900 border border-nebula-700 rounded p-3 text-gray-300 mt-1 outline-none focus:border-purple-500"
                                         >
                                             <option value="">Select Backbone...</option>
                                             {models.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
@@ -317,38 +380,39 @@ export const Laboratory: React.FC<LaboratoryProps> = ({ models }) => {
                                             type="number" 
                                             value={medusaConfig.heads}
                                             onChange={(e) => setMedusaConfig({...medusaConfig, heads: parseInt(e.target.value)})}
-                                            className="w-full bg-nebula-900 border border-nebula-700 rounded p-2 text-gray-300 mt-1 outline-none focus:border-purple-500" 
+                                            className="w-full bg-nebula-900 border border-nebula-700 rounded p-3 text-gray-300 mt-1 outline-none focus:border-purple-500" 
                                         />
                                     </div>
                                 </div>
 
-                                <div className="p-4 bg-purple-900/10 border border-purple-500/20 rounded mt-4">
-                                    <h4 className="text-purple-400 font-bold text-sm mb-2">Training Configuration</h4>
-                                    <div className="grid grid-cols-3 gap-4">
+                                {/* Optimization Strategy Panel */}
+                                <div className="p-5 bg-purple-900/10 border border-purple-500/20 rounded-xl mt-4">
+                                    <h4 className="text-purple-400 font-bold text-sm mb-4 border-b border-purple-500/20 pb-2">Optimization Strategy</h4>
+                                    <div className="grid grid-cols-2 gap-4">
                                         <div className="space-y-1">
-                                            <label className="text-xs text-gray-500 block">Learning Rate</label>
+                                            <label className="text-xs text-gray-500 block font-bold">Learning Rate</label>
                                             <input 
                                                 type="number" step={0.0001} 
                                                 value={medusaConfig.lr}
                                                 onChange={(e) => setMedusaConfig({...medusaConfig, lr: parseFloat(e.target.value)})}
-                                                className="w-full bg-nebula-900 border border-nebula-700 rounded p-1 text-sm font-mono text-gray-300 outline-none focus:border-purple-500" 
+                                                className="w-full bg-nebula-900 border border-nebula-700 rounded p-2 text-sm font-mono text-gray-300 outline-none focus:border-purple-500" 
                                             />
                                         </div>
                                          <div className="space-y-1">
-                                            <label className="text-xs text-gray-500 block">Medusa Decay</label>
+                                            <label className="text-xs text-gray-500 block font-bold">Medusa Decay</label>
                                             <input 
                                                 type="number" step={0.1} 
                                                 value={medusaConfig.decay}
                                                 onChange={(e) => setMedusaConfig({...medusaConfig, decay: parseFloat(e.target.value)})}
-                                                className="w-full bg-nebula-900 border border-nebula-700 rounded p-1 text-sm font-mono text-gray-300 outline-none focus:border-purple-500" 
+                                                className="w-full bg-nebula-900 border border-nebula-700 rounded p-2 text-sm font-mono text-gray-300 outline-none focus:border-purple-500" 
                                             />
                                         </div>
-                                         <div className="space-y-1">
-                                            <label className="text-xs text-gray-500 block">Scheduler</label>
+                                         <div className="space-y-1 col-span-2">
+                                            <label className="text-xs text-gray-500 block font-bold">Scheduler</label>
                                             <select 
                                                 value={medusaConfig.scheduler}
                                                 onChange={(e) => setMedusaConfig({...medusaConfig, scheduler: e.target.value})}
-                                                className="w-full bg-nebula-900 border border-nebula-700 rounded p-1 text-sm font-mono text-gray-300 outline-none focus:border-purple-500"
+                                                className="w-full bg-nebula-900 border border-nebula-700 rounded p-2 text-sm font-mono text-gray-300 outline-none focus:border-purple-500"
                                             >
                                                 <option>Cosine</option>
                                                 <option>Linear</option>
@@ -358,45 +422,76 @@ export const Laboratory: React.FC<LaboratoryProps> = ({ models }) => {
                                     </div>
                                 </div>
 
-                                <button className="px-8 py-3 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded shadow-[0_0_20px_rgba(139,92,246,0.3)] hover:shadow-[0_0_30px_rgba(139,92,246,0.5)] transition-all flex items-center gap-3 mt-6">
+                                <button className="w-full px-8 py-4 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded shadow-[0_0_20px_rgba(139,92,246,0.3)] hover:shadow-[0_0_30px_rgba(139,92,246,0.5)] transition-all flex items-center justify-center gap-3 mt-6">
                                     <Dna className="animate-spin" />
-                                    GROW HEADS
+                                    INITIATE HEAD TRAINING
                                 </button>
                             </div>
                             
-                            <div className="w-1/3 p-4 border border-nebula-800 bg-nebula-950/50 rounded-xl">
-                                <div className="flex justify-between items-center mb-4">
-                                    <h4 className="text-purple-400 font-bold text-sm uppercase">Active Specimens</h4>
-                                    <span className="text-[10px] bg-purple-900/30 text-purple-300 px-2 py-0.5 rounded">1 Running</span>
+                            {/* Live Telemetry Panel */}
+                            <div className="w-1/2 flex flex-col h-full gap-4">
+                                <div className="flex justify-between items-center px-2">
+                                    <h4 className="text-purple-400 font-bold text-sm uppercase flex items-center gap-2">
+                                        <Activity size={16}/> Live Telemetry
+                                    </h4>
+                                    <span className="text-[10px] bg-green-900/30 text-green-400 border border-green-500/30 px-3 py-1 rounded-full animate-pulse flex items-center gap-2">
+                                        <span className="w-1.5 h-1.5 bg-green-500 rounded-full"></span>
+                                        Running
+                                    </span>
                                 </div>
-                                <div className="space-y-4">
-                                    <div className="p-3 bg-nebula-900 border border-purple-500/30 rounded shadow-lg opacity-100">
-                                        <div className="flex justify-between items-start mb-2">
-                                            <div>
-                                                <div className="text-xs text-purple-300 font-bold">Medusa-Llama3-4Head</div>
-                                                <div className="text-[10px] text-gray-500 mt-1">Backbone: Llama-3-8b</div>
-                                            </div>
-                                            <div className="h-2 w-2 rounded-full bg-purple-500 animate-pulse"></div>
+                                
+                                <div className="flex-1 bg-nebula-950 border border-nebula-800 rounded-xl p-4 flex flex-col min-h-0">
+                                    {/* Stats Grid */}
+                                    <div className="grid grid-cols-3 gap-4 mb-4">
+                                        <div className="bg-nebula-900 p-3 rounded border border-nebula-800 text-center">
+                                            <div className="text-[10px] text-gray-500 uppercase font-bold">Current Loss</div>
+                                            <div className="text-xl font-mono text-white font-bold">1.624</div>
+                                            <div className="text-[10px] text-green-400 flex items-center justify-center gap-1"><TrendingDown size={10}/> 0.4%</div>
                                         </div>
-                                        
-                                        <div className="space-y-2 mt-3">
-                                            <div className="flex justify-between text-[10px] text-gray-400">
-                                                <span>Epoch 2/5</span>
-                                                <span>40%</span>
-                                            </div>
-                                            <div className="w-full h-1 bg-nebula-800 rounded-full overflow-hidden">
-                                                <div className="h-full bg-purple-500 w-[40%] animate-pulse"></div>
-                                            </div>
-                                            <div className="grid grid-cols-2 gap-2 text-[10px] mt-2 font-mono text-gray-500">
-                                                <div>Loss: <span className="text-gray-300">1.402</span></div>
-                                                <div>Acc: <span className="text-gray-300">88.2%</span></div>
-                                            </div>
+                                        <div className="bg-nebula-900 p-3 rounded border border-nebula-800 text-center">
+                                            <div className="text-[10px] text-gray-500 uppercase font-bold">Top-1 Acc</div>
+                                            <div className="text-xl font-mono text-white font-bold">88.2%</div>
+                                        </div>
+                                        <div className="bg-nebula-900 p-3 rounded border border-nebula-800 text-center">
+                                            <div className="text-[10px] text-gray-500 uppercase font-bold">Est. Time</div>
+                                            <div className="text-xl font-mono text-purple-300 font-bold">2h 14m</div>
                                         </div>
                                     </div>
 
-                                    {/* Placeholder for empty state */}
-                                    <div className="border border-dashed border-nebula-800 rounded p-4 text-center text-xs text-gray-600">
-                                        Queue empty. Start a new job.
+                                    {/* Chart */}
+                                    <div className="flex-1 min-h-0 bg-nebula-900/50 rounded border border-nebula-800/50 p-2 relative">
+                                        <div className="absolute top-2 left-2 text-[10px] text-gray-500 font-bold uppercase z-10">Training Loss (Cross Entropy)</div>
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <LineChart data={MOCK_LOSS_DATA}>
+                                                <CartesianGrid strokeDasharray="3 3" stroke="#272730" />
+                                                <XAxis dataKey="step" stroke="#6b7280" fontSize={10} tickLine={false} axisLine={false} />
+                                                <YAxis stroke="#6b7280" fontSize={10} tickLine={false} axisLine={false} domain={['dataMin - 0.1', 'dataMax + 0.1']} />
+                                                <Tooltip 
+                                                    contentStyle={{ backgroundColor: '#121217', borderColor: '#272730', fontSize: '12px' }}
+                                                    itemStyle={{ color: '#a78bfa' }}
+                                                />
+                                                <Line 
+                                                    type="monotone" 
+                                                    dataKey="loss" 
+                                                    stroke="#8b5cf6" 
+                                                    strokeWidth={2} 
+                                                    dot={false}
+                                                    activeDot={{ r: 4, fill: '#fff' }}
+                                                />
+                                            </LineChart>
+                                        </ResponsiveContainer>
+                                    </div>
+
+                                    {/* Active Specimen Info */}
+                                    <div className="mt-4 pt-4 border-t border-nebula-800 flex justify-between items-center text-xs text-gray-500">
+                                        <div>
+                                            <span className="text-gray-300 font-bold">Medusa-Llama3-4Head</span>
+                                            <span className="mx-2">•</span>
+                                            <span>Epoch 2/5 (Step 120/500)</span>
+                                        </div>
+                                        <div className="w-32 h-2 bg-nebula-800 rounded-full overflow-hidden">
+                                            <div className="h-full bg-purple-500 w-[24%] animate-[pulse_2s_infinite]"></div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -407,7 +502,7 @@ export const Laboratory: React.FC<LaboratoryProps> = ({ models }) => {
         </div>
 
         {/* Bio-Storage (Inventory) */}
-        <div className="w-72 flex flex-col gap-4 bg-nebula-900 border-l border-nebula-700 p-4 shadow-xl z-20">
+        <div className="w-72 flex flex-col gap-4 bg-nebula-900 border-l border-nebula-700 p-4 shadow-xl z-20 shrink-0">
              <div className="flex items-center gap-2 text-purple-400 border-b border-nebula-800 pb-2">
                  <Box size={20} />
                  <h3 className="font-bold tracking-wider">BIO-STORAGE</h3>

@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Model, Dataset } from '../types';
-import { Terminal, Play, Clock, Zap, Database, Cpu, Layers, Activity, Lock, AlertTriangle, CheckCircle, RotateCw, Wrench, Mic } from 'lucide-react';
+import { Terminal, Play, Clock, Zap, Database, Cpu, Layers, Activity, Lock, AlertTriangle, CheckCircle, RotateCw, Wrench, Mic, GraduationCap, Users, Plus, X, ArrowRight, GitMerge } from 'lucide-react';
 
 interface TrainingProps {
   models: Model[];
@@ -10,12 +10,31 @@ interface TrainingProps {
 
 export const Training: React.FC<TrainingProps> = ({ models, datasets }) => {
   const [mode, setMode] = useState<'lora' | 'sft' | 'distill' | 'agent' | 'audio'>('lora');
-  const [selectedModelId, setSelectedModelId] = useState(models[0]?.id || '');
+  const [teacherModelId, setTeacherModelId] = useState<string>('');
+  const [studentModels, setStudentModels] = useState<string[]>([models[0]?.id || '']);
   const [datasetsConfig, setDatasetsConfig] = useState({
       primary: '',
       contrastive: '',
       additive: ''
   });
+
+  const addStudent = () => {
+      setStudentModels([...studentModels, '']);
+  };
+
+  const removeStudent = (index: number) => {
+      if (studentModels.length > 1) {
+          setStudentModels(studentModels.filter((_, i) => i !== index));
+      }
+  };
+
+  const updateStudent = (index: number, modelId: string) => {
+      const newStudents = [...studentModels];
+      newStudents[index] = modelId;
+      setStudentModels(newStudents);
+  };
+
+  const isDataMixingSupported = ['lora', 'sft', 'distill'].includes(mode);
 
   return (
     <div className="flex h-full gap-8 text-nebula-100 font-sans animate-fade-in">
@@ -63,31 +82,96 @@ export const Training: React.FC<TrainingProps> = ({ models, datasets }) => {
             </div>
         </div>
 
-        <div className="flex-1 bg-nebula-900 border border-nebula-700 rounded-xl p-6 relative overflow-hidden backdrop-blur-sm">
+        <div className="flex-1 bg-nebula-900 border border-nebula-700 rounded-xl p-6 relative overflow-y-auto backdrop-blur-sm">
              {/* Background Decoration */}
             <div className="absolute top-0 right-0 p-8 opacity-5 pointer-events-none">
                 <Activity size={200} />
             </div>
 
             <div className="space-y-8 relative z-10">
-                {/* Core Config */}
-                <div className="grid grid-cols-2 gap-8">
-                     <div className="space-y-4">
-                        <label className="text-purple-400 text-xs font-bold uppercase block tracking-wider">Target Configuration</label>
-                        
-                        <div className="space-y-2">
-                             <label className="text-sm text-gray-400 font-medium">Base Model</label>
-                             <select 
-                                value={selectedModelId}
-                                onChange={(e) => setSelectedModelId(e.target.value)}
-                                className="w-full bg-nebula-950 border border-nebula-700 rounded p-3 text-white focus:border-purple-500 outline-none transition-colors"
+                {/* Topology Config */}
+                <div className="bg-nebula-950/50 border border-nebula-800 rounded-xl p-6">
+                    <h3 className="text-purple-400 text-sm font-bold mb-4 flex items-center gap-2 uppercase tracking-wider">
+                        <GitMerge size={16}/> Training Topology
+                    </h3>
+                    
+                    <div className="flex flex-col md:flex-row gap-8 items-start">
+                        {/* Teacher Column */}
+                        <div className="flex-1 w-full">
+                            <label className="text-xs text-gray-500 font-bold uppercase mb-2 flex items-center gap-2">
+                                <GraduationCap size={14} /> Teacher (Oracle)
+                                {mode === 'distill' && <span className="text-red-400 text-[10px]">* Required</span>}
+                            </label>
+                            <select 
+                                value={teacherModelId}
+                                onChange={(e) => setTeacherModelId(e.target.value)}
+                                className="w-full bg-nebula-900 border border-nebula-700 rounded-lg p-3 text-white focus:border-purple-500 outline-none transition-colors"
                             >
-                                {models.map(m => (
-                                    <option key={m.id} value={m.id}>{m.name} ({m.params} - {m.tensorType})</option>
-                                ))}
+                                <option value="">None (Self-Supervised)</option>
+                                <optgroup label="Local Models">
+                                    {models.map(m => (
+                                        <option key={m.id} value={m.id}>{m.name} ({m.params})</option>
+                                    ))}
+                                </optgroup>
+                                <optgroup label="API Oracles">
+                                    <option value="gpt-4o">GPT-4o (OpenAI)</option>
+                                    <option value="claude-3-opus">Claude 3 Opus (Anthropic)</option>
+                                    <option value="gemini-1.5-pro">Gemini 1.5 Pro (Google)</option>
+                                </optgroup>
                             </select>
+                            <p className="text-[10px] text-gray-500 mt-2 leading-relaxed">
+                                The teacher provides soft labels, reasoning traces, or synthetic data to guide the student models.
+                            </p>
                         </div>
 
+                        {/* Flow Arrow */}
+                        <div className="hidden md:flex flex-col items-center justify-center pt-8 text-gray-600">
+                            <ArrowRight size={24} />
+                        </div>
+
+                        {/* Students Column */}
+                        <div className="flex-1 w-full">
+                            <div className="flex justify-between items-center mb-2">
+                                <label className="text-xs text-gray-500 font-bold uppercase flex items-center gap-2">
+                                    <Users size={14} /> Student Models
+                                </label>
+                                <button onClick={addStudent} className="text-[10px] bg-purple-900/30 text-purple-300 px-2 py-1 rounded hover:bg-purple-600 hover:text-white transition-colors flex items-center gap-1">
+                                    <Plus size={10} /> Add
+                                </button>
+                            </div>
+                            
+                            <div className="space-y-2">
+                                {studentModels.map((studentId, idx) => (
+                                    <div key={idx} className="flex gap-2">
+                                        <select 
+                                            value={studentId}
+                                            onChange={(e) => updateStudent(idx, e.target.value)}
+                                            className="flex-1 bg-nebula-900 border border-nebula-700 rounded-lg p-3 text-white focus:border-purple-500 outline-none transition-colors"
+                                        >
+                                            <option value="">Select Student...</option>
+                                            {models.map(m => (
+                                                <option key={m.id} value={m.id}>{m.name} ({m.params} - {m.tensorType})</option>
+                                            ))}
+                                        </select>
+                                        <button 
+                                            onClick={() => removeStudent(idx)}
+                                            disabled={studentModels.length <= 1}
+                                            className="p-3 bg-nebula-900 border border-nebula-700 rounded-lg text-gray-500 hover:text-red-400 hover:border-red-500/50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
+                                            <X size={16} />
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Dataset & Params Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                     <div className="space-y-4">
+                        <label className="text-purple-400 text-xs font-bold uppercase block tracking-wider">Dataset Configuration</label>
+                        
                          <div className="space-y-2">
                              <label className="text-sm text-gray-400 font-medium">Training Data (Primary)</label>
                              <select 
@@ -99,169 +183,113 @@ export const Training: React.FC<TrainingProps> = ({ models, datasets }) => {
                                 {datasets.map(d => <option key={d.id} value={d.id}>{d.name} ({d.rows.toLocaleString()} rows)</option>)}
                             </select>
                         </div>
+
+                        {/* Hyperparameters */}
+                        <div className="pt-4 space-y-4">
+                            <label className="text-purple-400 text-xs font-bold uppercase block tracking-wider">Hyperparameters</label>
+                            
+                            {mode === 'lora' && (
+                                 <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="text-xs text-gray-500 font-bold uppercase">Rank (r)</label>
+                                        <input type="number" defaultValue={16} className="w-full bg-nebula-950 border border-nebula-700 rounded p-3 text-white mt-1" />
+                                    </div>
+                                    <div>
+                                        <label className="text-xs text-gray-500 font-bold uppercase">Alpha</label>
+                                        <input type="number" defaultValue={32} className="w-full bg-nebula-950 border border-nebula-700 rounded p-3 text-white mt-1" />
+                                    </div>
+                                    <div className="col-span-2">
+                                         <label className="text-xs text-gray-500 font-bold uppercase">Target Modules</label>
+                                         <div className="flex gap-2 mt-1">
+                                            {['q_proj', 'v_proj', 'k_proj', 'o_proj'].map(mod => (
+                                                <span key={mod} className="px-3 py-1 bg-nebula-800 border border-nebula-600 rounded text-xs text-gray-300 cursor-pointer hover:bg-purple-900/50 hover:border-purple-500">{mod}</span>
+                                            ))}
+                                         </div>
+                                    </div>
+                                 </div>
+                            )}
+
+                            {(mode === 'sft' || mode === 'agent' || mode === 'audio' || mode === 'distill') && (
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="text-xs text-gray-500 font-bold uppercase">Epochs</label>
+                                        <input type="number" defaultValue={3} className="w-full bg-nebula-950 border border-nebula-700 rounded p-3 text-white mt-1" />
+                                    </div>
+                                    <div>
+                                        <label className="text-xs text-gray-500 font-bold uppercase">Learning Rate</label>
+                                        <input type="number" defaultValue={2e-5} step={1e-6} className="w-full bg-nebula-950 border border-nebula-700 rounded p-3 text-white mt-1" />
+                                    </div>
+                                </div>
+                            )}
+                        </div>
                      </div>
 
                      <div className="space-y-4">
-                        <label className="text-purple-400 text-xs font-bold uppercase block tracking-wider">Hyperparameters</label>
+                        {isDataMixingSupported && (
+                            <div className="p-5 bg-nebula-950/50 border border-nebula-800 rounded-xl h-full">
+                                <h4 className="text-purple-400 text-sm font-bold mb-4 flex items-center gap-2"><Database size={14}/> Advanced Data Mixing Strategy</h4>
+                                <div className="space-y-6">
+                                    <div>
+                                        <label className="text-xs text-gray-500 font-bold uppercase mb-2 block">Positive / Additive (Reinforcement)</label>
+                                        <select 
+                                            value={datasetsConfig.additive}
+                                            onChange={(e) => setDatasetsConfig({...datasetsConfig, additive: e.target.value})}
+                                            className="w-full bg-nebula-900 border border-nebula-700 rounded p-3 text-white text-sm outline-none focus:border-purple-500 transition-colors"
+                                        >
+                                            <option value="">None</option>
+                                            {datasets.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+                                        </select>
+                                        <p className="text-[10px] text-gray-500 mt-2">Injects high-quality examples (e.g. Golden sets) to steer behavior during training.</p>
+                                    </div>
+                                    <div>
+                                        <label className="text-xs text-gray-500 font-bold uppercase mb-2 block">Negative / Contrastive (Rejection)</label>
+                                        <select 
+                                            value={datasetsConfig.contrastive}
+                                            onChange={(e) => setDatasetsConfig({...datasetsConfig, contrastive: e.target.value})}
+                                            className="w-full bg-nebula-900 border border-nebula-700 rounded p-3 text-white text-sm outline-none focus:border-purple-500 transition-colors"
+                                        >
+                                            <option value="">None</option>
+                                            {datasets.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+                                        </select>
+                                        <p className="text-[10px] text-gray-500 mt-2">Used for DPO/ORPO preference optimization or to unlearn behaviors.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Mode Specific Configs */}
+                        {mode === 'agent' && (
+                             <div className="p-5 bg-nebula-950/50 border border-nebula-800 rounded-xl h-full">
+                                <h4 className="text-purple-400 text-sm font-bold mb-4 flex items-center gap-2"><Wrench size={14}/> Agent Tool Config</h4>
+                                <div>
+                                    <label className="text-xs text-gray-500 font-bold uppercase mb-2 block">Format Enforcement</label>
+                                    <div className="space-y-2">
+                                        <label className="flex items-center gap-2 p-2 bg-nebula-900 rounded border border-nebula-700 cursor-pointer">
+                                            <input type="radio" name="format" defaultChecked className="accent-purple-500" />
+                                            <span className="text-sm text-gray-300">Strict JSON (Constrained Decoding)</span>
+                                        </label>
+                                        <label className="flex items-center gap-2 p-2 bg-nebula-900 rounded border border-nebula-700 cursor-pointer">
+                                            <input type="radio" name="format" className="accent-purple-500" />
+                                            <span className="text-sm text-gray-300">Thought + Action (ReAct)</span>
+                                        </label>
+                                    </div>
+                                </div>
+                             </div>
+                        )}
                         
-                        {mode === 'lora' && (
-                             <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="text-xs text-gray-500 font-bold uppercase">Rank (r)</label>
-                                    <input type="number" defaultValue={16} className="w-full bg-nebula-950 border border-nebula-700 rounded p-3 text-white mt-1" />
-                                </div>
-                                <div>
-                                    <label className="text-xs text-gray-500 font-bold uppercase">Alpha</label>
-                                    <input type="number" defaultValue={32} className="w-full bg-nebula-950 border border-nebula-700 rounded p-3 text-white mt-1" />
-                                </div>
-                                <div className="col-span-2">
-                                     <label className="text-xs text-gray-500 font-bold uppercase">Target Modules</label>
-                                     <div className="flex gap-2 mt-1">
-                                        {['q_proj', 'v_proj', 'k_proj', 'o_proj'].map(mod => (
-                                            <span key={mod} className="px-3 py-1 bg-nebula-800 border border-nebula-600 rounded text-xs text-gray-300 cursor-pointer hover:bg-purple-900/50 hover:border-purple-500">{mod}</span>
-                                        ))}
-                                     </div>
-                                </div>
-                             </div>
-                        )}
-
-                        {mode === 'distill' && (
-                             <div className="space-y-2">
-                                <label className="text-sm text-gray-400 font-medium">Teacher Model (Oracle)</label>
-                                <select className="w-full bg-nebula-950 border border-nebula-700 rounded p-3 text-white">
-                                    <option>Gemini 1.5 Pro</option>
-                                    <option>GPT-4o</option>
-                                    <option>Llama-3-70b-Instruct</option>
-                                </select>
-                             </div>
-                        )}
-
-                        {(mode === 'sft' || mode === 'agent' || mode === 'audio') && (
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="text-xs text-gray-500 font-bold uppercase">Epochs</label>
-                                    <input type="number" defaultValue={3} className="w-full bg-nebula-950 border border-nebula-700 rounded p-3 text-white mt-1" />
-                                </div>
-                                <div>
-                                    <label className="text-xs text-gray-500 font-bold uppercase">Learning Rate</label>
-                                    <input type="number" defaultValue={2e-5} step={1e-6} className="w-full bg-nebula-950 border border-nebula-700 rounded p-3 text-white mt-1" />
+                        {mode === 'audio' && (
+                            <div className="p-5 bg-nebula-950/50 border border-nebula-800 rounded-xl h-full">
+                                <h4 className="text-purple-400 text-sm font-bold mb-4 flex items-center gap-2"><Mic size={14}/> Audio Specifics</h4>
+                                <div className="space-y-4">
+                                    <div>
+                                        <label className="text-xs text-gray-500 font-bold uppercase mb-2 block">CTC Loss Weight</label>
+                                        <input type="range" min="0" max="1" step="0.1" defaultValue="0.3" className="w-full accent-purple-500" />
+                                    </div>
                                 </div>
                             </div>
                         )}
                      </div>
                 </div>
-
-                {/* Advanced Data Mixing / Agent Config / Audio Config */}
-                {mode === 'agent' && (
-                     <div className="p-5 bg-nebula-950/50 border border-nebula-800 rounded-xl">
-                        <h4 className="text-purple-400 text-sm font-bold mb-4 flex items-center gap-2"><Wrench size={14}/> Tool Use Configuration</h4>
-                        <div className="grid grid-cols-2 gap-8">
-                             <div>
-                                <label className="text-xs text-gray-500 font-bold uppercase mb-2 block">Tool Definitions (JSON Schema)</label>
-                                <textarea 
-                                    className="w-full bg-nebula-900 border border-nebula-700 rounded p-2 text-white text-xs font-mono outline-none h-24"
-                                    placeholder='[{"type": "function", "function": { "name": "get_weather", ... } }]'
-                                />
-                            </div>
-                            <div>
-                                <label className="text-xs text-gray-500 font-bold uppercase mb-2 block">Format Enforcement</label>
-                                <div className="space-y-2">
-                                    <label className="flex items-center gap-2 p-2 bg-nebula-900 rounded border border-nebula-700 cursor-pointer">
-                                        <input type="radio" name="format" defaultChecked className="accent-purple-500" />
-                                        <span className="text-sm text-gray-300">Strict JSON (Constrained Decoding)</span>
-                                    </label>
-                                    <label className="flex items-center gap-2 p-2 bg-nebula-900 rounded border border-nebula-700 cursor-pointer">
-                                        <input type="radio" name="format" className="accent-purple-500" />
-                                        <span className="text-sm text-gray-300">Thought + Action (ReAct)</span>
-                                    </label>
-                                </div>
-                            </div>
-                        </div>
-                     </div>
-                )}
-
-                {mode === 'audio' && (
-                    <div className="p-5 bg-nebula-950/50 border border-nebula-800 rounded-xl">
-                        <h4 className="text-purple-400 text-sm font-bold mb-4 flex items-center gap-2"><Mic size={14}/> Audio Fine-Tuning Parameters (LFM-Audio)</h4>
-                        <div className="grid grid-cols-2 gap-8">
-                            <div className="space-y-4">
-                                <div>
-                                    <label className="text-xs text-gray-500 font-bold uppercase mb-2 block">Audio Encoder Frozen?</label>
-                                    <div className="flex gap-4">
-                                        <label className="flex items-center gap-2 cursor-pointer">
-                                            <input type="radio" name="freeze_enc" defaultChecked className="accent-purple-500" />
-                                            <span className="text-sm text-gray-300">Yes (Adapter Only)</span>
-                                        </label>
-                                        <label className="flex items-center gap-2 cursor-pointer">
-                                            <input type="radio" name="freeze_enc" className="accent-purple-500" />
-                                            <span className="text-sm text-gray-300">No (Full FT)</span>
-                                        </label>
-                                    </div>
-                                </div>
-                                <div>
-                                    <label className="text-xs text-gray-500 font-bold uppercase mb-2 block">CTC Loss Weight</label>
-                                    <input type="range" min="0" max="1" step="0.1" defaultValue="0.3" className="w-full accent-purple-500" />
-                                    <div className="flex justify-between text-[10px] text-gray-500">
-                                        <span>0.0 (LLM Only)</span>
-                                        <span>0.3 (Hybrid)</span>
-                                        <span>1.0 (ASR Only)</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="space-y-4">
-                                <div>
-                                    <label className="text-xs text-gray-500 font-bold uppercase mb-2 block">SpecAugment Masking</label>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div>
-                                            <label className="text-[10px] text-gray-500">Freq Mask</label>
-                                            <input type="number" defaultValue={27} className="w-full bg-nebula-900 border border-nebula-700 rounded p-2 text-white text-xs mt-1" />
-                                        </div>
-                                        <div>
-                                            <label className="text-[10px] text-gray-500">Time Mask</label>
-                                            <input type="number" defaultValue={100} className="w-full bg-nebula-900 border border-nebula-700 rounded p-2 text-white text-xs mt-1" />
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-2 p-2 bg-nebula-900 rounded border border-nebula-700">
-                                    <input type="checkbox" defaultChecked className="accent-purple-500" />
-                                    <label className="text-sm text-gray-300">Interleaved Audio/Text Data</label>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                {(mode === 'distill' || mode === 'sft') && (
-                    <div className="p-5 bg-nebula-950/50 border border-nebula-800 rounded-xl">
-                        <h4 className="text-purple-400 text-sm font-bold mb-4 flex items-center gap-2"><Database size={14}/> Advanced Data Mixing Strategy</h4>
-                        <div className="grid grid-cols-2 gap-8">
-                            <div>
-                                <label className="text-xs text-gray-500 font-bold uppercase mb-2 block">Positive / Additive (Reinforcement)</label>
-                                <select 
-                                    value={datasetsConfig.additive}
-                                    onChange={(e) => setDatasetsConfig({...datasetsConfig, additive: e.target.value})}
-                                    className="w-full bg-nebula-900 border border-nebula-700 rounded p-2 text-white text-sm outline-none"
-                                >
-                                    <option value="">None</option>
-                                    {datasets.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
-                                </select>
-                                <p className="text-[10px] text-gray-500 mt-1">Injects high-quality examples to steer behavior.</p>
-                            </div>
-                            <div>
-                                <label className="text-xs text-gray-500 font-bold uppercase mb-2 block">Negative / Contrastive (Rejection)</label>
-                                <select 
-                                    value={datasetsConfig.contrastive}
-                                    onChange={(e) => setDatasetsConfig({...datasetsConfig, contrastive: e.target.value})}
-                                    className="w-full bg-nebula-900 border border-nebula-700 rounded p-2 text-white text-sm outline-none"
-                                >
-                                    <option value="">None</option>
-                                    {datasets.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
-                                </select>
-                                <p className="text-[10px] text-gray-500 mt-1">Used for DPO/ORPO preference optimization.</p>
-                            </div>
-                        </div>
-                    </div>
-                )}
 
                 {/* Footer Actions */}
                 <div className="pt-6 border-t border-nebula-800 flex justify-between items-center">
