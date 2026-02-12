@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Model, ModelVersion, ServerProfile, BenchmarkResult } from '../types';
-import { GitBranch, Box, FileCode, Tag, ExternalLink, Cpu, Terminal, Scale, X, BarChart2, Filter, Check, Server, FileText, Activity, Plus, RefreshCw, Trash2, Layers, Zap, Merge, Scissors, User, FlaskConical, Beaker, Database, ArrowLeftRight, TrendingUp, Sparkles, Wand2 } from 'lucide-react';
+import { GitBranch, Box, FileCode, Tag, ExternalLink, Cpu, Terminal, Scale, X, BarChart2, Filter, Check, Server, FileText, Activity, Plus, RefreshCw, Trash2, Layers, Zap, Merge, Scissors, User, FlaskConical, Beaker, Database, ArrowLeftRight, TrendingUp } from 'lucide-react';
 
 interface ModelsProps {
   models: Model[];
@@ -305,7 +305,7 @@ export const Models: React.FC<ModelsProps> = ({ models, servers, benchmarks }) =
                         
                         <div className="flex flex-wrap gap-1 mb-3">
                             {model.tags.slice(0, 4).map(tag => (
-                                <span key={tag} className="text-[9px] px-1.5 py-0.5 rounded-full bg-nebula-950 border border-nebula-800 text-gray-500 uppercase font-black tracking-widest">
+                                <span key={tag} className="text-[9px] px-1.5 py-0.5 rounded-full bg-nebula-950 border border-nebula-800 text-gray-500">
                                     {tag}
                                 </span>
                             ))}
@@ -435,25 +435,25 @@ export const Models: React.FC<ModelsProps> = ({ models, servers, benchmarks }) =
                                     <p className="text-gray-300 text-type-body leading-relaxed bg-nebula-950/30 p-4 rounded border border-nebula-800/50">{selectedModel.description}</p>
                                 </div>
 
-                                {/* Capability Section */}
+                                {/* Tag Management */}
                                 <div>
-                                    <h4 className="text-type-caption font-bold text-gray-400 uppercase mb-2 flex items-center gap-2"><Wand2 size={14} className="text-purple-400"/> System Capabilities</h4>
-                                    <div className="flex flex-wrap gap-2 items-center bg-nebula-950 border border-nebula-800 p-4 rounded-xl">
+                                    <h4 className="text-type-caption font-bold text-gray-400 uppercase mb-2 flex items-center gap-2"><Tag size={12}/> Custom Tags</h4>
+                                    <div className="flex flex-wrap gap-2 items-center bg-nebula-950 border border-nebula-800 p-3 rounded-lg">
                                         {selectedModel.tags.map(tag => (
-                                            <span key={tag} className="text-[10px] px-3 py-1.5 rounded bg-nebula-900 border border-nebula-800 text-gray-300 flex items-center gap-2 font-black uppercase tracking-widest group">
+                                            <span key={tag} className="text-xs px-2 py-1 rounded bg-nebula-800 border border-nebula-700 text-gray-300 flex items-center gap-1 group">
                                                 {tag}
-                                                <button onClick={() => removeTag(tag)} className="text-gray-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"><X size={10} /></button>
+                                                <button onClick={() => removeTag(tag)} className="text-gray-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"><X size={10} /></button>
                                             </span>
                                         ))}
-                                        <div className="flex items-center gap-1 bg-nebula-900 border border-nebula-800 rounded-lg px-3 py-1 focus-within:border-purple-500 transition-colors h-8">
+                                        <div className="flex items-center gap-1 bg-nebula-900 border border-nebula-800 rounded px-2 py-1 focus-within:border-purple-500 transition-colors">
                                             <Plus size={12} className="text-gray-500" />
                                             <input 
                                                 type="text" 
                                                 value={newTag}
                                                 onChange={(e) => setNewTag(e.target.value)}
                                                 onKeyDown={(e) => e.key === 'Enter' && handleAddTag()}
-                                                placeholder="Inject capability..." 
-                                                className="bg-transparent border-none outline-none text-[10px] font-bold uppercase tracking-widest text-white w-24"
+                                                placeholder="Add tag..." 
+                                                className="bg-transparent border-none outline-none text-xs text-white w-20"
                                             />
                                         </div>
                                     </div>
@@ -492,7 +492,7 @@ export const Models: React.FC<ModelsProps> = ({ models, servers, benchmarks }) =
                                         <div className="flex flex-wrap gap-2">
                                             {getCompatibleServers(selectedModel.id).length > 0 ? (
                                                 getCompatibleServers(selectedModel.id).map(srv => (
-                                                    <div key={srv.id} className="flex items-center gap-2 px-3 py-1.5 bg-green-900/20 border border-green-500/30 rounded text-green-400 text-xs font-bold uppercase tracking-widest">
+                                                    <div key={srv.id} className="flex items-center gap-2 px-3 py-1.5 bg-green-900/20 border border-green-500/30 rounded text-green-400 text-xs font-bold">
                                                         <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div>
                                                         {srv.name}
                                                     </div>
@@ -546,7 +546,7 @@ export const Models: React.FC<ModelsProps> = ({ models, servers, benchmarks }) =
                                     <div className="flex flex-col items-center justify-center p-12 border-2 border-dashed border-nebula-800 rounded-lg text-gray-600">
                                         <Activity size={32} className="mb-2 opacity-50" />
                                         <p>No benchmark results found for this model.</p>
-                                        <button className="mt-4 text-purple-400 text-xs font-bold hover:text-purple-300 uppercase tracking-widest">RUN BENCHMARK</button>
+                                        <button className="mt-4 text-purple-400 text-xs font-bold hover:text-purple-300">RUN BENCHMARK</button>
                                     </div>
                                 )}
                             </div>
@@ -555,35 +555,35 @@ export const Models: React.FC<ModelsProps> = ({ models, servers, benchmarks }) =
                         {detailTab === 'engineering' && (
                             <div className="space-y-space-lg animate-fade-in">
                                 <div className="flex justify-between items-center">
-                                    <h3 className="font-semibold text-sm flex items-center gap-2 text-gray-400 uppercase tracking-widest">
+                                    <h3 className="font-semibold text-sm flex items-center gap-2 text-gray-400">
                                         <FlaskConical size={16} />
-                                        Laboratory Assets
+                                        Laboratory & Engineering Assets
                                     </h3>
                                 </div>
 
                                 {/* Section: Fine-Tunes */}
                                 <div className="space-y-space-sm">
-                                    <h4 className="text-type-tiny font-bold text-purple-400 uppercase tracking-widest flex items-center gap-2"><Zap size={12}/> Associated Fine-Tunes</h4>
+                                    <h4 className="text-type-tiny font-bold text-purple-400 uppercase tracking-wider flex items-center gap-2"><Zap size={12}/> Associated Fine-Tunes</h4>
                                     <div className="grid grid-cols-1 gap-space-sm">
                                         <div className="bg-nebula-950 border border-nebula-800 p-space-md rounded-lg flex justify-between items-center group cursor-pointer hover:border-purple-500/50">
                                             <div className="flex items-center gap-space-md">
                                                 <div className="p-2 bg-purple-900/20 text-purple-400 rounded"><Database size={16}/></div>
                                                 <div>
-                                                    <div className="text-type-body font-bold text-white group-hover:text-purple-300 transition-colors uppercase tracking-tight">Legal-SFT-v3</div>
-                                                    <div className="text-type-tiny text-gray-500 uppercase tracking-widest">Created 2 days ago • Dataset: Legal-FLSA</div>
+                                                    <div className="text-type-body font-bold text-white group-hover:text-purple-300 transition-colors">Legal-SFT-v3</div>
+                                                    <div className="text-type-tiny text-gray-500">Created 2 days ago • Dataset: Legal-FLSA</div>
                                                 </div>
                                             </div>
-                                            <span className="text-type-tiny bg-green-900/20 text-green-400 px-2 py-1 rounded border border-green-900/30 uppercase font-black">Ready</span>
+                                            <span className="text-type-tiny bg-green-900/20 text-green-400 px-2 py-1 rounded border border-green-900/30">Ready</span>
                                         </div>
                                     </div>
                                 </div>
 
                                 {/* Section: Adapters */}
                                 <div className="space-y-space-sm">
-                                    <h4 className="text-type-tiny font-bold text-blue-400 uppercase tracking-widest flex items-center gap-2"><Layers size={12}/> LoRA Adapters</h4>
+                                    <h4 className="text-type-tiny font-bold text-blue-400 uppercase tracking-wider flex items-center gap-2"><Layers size={12}/> LoRA Adapters</h4>
                                     <div className="bg-nebula-950 border border-nebula-800 rounded-lg overflow-hidden">
                                         <table className="w-full text-type-tiny">
-                                            <thead className="bg-nebula-900 text-gray-500 font-bold uppercase tracking-widest">
+                                            <thead className="bg-nebula-900 text-gray-500 font-bold uppercase">
                                                 <tr>
                                                     <th className="px-4 py-2 text-left">Adapter Name</th>
                                                     <th className="px-4 py-2 text-left">Rank</th>
@@ -591,18 +591,27 @@ export const Models: React.FC<ModelsProps> = ({ models, servers, benchmarks }) =
                                                 </tr>
                                             </thead>
                                             <tbody className="divide-y divide-nebula-800 text-gray-300">
-                                                <tr className="hover:bg-nebula-900/30 transition-colors">
-                                                    <td className="px-4 py-2 font-mono uppercase">finance-adapter-r16</td>
+                                                <tr className="hover:bg-nebula-900/30">
+                                                    <td className="px-4 py-2 font-mono">finance-adapter-r16</td>
                                                     <td className="px-4 py-2">16</td>
-                                                    <td className="px-4 py-2 text-right text-gray-500 font-mono">45MB</td>
+                                                    <td className="px-4 py-2 text-right text-gray-500">45MB</td>
                                                 </tr>
-                                                <tr className="hover:bg-nebula-900/30 transition-colors">
-                                                    <td className="px-4 py-2 font-mono uppercase">chat-dpo-r32</td>
+                                                <tr className="hover:bg-nebula-900/30">
+                                                    <td className="px-4 py-2 font-mono">chat-dpo-r32</td>
                                                     <td className="px-4 py-2">32</td>
-                                                    <td className="px-4 py-2 text-right text-gray-500 font-mono">92MB</td>
+                                                    <td className="px-4 py-2 text-right text-gray-500">92MB</td>
                                                 </tr>
                                             </tbody>
                                         </table>
+                                    </div>
+                                </div>
+
+                                {/* Section: Experiments */}
+                                <div className="space-y-space-sm">
+                                    <h4 className="text-type-tiny font-bold text-orange-400 uppercase tracking-wider flex items-center gap-2"><Beaker size={12}/> Active Experiments</h4>
+                                    <div className="bg-nebula-950/50 border border-dashed border-nebula-800 p-4 rounded-lg flex flex-col items-center justify-center text-gray-600">
+                                        <p className="text-type-body font-medium">No active training jobs linked.</p>
+                                        <button className="mt-2 text-type-tiny bg-nebula-900 hover:bg-nebula-800 text-purple-400 px-3 py-1 rounded transition-colors">Start New Experiment</button>
                                     </div>
                                 </div>
                             </div>
@@ -611,15 +620,15 @@ export const Models: React.FC<ModelsProps> = ({ models, servers, benchmarks }) =
                         {detailTab === 'versions' && (
                             <div className="space-y-4 animate-fade-in">
                                  <div className="flex justify-between items-center mb-2">
-                                    <h3 className="font-semibold text-sm flex items-center gap-2 text-gray-400 uppercase tracking-widest">
+                                    <h3 className="font-semibold text-sm flex items-center gap-2 text-gray-400">
                                         <GitBranch size={16} />
-                                        Version Registry
+                                        Available Checkpoints
                                     </h3>
                                     
                                     {selectedVersionIds.size > 1 && (
                                         <button 
                                             onClick={() => setShowComparison(true)}
-                                            className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg text-xs font-black uppercase tracking-widest animate-fade-in shadow-lg"
+                                            className="flex items-center gap-2 px-3 py-1 bg-purple-600 hover:bg-purple-500 text-white rounded text-xs font-bold animate-fade-in"
                                         >
                                             <BarChart2 size={12} /> Compare ({selectedVersionIds.size})
                                         </button>
@@ -630,49 +639,60 @@ export const Models: React.FC<ModelsProps> = ({ models, servers, benchmarks }) =
                                     <div 
                                         key={ver.id} 
                                         onClick={() => toggleVersionSelection(ver.id)}
-                                        className={`bg-nebula-950 border rounded-xl p-5 transition-all cursor-pointer relative ${selectedVersionIds.has(ver.id) ? 'border-purple-500 bg-purple-900/10 shadow-[0_0_15px_rgba(124,58,237,0.1)]' : 'border-nebula-800 hover:border-purple-500/30'}`}
+                                        className={`bg-nebula-950 border rounded-lg p-4 transition-all cursor-pointer relative ${selectedVersionIds.has(ver.id) ? 'border-purple-500 bg-purple-900/10' : 'border-nebula-800 hover:border-purple-500/30'}`}
                                     >
-                                        <div className="absolute top-5 right-5">
-                                            <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${selectedVersionIds.has(ver.id) ? 'bg-purple-500 border-purple-500' : 'border-nebula-700 bg-nebula-900'}`}>
-                                                {selectedVersionIds.has(ver.id) && <Check size={12} className="text-white" />}
-                                            </div>
+                                        <div className="absolute top-4 right-4">
+                                            <input 
+                                                type="checkbox" 
+                                                checked={selectedVersionIds.has(ver.id)} 
+                                                onChange={() => {}}
+                                                className="accent-purple-500 w-4 h-4 cursor-pointer" 
+                                            />
                                         </div>
 
-                                        <div className="flex justify-between items-start mb-4 pr-10">
-                                            <div className="flex items-center gap-4">
-                                                <div className="p-3 bg-nebula-900 rounded-xl border border-nebula-800 text-purple-400">
-                                                    {ver.format === 'GGUF' ? <Box size={20} /> : ver.format === 'Ollama' ? <Terminal size={20} /> : <FileCode size={20} />}
+                                        <div className="flex justify-between items-start mb-3 pr-8">
+                                            <div className="flex items-center gap-3">
+                                                <div className="p-2 bg-nebula-900 rounded text-purple-400">
+                                                    {ver.format === 'GGUF' ? <Box size={16} /> : ver.format === 'Ollama' ? <Terminal size={16} /> : <FileCode size={16} />}
                                                 </div>
                                                 <div>
-                                                    <h4 className="font-bold text-type-body text-gray-100 uppercase tracking-tight">{ver.name}</h4>
-                                                    <p className="text-[10px] text-gray-500 font-mono mt-0.5 uppercase tracking-widest">{ver.id} • {ver.created}</p>
+                                                    <h4 className="font-bold text-sm text-gray-200">{ver.name}</h4>
+                                                    <p className="text-[10px] text-gray-500 font-mono">{ver.id} • {ver.created}</p>
                                                 </div>
                                             </div>
                                             <div className="text-right mr-6">
-                                                <span className={`text-[10px] px-2.5 py-1 rounded-full font-black uppercase tracking-[0.2em] border ${ver.status === 'Ready' ? 'bg-green-900/20 border-green-500/40 text-green-400' : 'bg-yellow-900/20 border-yellow-500/40 text-yellow-400'}`}>
+                                                <span className={`text-xs px-2 py-0.5 rounded ${ver.status === 'Ready' ? 'bg-green-900/30 text-green-400' : 'bg-yellow-900/30 text-yellow-400'}`}>
                                                     {ver.status}
                                                 </span>
                                             </div>
                                         </div>
 
-                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs bg-nebula-900/50 p-4 rounded-xl mb-4 border border-nebula-800/50">
+                                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-xs text-gray-400 bg-nebula-900/50 p-3 rounded mb-3">
                                             <div>
-                                                <span className="block text-[9px] text-gray-500 uppercase font-black tracking-widest mb-1">Architecture</span>
-                                                <span className="font-mono text-gray-300 font-bold uppercase">{ver.quantization}</span>
+                                                <span className="block text-gray-600">Quantization</span>
+                                                <span className="font-mono text-gray-300">{ver.quantization}</span>
                                             </div>
                                             <div>
-                                                <span className="block text-[9px] text-gray-500 uppercase font-black tracking-widest mb-1">Storage</span>
-                                                <span className="font-mono text-gray-300 font-bold">{ver.size}</span>
+                                                <span className="block text-gray-600">Size</span>
+                                                <span className="font-mono text-gray-300">{ver.size}</span>
                                             </div>
                                             {ver.metrics && (
                                                 <>
                                                     <div>
-                                                        <span className="block text-[9px] text-gray-500 uppercase font-black tracking-widest mb-1">Throughput</span>
-                                                        <span className="font-mono text-blue-400 font-bold">{ver.metrics.tokensPerSecond ? `${ver.metrics.tokensPerSecond} T/S` : '-'}</span>
+                                                        <span className="block text-gray-600">Speed</span>
+                                                        <span className="font-mono text-blue-400 font-bold">{ver.metrics.tokensPerSecond ? `${ver.metrics.tokensPerSecond} t/s` : '-'}</span>
                                                     </div>
                                                     <div>
-                                                        <span className="block text-[9px] text-gray-500 uppercase font-black tracking-widest mb-1">Inference Latency</span>
-                                                        <span className="font-mono text-purple-300 font-bold">{ver.metrics.latencyMs} MS</span>
+                                                        <span className="block text-gray-600">Latency (GPU)</span>
+                                                        <span className="font-mono text-gray-300">{ver.metrics.latencyMs} ms</span>
+                                                    </div>
+                                                    <div>
+                                                        <span className="block text-gray-600">VRAM</span>
+                                                        <span className="font-mono text-gray-300">{ver.metrics.vramGB} GB</span>
+                                                    </div>
+                                                    <div>
+                                                        <span className="block text-gray-600">Perplexity</span>
+                                                        <span className="font-mono text-gray-300">{ver.metrics.perplexity || '-'}</span>
                                                     </div>
                                                 </>
                                             )}
@@ -681,9 +701,9 @@ export const Models: React.FC<ModelsProps> = ({ models, servers, benchmarks }) =
                                         <div className="flex gap-2">
                                             <button 
                                                 onClick={(e) => { e.stopPropagation(); }}
-                                                className="flex-1 bg-purple-600/10 hover:bg-purple-600/20 text-purple-400 border border-purple-600/30 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all"
+                                                className="flex-1 bg-purple-600/10 hover:bg-purple-600/20 text-purple-400 border border-purple-600/30 py-1.5 rounded text-xs transition-colors"
                                             >
-                                                Deploy to Instance
+                                                Load to Server
                                             </button>
                                         </div>
                                     </div>
@@ -694,25 +714,25 @@ export const Models: React.FC<ModelsProps> = ({ models, servers, benchmarks }) =
                         {detailTab === 'docs' && (
                             <div className="space-y-4 animate-fade-in h-full flex flex-col">
                                 <div className="flex justify-between items-center mb-2">
-                                    <h3 className="font-semibold text-sm flex items-center gap-2 text-gray-400 uppercase tracking-widest">
+                                    <h3 className="font-semibold text-sm flex items-center gap-2 text-gray-400">
                                         <FileText size={16} />
-                                        Technical Protocols
+                                        Model Documentation
                                     </h3>
-                                    <button className="text-[10px] font-black uppercase tracking-widest bg-nebula-800 hover:bg-nebula-700 px-4 py-2 rounded-lg text-gray-300 border border-nebula-700 transition-colors">
+                                    <button className="text-xs bg-nebula-800 hover:bg-nebula-700 px-3 py-1.5 rounded text-gray-300 border border-nebula-700">
                                         Edit Markdown
                                     </button>
                                 </div>
                                 
-                                <div className="flex-1 bg-nebula-950 border border-nebula-800 rounded-2xl p-8 overflow-y-auto custom-scrollbar">
+                                <div className="flex-1 bg-nebula-950 border border-nebula-800 rounded-lg p-6 overflow-y-auto">
                                     {selectedModel.documentation ? (
                                         <div className="prose prose-invert prose-sm max-w-none">
-                                            <div dangerouslySetInnerHTML={{ __html: selectedModel.documentation.replace(/\n/g, '<br/>').replace(/# (.*)/g, '<h1 class="text-xl font-bold mb-4 text-purple-300 uppercase tracking-tight">$1</h1>').replace(/## (.*)/g, '<h2 class="text-lg font-bold mt-4 mb-2 text-purple-200 uppercase">$1</h2>').replace(/```python([\s\S]*?)```/g, '<pre class="bg-gray-900 p-4 rounded-xl my-4 text-xs font-mono text-green-400 border border-white/5 shadow-inner">$1</pre>') }} />
+                                            <div dangerouslySetInnerHTML={{ __html: selectedModel.documentation.replace(/\n/g, '<br/>').replace(/# (.*)/g, '<h1 class="text-xl font-bold mb-4 text-purple-300">$1</h1>').replace(/## (.*)/g, '<h2 class="text-lg font-bold mt-4 mb-2 text-purple-200">$1</h2>').replace(/```python([\s\S]*?)```/g, '<pre class="bg-gray-900 p-3 rounded my-2 text-xs font-mono text-green-400">$1</pre>') }} />
                                         </div>
                                     ) : (
                                         <div className="h-full flex flex-col items-center justify-center text-gray-600 opacity-60">
                                             <FileText size={48} className="mb-4" />
-                                            <p className="uppercase tracking-[0.2em] font-black text-xs">No documentation available</p>
-                                            <button className="mt-4 text-purple-400 hover:text-purple-300 text-[10px] font-black uppercase tracking-widest underline decoration-2 underline-offset-4">Add Readme</button>
+                                            <p>No documentation available for this model.</p>
+                                            <button className="mt-4 text-purple-400 hover:text-purple-300 text-sm underline">Add README</button>
                                         </div>
                                     )}
                                 </div>
@@ -723,64 +743,72 @@ export const Models: React.FC<ModelsProps> = ({ models, servers, benchmarks }) =
                     {/* Version Comparison Overlay */}
                     {showComparison && (
                         <div className="absolute inset-0 bg-nebula-950/95 backdrop-blur-sm z-20 flex flex-col animate-fade-in">
-                            <div className="p-space-lg border-b border-nebula-700 flex justify-between items-center bg-nebula-950/80">
-                                <h3 className="text-xl font-black text-white flex items-center gap-3 uppercase tracking-tight"><BarChart2 className="text-purple-500" /> Multi-Version Benchmark</h3>
-                                <button onClick={() => setShowComparison(false)} className="text-gray-400 hover:text-white p-2 hover:bg-nebula-800 rounded-full transition-colors"><X size={24}/></button>
+                            <div className="p-4 border-b border-nebula-700 flex justify-between items-center">
+                                <h3 className="text-lg font-bold text-white flex items-center gap-2"><BarChart2 className="text-purple-500" /> Compare Versions</h3>
+                                <button onClick={() => setShowComparison(false)} className="text-gray-400 hover:text-white"><X size={20}/></button>
                             </div>
-                            <div className="flex-1 p-space-lg overflow-x-auto custom-scrollbar">
+                            <div className="flex-1 p-6 overflow-x-auto">
                                 <div className="min-w-full inline-block align-middle">
-                                    <div className="bg-nebula-900 border border-nebula-800 rounded-2xl overflow-hidden shadow-2xl">
+                                    <div className="bg-nebula-900 border border-nebula-700 rounded-xl overflow-hidden">
                                         <table className="min-w-full text-sm">
-                                            <thead className="bg-nebula-950 text-gray-500">
+                                            <thead className="bg-nebula-950 text-gray-400">
                                                 <tr>
-                                                    <th className="px-6 py-4 text-left uppercase tracking-widest text-[10px] font-black">Parameter Matrix</th>
+                                                    <th className="px-4 py-3 text-left">Metric</th>
                                                     {getSelectedVersions().map(v => (
-                                                        <th key={v.id} className="px-6 py-4 text-left font-mono text-purple-400 border-l border-nebula-800 uppercase text-[11px] font-black">{v.name}</th>
+                                                        <th key={v.id} className="px-4 py-3 text-left font-mono text-purple-300 border-l border-nebula-800">{v.name}</th>
                                                     ))}
                                                 </tr>
                                             </thead>
                                             <tbody className="divide-y divide-nebula-800 text-gray-300">
-                                                <tr className="hover:bg-nebula-800/30 transition-colors">
-                                                    <td className="px-6 py-4 font-black uppercase tracking-widest text-[10px] text-gray-500 bg-nebula-950/50">Container Format</td>
-                                                    {getSelectedVersions().map(v => <td key={v.id} className="px-6 py-4 border-l border-nebula-800 font-mono text-xs">{v.format}</td>)}
+                                                <tr>
+                                                    <td className="px-4 py-3 font-medium bg-nebula-950/50">Format</td>
+                                                    {getSelectedVersions().map(v => <td key={v.id} className="px-4 py-3 border-l border-nebula-800">{v.format}</td>)}
                                                 </tr>
-                                                <tr className="hover:bg-nebula-800/30 transition-colors">
-                                                    <td className="px-6 py-4 font-black uppercase tracking-widest text-[10px] text-gray-500 bg-nebula-950/50">Precision</td>
-                                                    {getSelectedVersions().map(v => <td key={v.id} className="px-6 py-4 border-l border-nebula-800 font-mono text-xs uppercase">{v.quantization}</td>)}
+                                                <tr>
+                                                    <td className="px-4 py-3 font-medium bg-nebula-950/50">Quantization</td>
+                                                    {getSelectedVersions().map(v => <td key={v.id} className="px-4 py-3 border-l border-nebula-800 font-mono">{v.quantization}</td>)}
                                                 </tr>
-                                                <tr className="hover:bg-nebula-800/30 transition-colors">
-                                                    <td className="px-6 py-4 font-black uppercase tracking-widest text-[10px] text-gray-500 bg-nebula-950/50">VRAM Footprint</td>
-                                                    {getSelectedVersions().map(v => <td key={v.id} className="px-6 py-4 border-l border-nebula-800 font-mono text-xs">{v.size}</td>)}
+                                                <tr>
+                                                    <td className="px-4 py-3 font-medium bg-nebula-950/50">Size</td>
+                                                    {getSelectedVersions().map(v => <td key={v.id} className="px-4 py-3 border-l border-nebula-800 font-mono">{v.size}</td>)}
                                                 </tr>
-                                                <tr className="hover:bg-nebula-800/30 transition-colors">
-                                                    <td className="px-6 py-4 font-black uppercase tracking-widest text-[10px] text-gray-500 bg-nebula-950/50">Peak Throughput</td>
+                                                <tr>
+                                                    <td className="px-4 py-3 font-medium bg-nebula-950/50">Token Speed (t/s)</td>
                                                     {getSelectedVersions().map(v => (
-                                                        <td key={v.id} className="px-6 py-4 border-l border-nebula-800 font-mono font-black text-blue-400">
-                                                            {v.metrics?.tokensPerSecond ? `${v.metrics.tokensPerSecond.toFixed(1)} T/S` : '-'}
+                                                        <td key={v.id} className="px-4 py-3 border-l border-nebula-800 font-mono font-bold text-blue-400">
+                                                            {v.metrics?.tokensPerSecond ? v.metrics.tokensPerSecond.toFixed(1) : '-'}
                                                         </td>
                                                     ))}
                                                 </tr>
-                                                <tr className="hover:bg-nebula-800/30 transition-colors">
-                                                    <td className="px-6 py-4 font-black uppercase tracking-widest text-[10px] text-gray-500 bg-nebula-950/50">GPU Memory Usage</td>
+                                                <tr>
+                                                    <td className="px-4 py-3 font-medium bg-nebula-950/50">VRAM Usage</td>
                                                     {getSelectedVersions().map(v => (
-                                                        <td key={v.id} className={`px-6 py-4 border-l border-nebula-800 font-mono text-xs ${v.metrics?.vramGB && v.metrics.vramGB < 4 ? 'text-green-400' : ''}`}>
+                                                        <td key={v.id} className={`px-4 py-3 border-l border-nebula-800 font-mono ${v.metrics?.vramGB && v.metrics.vramGB < 4 ? 'text-green-400' : ''}`}>
                                                             {v.metrics?.vramGB ? `${v.metrics.vramGB} GB` : '-'}
                                                         </td>
                                                     ))}
                                                 </tr>
-                                                <tr className="hover:bg-nebula-800/30 transition-colors">
-                                                    <td className="px-6 py-4 font-black uppercase tracking-widest text-[10px] text-gray-500 bg-nebula-950/50">Perplexity (PPL)</td>
+                                                <tr>
+                                                    <td className="px-4 py-3 font-medium bg-nebula-950/50">Perplexity</td>
                                                     {getSelectedVersions().map(v => (
-                                                        <td key={v.id} className="px-6 py-4 border-l border-nebula-800 font-mono text-xs">
+                                                        <td key={v.id} className="px-4 py-3 border-l border-nebula-800 font-mono">
                                                             {v.metrics?.perplexity ? v.metrics.perplexity.toFixed(2) : '-'}
                                                         </td>
                                                     ))}
                                                 </tr>
-                                                <tr className="hover:bg-nebula-800/30 transition-colors">
-                                                    <td className="px-6 py-4 font-black uppercase tracking-widest text-[10px] text-gray-500 bg-nebula-950/50">Benchmark Score</td>
+                                                <tr>
+                                                    <td className="px-4 py-3 font-medium bg-nebula-950/50">Accuracy (MMLU)</td>
                                                     {getSelectedVersions().map(v => (
-                                                        <td key={v.id} className="px-6 py-4 border-l border-nebula-800 font-mono text-xs font-black text-green-400">
+                                                        <td key={v.id} className="px-4 py-3 border-l border-nebula-800 font-mono">
                                                             {v.metrics?.accuracy ? `${v.metrics.accuracy}%` : '-'}
+                                                        </td>
+                                                    ))}
+                                                </tr>
+                                                <tr>
+                                                    <td className="px-4 py-3 font-medium bg-nebula-950/50">Latency (Est.)</td>
+                                                    {getSelectedVersions().map(v => (
+                                                        <td key={v.id} className={`px-4 py-3 border-l border-nebula-800 font-mono ${v.metrics?.latencyMs && v.metrics.latencyMs < 500 ? 'text-green-400' : ''}`}>
+                                                            {v.metrics?.latencyMs ? `${v.metrics.latencyMs} ms` : '-'}
                                                         </td>
                                                     ))}
                                                 </tr>
@@ -829,18 +857,18 @@ export const Models: React.FC<ModelsProps> = ({ models, servers, benchmarks }) =
                       
                       <div className="space-y-2">
                         <div className="text-[10px] text-purple-400 font-black uppercase tracking-widest">{model.provider}</div>
-                        <h3 className="text-3xl font-black text-white tracking-tighter uppercase">{model.name}</h3>
+                        <h3 className="text-3xl font-black text-white tracking-tighter">{model.name}</h3>
                       </div>
 
                       {/* Vital Stats Card */}
                       <div className="grid grid-cols-2 gap-4">
                         <div className="bg-nebula-950/60 p-4 rounded-2xl border border-nebula-800">
                           <div className="text-[10px] text-gray-500 font-black uppercase mb-1">Architecture</div>
-                          <div className="text-lg font-black text-white uppercase tracking-tight">{model.family}</div>
+                          <div className="text-lg font-black text-white">{model.family}</div>
                         </div>
                         <div className="bg-nebula-950/60 p-4 rounded-2xl border border-nebula-800">
                           <div className="text-[10px] text-gray-500 font-black uppercase mb-1">Parameters</div>
-                          <div className="text-lg font-black text-white font-mono uppercase">{model.params}</div>
+                          <div className="text-lg font-black text-white font-mono">{model.params}</div>
                         </div>
                         <div className="bg-nebula-950/60 p-4 rounded-2xl border border-nebula-800">
                           <div className="text-[10px] text-gray-500 font-black uppercase mb-1">VRAM Payload</div>
@@ -848,7 +876,7 @@ export const Models: React.FC<ModelsProps> = ({ models, servers, benchmarks }) =
                         </div>
                         <div className="bg-nebula-950/60 p-4 rounded-2xl border border-nebula-800">
                           <div className="text-[10px] text-gray-500 font-black uppercase mb-1">Tensor Format</div>
-                          <div className="text-lg font-black text-white font-mono uppercase">{model.tensorType}</div>
+                          <div className="text-lg font-black text-white font-mono">{model.tensorType}</div>
                         </div>
                       </div>
 
@@ -858,37 +886,30 @@ export const Models: React.FC<ModelsProps> = ({ models, servers, benchmarks }) =
                           <TrendingUp size={12} /> Performance Benchmarks
                         </h4>
                         <div className="space-y-3">
-                          <div className="flex justify-between items-center p-4 bg-nebula-950/30 rounded-2xl border border-nebula-800 group hover:border-purple-500/40 transition-colors shadow-inner">
-                            <span className="text-[10px] font-black uppercase text-gray-400 tracking-widest">Peak Tokens/Sec</span>
+                          <div className="flex justify-between items-center p-4 bg-nebula-950/30 rounded-2xl border border-nebula-800 group hover:border-purple-500/40 transition-colors">
+                            <span className="text-sm font-bold text-gray-400">Peak Tokens/Sec</span>
                             <span className="text-xl font-black text-blue-400 font-mono">{model.tokensPerSecond || model.versions[0]?.metrics?.tokensPerSecond?.toFixed(1) || '0.0'}</span>
                           </div>
-                          <div className="flex justify-between items-center p-4 bg-nebula-950/30 rounded-2xl border border-nebula-800 group hover:border-purple-500/40 transition-colors shadow-inner">
-                            <span className="text-[10px] font-black uppercase text-gray-400 tracking-widest">Response Latency</span>
+                          <div className="flex justify-between items-center p-4 bg-nebula-950/30 rounded-2xl border border-nebula-800 group hover:border-purple-500/40 transition-colors">
+                            <span className="text-sm font-bold text-gray-400">Response Latency</span>
                             <span className="text-xl font-black text-purple-400 font-mono">{model.latencyMs || model.versions[0]?.metrics?.latencyMs || '0'}ms</span>
                           </div>
-                          <div className="flex justify-between items-center p-4 bg-nebula-950/30 rounded-2xl border border-nebula-800 group hover:border-purple-500/40 transition-colors shadow-inner">
-                            <span className="text-[10px] font-black uppercase text-gray-400 tracking-widest">Base Accuracy</span>
+                          <div className="flex justify-between items-center p-4 bg-nebula-950/30 rounded-2xl border border-nebula-800 group hover:border-purple-500/40 transition-colors">
+                            <span className="text-sm font-bold text-gray-400">Base Accuracy</span>
                             <span className="text-xl font-black text-green-400 font-mono">{model.accuracy || model.versions[0]?.metrics?.accuracy || 'N/A'}%</span>
                           </div>
                         </div>
                       </div>
 
-                      {/* Capabilities Section - UPDATED per screenshot request */}
+                      {/* Capabilities */}
                       <div className="mt-auto">
-                         <div className="text-[10px] text-gray-500 font-black uppercase tracking-[0.2em] mb-4">Capabilities</div>
+                         <div className="text-[10px] text-gray-500 font-black uppercase tracking-widest mb-3">Loaded Plugins</div>
                          <div className="flex flex-wrap gap-2">
                            {model.tags.map(tag => (
-                             <span key={tag} className="px-3 py-1.5 rounded-lg bg-nebula-950 border border-nebula-800 text-[9px] font-black uppercase tracking-widest text-gray-300 hover:border-purple-500/30 hover:text-white transition-all cursor-default">
-                               {tag === 'Embedding' ? `Embedding (dim:768)` : tag}
+                             <span key={tag} className="px-3 py-1.5 rounded-full bg-nebula-950 border border-nebula-800 text-[10px] font-black uppercase tracking-tighter text-gray-400">
+                               {tag}
                              </span>
                            ))}
-                           {/* Supplemental capability labels if missing common ones */}
-                           {model.family === 'Liquid' && !model.tags.includes('Tool Calling') && (
-                             <span className="px-3 py-1.5 rounded-lg bg-nebula-950 border border-nebula-800 text-[9px] font-black uppercase tracking-widest text-gray-300">Tool Calling</span>
-                           )}
-                           {!model.tags.includes('Instruct') && (
-                             <span className="px-3 py-1.5 rounded-lg bg-nebula-950 border border-nebula-800 text-[9px] font-black uppercase tracking-widest text-gray-300">Instruct</span>
-                           )}
                          </div>
                       </div>
                     </div>
@@ -898,10 +919,10 @@ export const Models: React.FC<ModelsProps> = ({ models, servers, benchmarks }) =
 
               {/* Action Bar */}
               <div className="p-space-lg border-t border-nebula-800 bg-nebula-950/50 flex justify-between items-center shrink-0">
-                <div className="text-xs text-gray-500 font-mono uppercase tracking-widest">Comparing <span className="text-purple-400 font-bold">{comparisonPair[0].id}</span> vs <span className="text-blue-400 font-bold">{comparisonPair[1].id}</span></div>
-                <div className="flex gap-6">
-                  <button onClick={() => setComparisonPair(null)} className="px-6 py-2.5 text-[10px] font-black uppercase tracking-[0.2em] text-gray-500 hover:text-white transition-colors">Cancel Evaluation</button>
-                  <button className="px-10 py-3 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-[10px] font-black uppercase tracking-[0.2em] shadow-xl shadow-purple-500/10 transition-all active:scale-95 border border-white/10">Generate Analytics Report</button>
+                <div className="text-xs text-gray-500 font-mono">Comparing <span className="text-purple-400">{comparisonPair[0].id}</span> vs <span className="text-blue-400">{comparisonPair[1].id}</span></div>
+                <div className="flex gap-4">
+                  <button onClick={() => setComparisonPair(null)} className="px-6 py-2.5 text-sm font-black uppercase tracking-widest text-gray-400 hover:text-white transition-colors">Cancel</button>
+                  <button className="px-10 py-2.5 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-sm font-black uppercase tracking-widest shadow-lg shadow-purple-500/20 transition-all active:scale-95">Generate Report</button>
                 </div>
               </div>
             </div>
