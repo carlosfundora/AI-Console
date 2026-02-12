@@ -8,11 +8,6 @@ interface DashboardProps {
   serverConfig: ServerConfig;
 }
 
-const vramData = [
-  { name: 'Used', value: 24, color: '#7c3aed' }, // Purple-600
-  { name: 'Free', value: 56, color: '#1c1c24' }, // Darker placeholder
-];
-
 const activityData = [
   { time: '10:00', load: 20 },
   { time: '11:00', load: 45 },
@@ -59,9 +54,9 @@ const sftComparisonData = [
 
 // Mock Data for Slides
 const activeTasks = [
-    { id: 1, name: 'Llama-3-8b SFT (Epoch 2/3)', progress: 65, status: 'Training', color: 'bg-purple-600' },
-    { id: 2, name: 'Legal Corpus Indexing', progress: 32, status: 'Indexing', color: 'bg-blue-600' },
-    { id: 3, name: 'Evaluation: TruthfulQA', progress: 88, status: 'Benchmarking', color: 'bg-green-600' },
+    { id: 1, name: 'Llama-3-8b SFT (Epoch 2/3)', progress: 65, status: 'Training', color: 'bg-purple-600', glow: 'shadow-[0_0_15px_#9333ea]' },
+    { id: 2, name: 'Legal Corpus Indexing', progress: 32, status: 'Indexing', color: 'bg-blue-600', glow: 'shadow-[0_0_15px_#2563eb]' },
+    { id: 3, name: 'Evaluation: TruthfulQA', progress: 88, status: 'Benchmarking', color: 'bg-green-600', glow: 'shadow-[0_0_15px_#16a34a]' },
 ];
 
 const highScores = [
@@ -200,9 +195,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ serverConfig }) => {
                                     </div>
                                     <span className="text-white font-mono bg-nebula-900 px-2.5 py-1 rounded-md border border-white/5 shadow-inner">{task.progress}%</span>
                                 </div>
-                                <div className="w-full bg-nebula-950 h-1.5 rounded-full overflow-hidden border border-white/5">
+                                <div className="w-full bg-nebula-950/50 h-1.5 rounded-full overflow-hidden border border-white/5">
                                     <div 
-                                        className={`h-full ${task.color} relative transition-all duration-1000 ease-out shadow-[0_0_12px_currentColor] opacity-80`} 
+                                        className={`h-full ${task.color} ${task.glow} relative transition-all duration-1000 ease-out`} 
                                         style={{ width: `${task.progress}%` }}
                                     >
                                         <div className="absolute inset-0 bg-white/20 animate-pulse"></div>
@@ -214,7 +209,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ serverConfig }) => {
                 </div>
             )}
 
-            {/* Slide 2: High Scores */}
+            {/* Slide 2: Model Benchmarks */}
             {slideIndex === 2 && (
                 <div className="bg-gradient-to-b from-nebula-900 to-nebula-950 border border-white/5 rounded-xl p-6 h-[450px] animate-fade-in flex flex-col shadow-lg relative overflow-hidden">
                     <div className="absolute top-0 right-0 p-8 opacity-[0.02] pointer-events-none">

@@ -1,6 +1,7 @@
+
 import React, { useState } from 'react';
 import { Model, ModelVersion, ServerProfile, BenchmarkResult } from '../types';
-import { GitBranch, Box, FileCode, Tag, ExternalLink, Cpu, Terminal, Scale, X, BarChart2, Filter, Check, Server, FileText, Activity, Plus, RefreshCw, Trash2, Layers, Zap, Merge, Scissors, User, FlaskConical, Beaker, Database, ArrowLeftRight, TrendingUp, Play, Loader2, BrainCircuit, Eraser, HardDrive, LayoutTemplate, ScanLine, ArrowUp, ArrowDown, Minus, Settings } from 'lucide-react';
+import { GitBranch, Box, FileCode, Tag, ExternalLink, Cpu, Terminal, Scale, X, BarChart2, Filter, Check, Server, FileText, Activity, Plus, RefreshCw, Trash2, Layers, Zap, Merge, Scissors, User, FlaskConical, Beaker, Database, ArrowLeftRight, TrendingUp, Play, Loader2, BrainCircuit, Eraser, HardDrive, LayoutTemplate, ScanLine, ArrowUp, ArrowDown, Minus, Settings, Search, AlignLeft, Table as TableIcon } from 'lucide-react';
 
 interface ModelsProps {
   models: Model[];
@@ -250,33 +251,38 @@ export const Models: React.FC<ModelsProps> = ({ models, servers, benchmarks, onA
   return (
     <div className="h-full flex flex-col relative animate-fade-in p-space-lg">
       <div className="flex flex-col gap-space-md mb-space-md shrink-0">
-        <div className="flex items-center gap-space-md">
-            <h2 className="text-type-heading-lg font-bold text-white flex items-center gap-space-sm">
-                <BrainCircuit className="text-purple-500" /> Model Registry
-            </h2>
-            <span className="text-type-tiny bg-white/5 text-gray-400 px-2 py-1 rounded border border-white/5">
-                Showing {filteredModels.length} of {localModels.length}
-            </span>
-            <div className="ml-4 text-type-tiny text-gray-500 italic hidden lg:block">
-              Drag a model onto another to compare metrics side-by-side
+        <div className="flex justify-between items-center shrink-0">
+            <div>
+                <h2 className="text-type-heading-lg font-bold text-white flex items-center gap-space-sm">
+                    <BrainCircuit className="text-purple-500" /> Model Registry
+                </h2>
+                <div className="flex items-center gap-2 mt-1 text-type-body text-gray-400">
+                    <span className="text-xs bg-white/5 px-2 py-0.5 rounded border border-white/5">
+                        Showing {filteredModels.length} of {localModels.length}
+                    </span>
+                    <span className="text-xs italic hidden lg:block opacity-60">
+                        Drag a model onto another to compare metrics side-by-side
+                    </span>
+                </div>
             </div>
-            <button className="text-type-tiny bg-nebula-900 hover:bg-nebula-800 text-purple-400 border border-nebula-700 hover:border-purple-500/50 px-3 py-1 rounded flex items-center gap-1 transition-all shadow-sm ml-auto">
-                <Plus size={12} /> Import HF
+            
+            <button className="text-type-tiny bg-nebula-900 hover:bg-nebula-800 text-purple-300 hover:text-white border border-nebula-700 hover:border-purple-500/50 px-3 py-2 rounded flex items-center gap-2 transition-all shadow-sm ml-auto font-bold uppercase tracking-wider">
+                <Plus size={14} /> Import HF
             </button>
         </div>
 
-        {/* Combined Row: Tabs + Search */}
-        <div className="flex flex-wrap items-center gap-space-md border-b border-white/5 pb-4">
+        {/* Filter Bar (Unified Style) */}
+        <div className="flex gap-space-md items-center bg-nebula-900 p-1.5 rounded-lg border border-nebula-700 shrink-0">
             {/* View Category Tabs */}
-            <div className="flex gap-1 bg-nebula-900 p-1 rounded-lg border border-white/5 overflow-x-auto">
+            <div className="flex bg-nebula-950/50 rounded-md p-1 border border-nebula-800 overflow-x-auto">
                 {(['All', 'Base', 'Fine-Tuned', 'Distilled', 'Merged', 'Custom'] as ModelCategory[]).map(cat => (
                     <button
                         key={cat}
                         onClick={() => setViewCategory(cat)}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-md text-type-caption font-medium transition-all whitespace-nowrap h-9 ${
+                        className={`flex items-center gap-2 px-3 py-1 rounded text-type-tiny font-bold uppercase transition-all whitespace-nowrap ${
                             viewCategory === cat 
-                            ? 'bg-purple-600/20 text-purple-300 border border-purple-500/30 shadow-inner' 
-                            : 'text-gray-400 hover:text-white hover:bg-white/5'
+                            ? 'bg-purple-600 text-white shadow-md' 
+                            : 'text-gray-500 hover:text-gray-300 hover:bg-white/5'
                         }`}
                     >
                         {getCategoryIcon(cat)}
@@ -285,29 +291,32 @@ export const Models: React.FC<ModelsProps> = ({ models, servers, benchmarks, onA
                 ))}
             </div>
             
+            <div className="h-4 w-px bg-nebula-700 mx-1"></div>
+
             {/* Search & Filter Bar */}
-            <div className="flex gap-2 ml-auto flex-1 md:flex-none md:w-auto min-w-[200px]">
-                <div className="relative flex-1">
-                    <input 
-                        type="text" 
-                        placeholder={`Search ${viewCategory === 'All' ? '' : viewCategory} models...`}
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full h-9 bg-nebula-900 border border-white/10 rounded-lg pl-4 pr-10 text-type-caption outline-none text-white focus:border-purple-500 placeholder-gray-600" 
-                    />
-                    {searchQuery && (
-                        <button onClick={() => setSearchQuery('')} className="absolute right-3 top-2.5 text-gray-500 hover:text-white">
-                            <X size={14} />
-                        </button>
-                    )}
-                </div>
-                <button 
-                    onClick={() => setShowFilters(!showFilters)}
-                    className={`h-9 px-4 rounded-lg text-type-caption border transition-colors flex items-center gap-2 ${showFilters ? 'bg-purple-900/30 border-purple-500 text-white' : 'bg-nebula-900 border-white/10 text-gray-400 hover:text-white'}`}
-                >
-                    <Filter size={14} /> Filters
-                </button>
+            <div className="relative flex-1">
+                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
+                <input 
+                    type="text" 
+                    placeholder={`Search ${viewCategory === 'All' ? '' : viewCategory} models...`}
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full bg-nebula-950 border border-nebula-800 rounded-md pl-9 pr-4 py-1.5 text-xs text-white outline-none focus:border-purple-500/50 transition-colors placeholder-gray-600" 
+                />
+                {searchQuery && (
+                    <button onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white">
+                        <X size={14} />
+                    </button>
+                )}
             </div>
+            
+            <button 
+                onClick={() => setShowFilters(!showFilters)}
+                className={`p-1.5 rounded hover:bg-nebula-800 transition-colors ${showFilters ? 'text-purple-400 bg-nebula-800' : 'text-gray-500'}`}
+                title="Filters"
+            >
+                <Filter size={14} />
+            </button>
         </div>
         
         {/* Filter Panel */}

@@ -581,7 +581,7 @@ export const Benchmarks: React.FC<BenchmarksProps> = ({ results, models, servers
 
             {/* Slide 0: Model Comparison */}
             {slideIndex === 0 && (
-                <div className="h-full bg-nebula-900 border border-nebula-700 rounded-xl p-space-xl flex flex-col animate-fade-in">
+                <div className="h-full bg-nebula-900/50 border border-nebula-700 rounded-xl p-space-xl flex flex-col animate-fade-in">
                     <h3 className="text-type-heading-md font-bold mb-space-lg flex items-center gap-space-sm text-white">
                         <Zap size={20} className="text-yellow-500" /> Model Performance Comparison
                     </h3>
@@ -589,13 +589,13 @@ export const Benchmarks: React.FC<BenchmarksProps> = ({ results, models, servers
                         <ResponsiveContainer width="100%" height="100%">
                             <BarChart data={modelAggregatedStats}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="#272730" vertical={false} />
-                                <XAxis dataKey="name" stroke="#6b7280" fontSize={12} />
-                                <YAxis yAxisId="left" stroke="#8b5cf6" fontSize={12} orientation="left" />
-                                <YAxis yAxisId="right" stroke="#10b981" fontSize={12} orientation="right" />
-                                <Tooltip contentStyle={{ backgroundColor: '#121217', borderColor: '#272730' }} />
+                                <XAxis dataKey="name" stroke="#6b7280" fontSize={12} tickLine={false} axisLine={false} />
+                                <YAxis yAxisId="left" stroke="#8b5cf6" fontSize={12} orientation="left" tickLine={false} axisLine={false} />
+                                <YAxis yAxisId="right" stroke="#10b981" fontSize={12} orientation="right" tickLine={false} axisLine={false} />
+                                <Tooltip cursor={{fill: 'rgba(255,255,255,0.02)'}} contentStyle={{ backgroundColor: '#121217', borderColor: '#272730' }} />
                                 <Legend />
-                                <Bar yAxisId="left" dataKey="tps" name="Throughput (t/s)" fill="#8b5cf6" radius={[4, 4, 0, 0]} barSize={40} />
-                                <Bar yAxisId="right" dataKey="score" name="Avg Score" fill="#10b981" radius={[4, 4, 0, 0]} barSize={40} />
+                                <Bar yAxisId="left" dataKey="tps" name="Throughput (t/s)" fill="#8b5cf6" radius={[4, 4, 0, 0]} barSize={40} fillOpacity={0.6} />
+                                <Bar yAxisId="right" dataKey="score" name="Avg Score" fill="#10b981" radius={[4, 4, 0, 0]} barSize={40} fillOpacity={0.6} />
                             </BarChart>
                         </ResponsiveContainer>
                     </div>
@@ -604,7 +604,7 @@ export const Benchmarks: React.FC<BenchmarksProps> = ({ results, models, servers
 
             {/* Slide 1: Historical Trends */}
             {slideIndex === 1 && (
-                <div className="h-full bg-nebula-900 border border-nebula-700 rounded-xl p-space-xl flex flex-col animate-fade-in relative">
+                <div className="h-full bg-nebula-900/50 border border-nebula-700 rounded-xl p-space-xl flex flex-col animate-fade-in relative">
                     <div className="flex justify-between items-center mb-space-lg">
                         <h3 className="text-type-heading-md font-bold flex items-center gap-space-sm text-white">
                             <Clock size={20} className="text-blue-500" /> Latency Trends Over Time
@@ -630,9 +630,9 @@ export const Benchmarks: React.FC<BenchmarksProps> = ({ results, models, servers
                     <div className="flex-1 min-h-0">
                         <ResponsiveContainer width="100%" height="100%">
                             <LineChart data={processedTrendData}>
-                                <CartesianGrid strokeDasharray="3 3" stroke="#272730" />
-                                <XAxis dataKey="date" stroke="#6b7280" fontSize={12} />
-                                <YAxis stroke="#6b7280" fontSize={12} />
+                                <CartesianGrid strokeDasharray="3 3" stroke="#272730" vertical={false} />
+                                <XAxis dataKey="date" stroke="#6b7280" fontSize={12} tickLine={false} axisLine={false} />
+                                <YAxis stroke="#6b7280" fontSize={12} tickLine={false} axisLine={false} />
                                 <Tooltip contentStyle={{ backgroundColor: '#121217', borderColor: '#272730' }} />
                                 <Legend />
                                 {trendModelFilter.map((modelId, i) => (
@@ -656,7 +656,7 @@ export const Benchmarks: React.FC<BenchmarksProps> = ({ results, models, servers
 
             {/* Slide 2: Category Analysis */}
             {slideIndex === 2 && (
-                <div className="h-full bg-nebula-900 border border-nebula-700 rounded-xl p-space-xl flex flex-col animate-fade-in">
+                <div className="h-full bg-nebula-900/50 border border-nebula-700 rounded-xl p-space-xl flex flex-col animate-fade-in">
                     <h3 className="text-type-heading-md font-bold mb-space-lg flex items-center gap-space-sm text-white">
                         <ScanSearch size={20} className="text-green-500" /> Quality by Category
                     </h3>
